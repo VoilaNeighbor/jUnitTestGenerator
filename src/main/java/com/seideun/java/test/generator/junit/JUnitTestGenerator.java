@@ -1,5 +1,7 @@
 package com.seideun.java.test.generator.junit;
 
+import com.seideun.java.test.generator.smt.TestCase;
+
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -15,6 +17,9 @@ public class JUnitTestGenerator {
 	private final StringBuilder builder = new StringBuilder(ARBITRARY_CAPACITY);
 	private String objectName;
 	private String methodName;
+
+	// aka "objectName.methodName"
+	private String methodAccess;
 
 	public JUnitTestGenerator() {
 	}
@@ -36,11 +41,12 @@ public class JUnitTestGenerator {
 	 * A no-arg method should return the same value when called multiple times.
 	 */
 	public String generateConsistencyTest() {
+		makeMethodAccessExpression();
 		return format(
 			"@Test void %sReturnsSameValue(){" +
-				"var first=%s.%s();" + "var second=%s.%s();" +
+				"var first=%s();" + "var second=%s();" +
 				"assertEquals(first,second);}",
-			methodName, objectName, methodName, objectName, methodName
+			methodName, methodAccess, methodAccess
 		);
 	}
 
@@ -57,11 +63,15 @@ public class JUnitTestGenerator {
 	private void buildAssertion(TestCase testCase) {
 		builder.append(format(
 			"assertEquals(%s,%s.%s(%s));",
-			toLiteral(testCase.result()),
+			toLiteral(testCase.expectedResult()),
 			objectName,
 			methodName,
 			makeArgumentLiterals(testCase.arguments())
 		));
+	}
+
+	private void makeMethodAccessExpression() {
+		methodAccess = objectName + '.' + methodName;
 	}
 
 

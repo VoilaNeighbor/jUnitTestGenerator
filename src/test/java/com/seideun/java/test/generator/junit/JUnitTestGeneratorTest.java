@@ -1,5 +1,6 @@
 package com.seideun.java.test.generator.junit;
 
+import com.seideun.java.test.generator.smt.TestCase;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
