@@ -1,9 +1,5 @@
 package com.seideun.java.test.generator.smt;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,17 +31,18 @@ public class TestCaseBuilder {
 		if (expectedOutput == null) {
 			throw new OutputNotSetException();
 		}
-		result = new TestCase(
-			argumentTypes.stream()
-				.map(TestCaseBuilder::makeDefaultObject)
-				.toList(),
-			expectedOutput
-		);
+		result = new TestCase(makeArguments(), expectedOutput);
 		return this;
 	}
 
 	public TestCase result() {
 		return result;
+	}
+
+	private List<Object> makeArguments() {
+		return argumentTypes.stream()
+			.map(TestCaseBuilder::makeDefaultObject)
+			.toList();
 	}
 
 	private static Object makeDefaultObject(Class<?> theClass) {

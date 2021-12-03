@@ -8,14 +8,15 @@ class TestCaseGeneratorTest {
 	@Test
 	void generateArbitraryInputForNoConstraints() {
 		// Note that only a few types are known to TestCaseBuilder.
+		var expectedOutput = arbitraryInt();
 		var testCase = new TestCaseBuilder()
 			.addArgument(Integer.class)
 			.addArgument(String.class)
-			.setExpectedOutput(arbitraryInt())
+			.setExpectedOutput(expectedOutput)
 			.build()
 			.result();
 
-		assertEquals(arbitraryInt(), testCase.expectedOutput());
+		assertEquals(expectedOutput, testCase.expectedOutput());
 		assertEquals(2, testCase.arguments().size());
 		assertEquals(Integer.class, testCase.arguments().get(0).getClass());
 		assertEquals(String.class, testCase.arguments().get(1).getClass());
