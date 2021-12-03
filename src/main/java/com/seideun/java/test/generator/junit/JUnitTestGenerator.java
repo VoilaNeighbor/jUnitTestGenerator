@@ -11,10 +11,18 @@ import java.util.stream.Collectors;
 public class JUnitTestGenerator {
 	private static final int ARBITRARY_CAPACITY = 100;
 	private final StringBuilder builder = new StringBuilder(ARBITRARY_CAPACITY);
+	private String objectName;
+	private String methodName;
+
+	public void setObjectName(String objectName) {
+		this.objectName = objectName;
+	}
+
+	public void setMethodName(String methodName) {
+		this.methodName = methodName;
+	}
 
 	public String generateForMethod(
-		String objectName,
-		String methodName,
 		Collection<TestCase> testSuite
 	) {
 		if (testSuite.isEmpty()) {
