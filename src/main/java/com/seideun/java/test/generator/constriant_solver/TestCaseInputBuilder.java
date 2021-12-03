@@ -8,7 +8,7 @@ import java.util.List;
  * typed constraints and an expected result, and then generate a conforming
  * test case.
  */
-public class TestCaseBuilder {
+public class TestCaseInputBuilder {
 	/**
 	 * There must be an output for a test case.
 	 */
@@ -24,11 +24,11 @@ public class TestCaseBuilder {
 	private Object expectedOutput;
 	private TestCase result;
 
-	public TestCaseBuilder() {
+	public TestCaseInputBuilder() {
 		arguments = new ArrayList<>();
 	}
 
-	public TestCaseBuilder addArgument(Class<?> type, String name) {
+	public TestCaseInputBuilder addArgument(Class<?> type, String name) {
 		if (arguments.stream().anyMatch(x -> name.equals(x.name))) {
 			throw new ArgNameDuplicatedException();
 		}
@@ -36,12 +36,12 @@ public class TestCaseBuilder {
 		return this;
 	}
 
-	public TestCaseBuilder setExpectedOutput(Object expectedOutput) {
+	public TestCaseInputBuilder setExpectedOutput(Object expectedOutput) {
 		this.expectedOutput = expectedOutput;
 		return this;
 	}
 
-	public TestCaseBuilder build() {
+	public TestCaseInputBuilder build() {
 		if (expectedOutput == null) {
 			throw new OutputNotSetException();
 		}

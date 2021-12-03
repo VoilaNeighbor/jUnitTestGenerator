@@ -5,20 +5,20 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class TestCaseGeneratorTest {
+class TestCaseInputGeneratorTest {
 	@Test
 	void throwsIfResultNotSet() {
 		assertThrows(
-			TestCaseBuilder.OutputNotSetException.class,
-			() -> new TestCaseBuilder().build()
+			TestCaseInputBuilder.OutputNotSetException.class,
+			() -> new TestCaseInputBuilder().build()
 		);
 	}
 
 	@Test
 	void argumentsCannotHaveDuplicateNames() {
 		assertThrows(
-			TestCaseBuilder.ArgNameDuplicatedException.class,
-			() -> new TestCaseBuilder()
+			TestCaseInputBuilder.ArgNameDuplicatedException.class,
+			() -> new TestCaseInputBuilder()
 				.addArgument(arbitraryClass(), "a")
 				.addArgument(arbitraryClass(), "a")
 		);
@@ -28,7 +28,7 @@ class TestCaseGeneratorTest {
 	void generateArbitraryInputForNoConstraints() {
 		// Note that only a few types are known to TestCaseBuilder.
 		var expectedOutput = arbitraryInt();
-		var testCase = new TestCaseBuilder()
+		var testCase = new TestCaseInputBuilder()
 			.addArgument(Integer.class, "a")
 			.addArgument(String.class, "b")
 			.setExpectedOutput(expectedOutput)
