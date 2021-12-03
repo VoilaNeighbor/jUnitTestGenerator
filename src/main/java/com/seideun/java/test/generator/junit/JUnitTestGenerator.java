@@ -54,15 +54,14 @@ public class JUnitTestGenerator {
 		return builder.toString();
 	}
 
-	private void buildAssertion(
-		TestCase testCase
-	) {
-		builder.append("assertEquals(")
-			.append(toLiteral(testCase.result())).append(",")
-			.append(objectName).append(".")
-			.append(methodName).append("(")
-			.append(makeArgumentLiterals(testCase.arguments()))
-			.append("));");
+	private void buildAssertion(TestCase testCase) {
+		builder.append(format(
+			"assertEquals(%s,%s.%s(%s));",
+			toLiteral(testCase.result()),
+			objectName,
+			methodName,
+			makeArgumentLiterals(testCase.arguments())
+		));
 	}
 
 
@@ -72,8 +71,12 @@ public class JUnitTestGenerator {
 			.collect(Collectors.joining(","));
 	}
 
+	/**
+	 * Converts an object to a Java-source-code-conforming literal.
+	 */
 	private static String toLiteral(Object x) {
 		if (x instanceof String s) {
+			// Currently, only String is specially treated.
 			return '"' + s + '"';
 		} else {
 			return x.toString();
