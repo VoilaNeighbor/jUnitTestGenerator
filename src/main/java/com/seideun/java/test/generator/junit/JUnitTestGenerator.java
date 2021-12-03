@@ -14,6 +14,13 @@ public class JUnitTestGenerator {
 	private String objectName;
 	private String methodName;
 
+	public JUnitTestGenerator() { }
+
+	public JUnitTestGenerator(String objectName, String methodName) {
+		this.objectName = objectName;
+		this.methodName = methodName;
+	}
+
 	public void setObjectName(String objectName) {
 		this.objectName = objectName;
 	}
@@ -22,13 +29,17 @@ public class JUnitTestGenerator {
 		this.methodName = methodName;
 	}
 
+	public String generateForMethod() {
+		return "@Test void " + methodName + "ReturnsSameValue(){var first=" +
+			objectName + "." + methodName + "();var second=" + objectName + "." +
+			methodName + "();assertEquals(first,second);}";
+	}
+
 	public String generateForMethod(
 		Collection<TestCase> testSuite
 	) {
 		if (testSuite.isEmpty()) {
-			return "@Test void " + methodName + "ReturnsSameValue(){var first=" +
-				objectName + "." + methodName + "();var second=" + objectName + "." +
-				methodName + "();assertEquals(first,second);}";
+			return generateForMethod();
 		} else {
 			builder.setLength(0);
 			builder.append("@Test void ")

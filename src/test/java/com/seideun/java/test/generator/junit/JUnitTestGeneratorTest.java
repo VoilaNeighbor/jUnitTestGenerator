@@ -19,7 +19,7 @@ class JUnitTestGeneratorTest {
 				"var first=obj.fn();" +
 				"var second=obj.fn();" +
 				"assertEquals(first,second);}",
-			generator.generateForMethod(new ArrayList<>())
+			generator.generateForMethod()
 		);
 
 		generator.setObjectName("myVar");
@@ -29,7 +29,7 @@ class JUnitTestGeneratorTest {
 				"var first=myVar.method();" +
 				"var second=myVar.method();" +
 				"assertEquals(first,second);}",
-			generator.generateForMethod(new ArrayList<>())
+			generator.generateForMethod()
 		);
 	}
 
