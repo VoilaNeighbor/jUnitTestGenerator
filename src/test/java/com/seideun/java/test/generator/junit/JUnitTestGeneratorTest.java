@@ -52,6 +52,4 @@ class JUnitTestGeneratorTest {
 			))
 		);
 	}
-
-	// inconsistentNumOfArgumentsThrow
 }
