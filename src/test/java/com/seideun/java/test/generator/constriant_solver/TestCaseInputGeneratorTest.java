@@ -19,7 +19,6 @@ class TestCaseInputGeneratorTest {
 	@Test
 	void generateArbitraryInputForNoConstraints() {
 		// Note that only a few types are known to TestCaseBuilder.
-		var expectedOutput = arbitraryInt();
 		var arguments = new TestCaseInputBuilder()
 			.addArgument(Integer.class, "a")
 			.addArgument(String.class, "b")
@@ -27,11 +26,6 @@ class TestCaseInputGeneratorTest {
 		assertEquals(2, arguments.size());
 		assertEquals(Integer.class, arguments.get(0).getClass());
 		assertEquals(String.class, arguments.get(1).getClass());
-	}
-
-
-	private static int arbitraryInt() {
-		return 9;
 	}
 
 	private static Class<?> arbitraryClass() {

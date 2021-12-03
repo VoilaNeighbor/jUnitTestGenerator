@@ -4,9 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This class has not idea of a method or anything alike. It accepts a flock of
- * typed constraints and an expected result, and then generate a conforming
- * test case.
+ * This class has no idea of a method or anything alike. It accepts a flock of
+ * typed constraints and then generate a conforming input set.
  */
 public class TestCaseInputBuilder {
 	public static class ArgNameDuplicatedException extends RuntimeException {
