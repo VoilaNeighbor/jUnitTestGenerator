@@ -64,7 +64,7 @@ public class JUnitTestGenerator {
 	private void buildAssertion(TestCase testCase) {
 		builder.append(format(
 			"assertEquals(%s,%s(%s));",
-			toLiteral(testCase.expectedResult()),
+			toLiteral(testCase.expectedOutput()),
 			methodAccess,
 			makeArgumentLiterals(testCase.arguments())
 		));
