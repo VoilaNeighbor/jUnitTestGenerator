@@ -4,6 +4,8 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
+
 /**
  * A text-generating class creating JUnit test for based on input.
  */
@@ -44,12 +46,8 @@ public class JUnitTestGenerator {
 			throw new NoTestCaseException();
 		}
 		builder.setLength(0);
-		builder.append("@Test void ")
-			.append(methodName)
-			.append("ReturnsAsExpected(){");
-		for (var testCase: testSuite) {
-			buildAssertion(testCase);
-		}
+		builder.append(format("@Test void %sReturnsAsExpected(){", methodName));
+		testSuite.forEach(this::buildAssertion);
 		return builder.toString();
 	}
 
