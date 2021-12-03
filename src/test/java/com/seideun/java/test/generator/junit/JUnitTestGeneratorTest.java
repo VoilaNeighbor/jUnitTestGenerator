@@ -7,6 +7,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class JUnitTestGeneratorTest {
+	// Note(Seideun): I think of refactoring away the duplication, but I'm somehow
+	// 	lazy for this now.
 	@Test
 	void generateConsistencyTestForConstantFunctions() {
 		var generator = new JUnitTestGenerator("myVar", "myMethod");
