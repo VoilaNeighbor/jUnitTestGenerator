@@ -36,9 +36,12 @@ public class JUnitTestGenerator {
 	 * A no-arg method should return the same value when called multiple times.
 	 */
 	public String generateConsistencyTest() {
-		return "@Test void " + methodName + "ReturnsSameValue(){var first=" +
-			objectName + "." + methodName + "();var second=" + objectName + "." +
-			methodName + "();assertEquals(first,second);}";
+		return format(
+			"@Test void %sReturnsSameValue(){" +
+				"var first=%s.%s();" + "var second=%s.%s();" +
+				"assertEquals(first,second);}",
+			methodName, objectName, methodName, objectName, methodName
+		);
 	}
 
 	public String generateAssertForEachCase(Collection<TestCase> testSuite) {
@@ -77,5 +80,6 @@ public class JUnitTestGenerator {
 		}
 	}
 
-	public static class NoTestCaseException extends RuntimeException { }
+	public static class NoTestCaseException extends RuntimeException {
+	}
 }
