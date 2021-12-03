@@ -1,4 +1,4 @@
-package com.seideun.java.test.generator.smt;
+package com.seideun.java.test.generator.constriant_solver;
 
 import java.util.List;
 

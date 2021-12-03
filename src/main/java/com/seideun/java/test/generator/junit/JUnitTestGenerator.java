@@ -1,6 +1,6 @@
 package com.seideun.java.test.generator.junit;
 
-import com.seideun.java.test.generator.smt.TestCase;
+import com.seideun.java.test.generator.constriant_solver.TestCase;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
