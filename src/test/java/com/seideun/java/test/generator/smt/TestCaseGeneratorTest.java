@@ -1,5 +1,10 @@
 package com.seideun.java.test.generator.smt;
 
-class TestCaseGeneratorTest {
+import org.junit.jupiter.api.Test;
 
+class TestCaseGeneratorTest {
+//	@Test
+//	void  {
+//
+//	}
 }
