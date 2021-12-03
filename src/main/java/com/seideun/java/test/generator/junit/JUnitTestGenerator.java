@@ -62,10 +62,9 @@ public class JUnitTestGenerator {
 
 	private void buildAssertion(TestCase testCase) {
 		builder.append(format(
-			"assertEquals(%s,%s.%s(%s));",
+			"assertEquals(%s,%s(%s));",
 			toLiteral(testCase.expectedResult()),
-			objectName,
-			methodName,
+			methodAccess,
 			makeArgumentLiterals(testCase.arguments())
 		));
 	}
@@ -73,7 +72,6 @@ public class JUnitTestGenerator {
 	private void makeMethodAccessExpression() {
 		methodAccess = objectName + '.' + methodName;
 	}
-
 
 	private static String makeArgumentLiterals(Collection<Object> arguments) {
 		return arguments.stream()
