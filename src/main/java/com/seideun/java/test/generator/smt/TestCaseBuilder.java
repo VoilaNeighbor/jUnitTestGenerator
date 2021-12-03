@@ -21,7 +21,7 @@ public class TestCaseBuilder {
 		argumentTypes = new ArrayList<>();
 	}
 
-	public TestCaseBuilder addArgument(Class<Integer> type) {
+	public TestCaseBuilder addArgument(Class<?> type) {
 		argumentTypes.add(type);
 		return this;
 	}
@@ -49,7 +49,11 @@ public class TestCaseBuilder {
 	}
 
 	private static Object makeDefaultObject(Class<?> theClass) {
-		return 0;
+		if (theClass == Integer.class) {
+			return 0;
+		} else {
+			return "";
+		}
 	}
 
 	/**
