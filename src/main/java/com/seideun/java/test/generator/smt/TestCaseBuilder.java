@@ -9,16 +9,30 @@ import java.util.List;
  * test case.
  */
 public class TestCaseBuilder {
-	private final List<Class<?>> argumentTypes;
+	/**
+	 * There must be an output for a test case.
+	 */
+	public static class OutputNotSetException extends RuntimeException {
+	}
+
+	public static class ArgNameDuplicatedException extends RuntimeException {
+	}
+
+	private record Argument(Class<?> type, String name) {}
+
+	private final List<Argument> arguments;
 	private Object expectedOutput;
 	private TestCase result;
 
 	public TestCaseBuilder() {
-		argumentTypes = new ArrayList<>();
+		arguments = new ArrayList<>();
 	}
 
-	public TestCaseBuilder addArgument(Class<?> type) {
-		argumentTypes.add(type);
+	public TestCaseBuilder addArgument(Class<?> type, String name) {
+		if (arguments.stream().anyMatch(x -> name.equals(x.name))) {
+			throw new ArgNameDuplicatedException();
+		}
+		arguments.add(new Argument(type, name));
 		return this;
 	}
 
@@ -40,8 +54,8 @@ public class TestCaseBuilder {
 	}
 
 	private List<Object> makeArguments() {
-		return argumentTypes.stream()
-			.map(TestCaseBuilder::makeDefaultObject)
+		return arguments.stream()
+			.map(x -> makeDefaultObject(x.type))
 			.toList();
 	}
 
@@ -51,11 +65,5 @@ public class TestCaseBuilder {
 		} else {
 			return "";
 		}
-	}
-
-	/**
-	 * There must be an output for a test case.
-	 */
-	public static class OutputNotSetException extends RuntimeException {
 	}
 }
