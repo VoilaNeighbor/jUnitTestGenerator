@@ -7,12 +7,9 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class JUnitTestGeneratorTest {
-	final JUnitTestGenerator generator = new JUnitTestGenerator();
-
 	@Test
 	void generateConsistencyTestForConstantFunctions() {
-		generator.setObjectName("myVar");
-		generator.setMethodName("myMethod");
+		var generator = new JUnitTestGenerator("myVar", "myMethod");
 		assertEquals(
 			"@Test void myMethodReturnsSameValue(){" +
 				"var first=myVar.myMethod();" +
@@ -21,8 +18,7 @@ class JUnitTestGeneratorTest {
 			generator.generateConsistencyTest()
 		);
 
-		generator.setObjectName("anotherVar");
-		generator.setMethodName("anotherMethod");
+		generator = new JUnitTestGenerator("anotherVar", "anotherMethod");
 		assertEquals(
 			"@Test void anotherMethodReturnsSameValue(){" +
 				"var first=anotherVar.anotherMethod();" +
@@ -34,8 +30,7 @@ class JUnitTestGeneratorTest {
 
 	@Test
 	void generateTestForEachInputSuite() {
-		generator.setObjectName("myVar");
-		generator.setMethodName("myMethod");
+		var generator = new JUnitTestGenerator("myVar", "myMethod");
 		assertEquals(
 			"@Test void myMethodReturnsAsExpected(){" +
 				"assertEquals(0,myVar.myMethod(1,2));" +
@@ -45,8 +40,8 @@ class JUnitTestGeneratorTest {
 				new TestCase(List.of(0, 1), 2)
 			))
 		);
-		generator.setObjectName("anotherVar");
-		generator.setMethodName("anotherMethod");
+
+		generator = new JUnitTestGenerator("anotherVar", "anotherMethod");
 		assertEquals(
 			"@Test void anotherMethodReturnsAsExpected(){" +
 				"assertEquals(\"c\",anotherVar.anotherMethod(\"a\",\"b\"));" +
