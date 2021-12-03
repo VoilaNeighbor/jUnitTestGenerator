@@ -1,12 +1,16 @@
 package com.seideun.java.test.generator.junit;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
  * A text-generating class creating JUnit test for based on input.
  */
+@NotThreadSafe
 public class JUnitTestGenerator {
+	private static final int ARBITRARY_CAPACITY = 100;
+	private final StringBuilder builder = new StringBuilder(ARBITRARY_CAPACITY);
 
 	public String generateForMethod(
 		String objectName,
@@ -18,22 +22,35 @@ public class JUnitTestGenerator {
 				objectName + "." + methodName + "();var second=" + objectName + "." +
 				methodName + "();assertEquals(first,second);}";
 		} else {
-			var result = new StringBuilder();
-			result.append("@Test void ")
+			builder.setLength(0);
+			builder.append("@Test void ")
 				.append(methodName)
 				.append("ReturnsAsExpected(){");
 			for (var testCase: testSuite) {
-				result.append("assertEquals(")
-					.append(toLiteral(testCase.result())).append(",")
-					.append(objectName).append(".")
-					.append(methodName).append("(")
-					.append(testCase.arguments().stream()
-						.map(JUnitTestGenerator::toLiteral)
-						.collect(Collectors.joining(","))
-					).append("));");
+				buildAssertion(objectName, methodName, testCase);
 			}
-			return result.toString();
+			return builder.toString();
 		}
+	}
+
+	private void buildAssertion(
+		String objectName,
+		String methodName,
+		TestCase testCase
+	) {
+		builder.append("assertEquals(")
+			.append(toLiteral(testCase.result())).append(",")
+			.append(objectName).append(".")
+			.append(methodName).append("(")
+			.append(makeArgumentLiterals(testCase.arguments()))
+			.append("));");
+	}
+
+
+	private static String makeArgumentLiterals(Collection<Object> arguments) {
+		return arguments.stream()
+			.map(JUnitTestGenerator::toLiteral)
+			.collect(Collectors.joining(","));
 	}
 
 	private static String toLiteral(Object x) {
