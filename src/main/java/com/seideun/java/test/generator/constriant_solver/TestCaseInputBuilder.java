@@ -9,20 +9,12 @@ import java.util.List;
  * test case.
  */
 public class TestCaseInputBuilder {
-	/**
-	 * There must be an output for a test case.
-	 */
-	public static class OutputNotSetException extends RuntimeException {
-	}
-
 	public static class ArgNameDuplicatedException extends RuntimeException {
 	}
 
 	private record Argument(Class<?> type, String name) {}
 
 	private final List<Argument> arguments;
-	private Object expectedOutput;
-	private TestCase result;
 
 	public TestCaseInputBuilder() {
 		arguments = new ArrayList<>();
@@ -36,24 +28,7 @@ public class TestCaseInputBuilder {
 		return this;
 	}
 
-	public TestCaseInputBuilder setExpectedOutput(Object expectedOutput) {
-		this.expectedOutput = expectedOutput;
-		return this;
-	}
-
-	public TestCaseInputBuilder build() {
-		if (expectedOutput == null) {
-			throw new OutputNotSetException();
-		}
-		result = new TestCase(makeArguments(), expectedOutput);
-		return this;
-	}
-
-	public TestCase result() {
-		return result;
-	}
-
-	private List<Object> makeArguments() {
+	public List<Object> build() {
 		return arguments.stream()
 			.map(x -> makeDefaultObject(x.type))
 			.toList();
