@@ -19,13 +19,14 @@ class TestCaseInputGeneratorTest {
 	@Test
 	void generateArbitraryInputForNoConstraints() {
 		// Note that only a few types are known to TestCaseBuilder.
+		// Todo(Seideun): Use different types here.
 		var arguments = new TestCaseInputBuilder()
 			.addArgument(Integer.class, "a")
-			.addArgument(String.class, "b")
+			.addArgument(Integer.class, "b")
 			.build();
 		assertEquals(2, arguments.size());
 		assertEquals(Integer.class, arguments.get(0).getClass());
-		assertEquals(String.class, arguments.get(1).getClass());
+		assertEquals(Integer.class, arguments.get(1).getClass());
 	}
 
 	private static Class<?> arbitraryClass() {
