@@ -1,6 +1,9 @@
 package com.seideun.java.test.generator.constriant_solver;
 
+import com.microsoft.z3.Context;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -13,11 +16,8 @@ public class TestCaseInputBuilder {
 
 	private record Argument(Class<?> type, String name) {}
 
-	private final List<Argument> arguments;
-
-	public TestCaseInputBuilder() {
-		arguments = new ArrayList<>();
-	}
+	private final List<Argument> arguments = new ArrayList<>();
+	private final Context z3Context = makeContext();
 
 	public TestCaseInputBuilder addArgument(Class<?> type, String name) {
 		if (arguments.stream().anyMatch(x -> name.equals(x.name))) {
@@ -39,5 +39,11 @@ public class TestCaseInputBuilder {
 		} else {
 			return "";
 		}
+	}
+
+	private static Context makeContext() {
+		var configs = new HashMap<String, String>();
+		configs.put("model", "true");
+		return new Context(configs);
 	}
 }
