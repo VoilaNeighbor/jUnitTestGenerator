@@ -8,9 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConstraintSolverTest {
+	private final Context z3Context = new Context();
+	private final Solver z3Solver = z3Context.mkSolver();
+
 	@Test
 	void solveSimpleIntConstraint() {
-		Context z3Context = new Context();
 		IntExpr x = z3Context.mkIntConst("x");
 		BoolExpr[] ast = z3Context.parseSMTLIB2String(
 			"(declare-const x Int)" +
@@ -19,7 +21,6 @@ class ConstraintSolverTest {
 				"(check-sat)(get-model)",
 			null, null, null, null
 		);
-		Solver z3Solver = z3Context.mkSolver();
 		assertEquals(Status.SATISFIABLE, z3Solver.check(ast));
 		Model model = z3Solver.getModel();
 		int x_value = Integer.parseInt(model.eval(x, false).toString());
