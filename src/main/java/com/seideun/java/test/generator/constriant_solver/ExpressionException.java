@@ -2,24 +2,24 @@ package com.seideun.java.test.generator.constriant_solver;
 
 public class ExpressionException extends RuntimeException {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 3136681292988750961L;
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 3136681292988750961L;
 
-    public ExpressionException() {
-        super();
-    }
+	public ExpressionException() {
+		super();
+	}
 
-    public ExpressionException(String msg) {
-        super(msg);
-    }
+	public ExpressionException(String msg) {
+		super(msg);
+	}
 
-    public ExpressionException(String msg, Throwable cause) {
-        super(msg, cause);
-    }
+	public ExpressionException(String msg, Throwable cause) {
+		super(msg, cause);
+	}
 
-    public ExpressionException(Throwable cause) {
-        super(cause);
-    }
+	public ExpressionException(Throwable cause) {
+		super(cause);
+	}
 }
