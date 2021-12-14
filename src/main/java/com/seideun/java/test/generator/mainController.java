@@ -23,7 +23,7 @@ public class mainController {
     public static void main(String []ch){
         String clspath = System.getProperty("user.dir") + File.separator + "target" + File.separator + "test-classes";
         String clsName = "cut.LogicStructure";
-        String methodName = "myfor";
+        String methodName = "mywhile";
 
         UnitGraph ug = SootCFG.getMethodCFG(clspath,clsName,methodName);
         Body body = SootCFG.getMethodBody(clspath,clsName,methodName);

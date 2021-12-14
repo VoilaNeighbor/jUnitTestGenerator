@@ -1,15 +1,16 @@
 package com.seideun.java.test.generator.CFG_analyzer;
 
 
-import soot.Body;
-import soot.Local;
-import soot.Unit;
+import java.util.Map.Entry;
+import soot.*;
 import soot.jimple.internal.JAssignStmt;
 import soot.jimple.internal.JIfStmt;
 import soot.jimple.internal.JReturnStmt;
 import soot.toolkits.graph.UnitGraph;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 //测试路径集合
 //包括基路径和完整路径
@@ -21,6 +22,7 @@ public class Path {
     public String completePathConstraint;
     public List<String> valueList;
     public Object expectResult;
+    public HashMap<String, LinkedHashMap<String,String>> assignMap;
 
     public Path (UnitGraph ug,List<Unit> myPrimePath){
         this.primePathConstraint = calPathConstraint(myPrimePath,ug);
@@ -39,31 +41,89 @@ public class Path {
         return jimpleVars;
     }
 
-    //todo：找到路径上的constraint，有缺陷，还不支持循环
+    //todo：找到路径上的constraint
     public String calPathConstraint(List<Unit> path,UnitGraph ug) {
 
-        List<Local> jVars = getJVars(ug.getBody());
+//        List<Local> jVars = getJVars(ug.getBody());
+//
+//        for(int i = 0;i < jVars.size();i++){
+//            System.out.println(jVars.get(i));
+//        }
+//
+//        String pathConstraint = "";
+//        String expectedResult = "";
+//
+//        HashMap<String, String> assignList = new HashMap<>();
+//        ArrayList<String> stepConditionsWithJimpleVars = new ArrayList<String>();
+//        ArrayList<String> stepConditions = new ArrayList<String>();
 
-        for(int i = 0;i < jVars.size();i++){
-            System.out.println(jVars.get(i));
-        }
+//
+        List<Local> jVars = getJVars(ug.getBody());
 
         String pathConstraint = "";
         String expectedResult = "";
 
-        HashMap<String, String> assignList = new HashMap<>();
+        assignMap = new HashMap<>();
         ArrayList<String> stepConditionsWithJimpleVars = new ArrayList<String>();
         ArrayList<String> stepConditions = new ArrayList<String>();
 
+        for(int i = 0;i < jVars.size();i++){
+            System.out.println(jVars.get(i));
+        }
         for (Unit stmt : path) {
 
             if (stmt instanceof JAssignStmt) {
-                assignList.put(((JAssignStmt) stmt).getLeftOp().toString(), ((JAssignStmt) stmt).getRightOp().toString());
+                String key = ((JAssignStmt) stmt).getLeftOp().toString();
+                //查询是否存在该值
+                LinkedHashMap<String,String> stateSet = assignMap.get(key);
+                //如果不存在该值,新建
+                if(stateSet == null){
+                    stateSet = new LinkedHashMap<>();
+                    assignMap.put(key,stateSet);
+                }
+
+                String value = ((JAssignStmt) stmt).getRightOp().toString();
+                //todo:对负数加括号 ,正则表达式不对
+                Pattern pattern = Pattern.compile("-?[1-9]\\d*|0");//"^[-\\+]?([0-9]+\\.?)?[0-9]+$"
+                //Pattern pattern = Pattern.compile("^[-\\\\+]?([0-9]+\\\\.?)?[0-9]+$");
+                Matcher isNum = pattern.matcher(value);
+                if(!isNum.matches()){
+                    int num = isNum.groupCount();
+                    while(num>0){
+                        String getStr = isNum.group(num);
+                        value = value.replaceFirst(value,"("+getStr+")");
+                        num -= 1;
+                    }
+
+                }
+                Set<String> keySet = assignMap.keySet();
+                for(String tmp:keySet){
+                    if(value.contains(tmp)){
+                        Entry<String, String> entry = getTail(assignMap.get(tmp));
+                        if(entry != null){
+                            String nowStateValue = entry.getValue();
+                            value= value.replace(tmp,"("+nowStateValue+")");
+                        }
+                    }
+                }
+                assignMap.get(key);
+                LinkedHashMap<String,String> stateSet2 = assignMap.get(key);
+                int num = stateSet2.size();
+                String newKey = key + String.valueOf(num);
+                stateSet2.put(newKey,value);
+                assignMap.put(key,stateSet);
                 continue;
             }
             if (stmt instanceof JIfStmt) {
 
                 String ifstms = ((JIfStmt) stmt).getCondition().toString();
+                Set<String> keys = assignMap.keySet();
+                for(String tmp2:keys){
+                    if(ifstms.contains(tmp2)){
+                        String newValue = getTail(assignMap.get(tmp2)).getValue();
+                        ifstms = ifstms.replace(tmp2,"("+newValue+")");
+                    }
+                }
                 int nextUnitIndex = path.indexOf(stmt) + 1;
                 Unit nextUnit = path.get(nextUnitIndex);
 
@@ -80,18 +140,20 @@ public class Path {
                 this.expectResult =expectedResult;
             }
         }
+
         //System.out.println("The step conditions with JimpleVars are: " + stepConditionsWithJimpleVars);
 
         //bug 没有考虑jVars为空的情况
         if (jVars.size() != 0) {
-            for (String cond : stepConditionsWithJimpleVars) {
-                //替换条件里的Jimple变量
-                for (Local lv : jVars) {
-                    if (cond.contains(lv.toString())) {
-                        stepConditions.add(cond.replace(lv.toString(), assignList.get(lv.toString()).trim()));
-                    }
-                }
-            }
+//            for (String cond : stepConditionsWithJimpleVars) {
+//                //替换条件里的Jimple变量
+//                for (Local lv : jVars) {
+//                    if (cond.contains(lv.toString())) {
+//                        stepConditions.add(cond.replace(lv.toString(), assignList.get(lv.toString()).trim()));
+//                    }
+//                }
+//            }
+            stepConditions = stepConditionsWithJimpleVars;
         } else
             stepConditions = stepConditionsWithJimpleVars;
 
@@ -235,5 +297,20 @@ public class Path {
             }
         }
 
+        LinkedHashMap<String,String> endSet = assignMap.get(endValue);
+        Entry<String, String> lastValue =  getTail(endSet);
+        expectResult = lastValue.getValue();
+
+
+
+
+    }
+    public <K, V> Entry<K, V> getTail(LinkedHashMap<K, V> map) {
+        Iterator<Entry<K, V>> iterator = map.entrySet().iterator();
+        Entry<K, V> tail = null;
+        while (iterator.hasNext()) {
+            tail = iterator.next();
+        }
+        return tail;
     }
 }
