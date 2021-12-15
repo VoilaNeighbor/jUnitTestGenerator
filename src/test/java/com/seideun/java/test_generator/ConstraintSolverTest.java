@@ -3,18 +3,21 @@ package com.seideun.java.test_generator;
 import com.microsoft.z3.*;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * - solve double types
- * - solve negative numbers.
+ * It is too weird to parse to SMT-LIB strings! We could have used the Java API
+ * directly. We were misled by the damn example our teacher gave us. Dang.
  */
+@Deprecated
 class ConstraintSolverTest {
-	private final Context z3Context = new Context();
-	private final Solver z3Solver = z3Context.mkSolver();
+	final Context z3Context = new Context();
+	final Solver z3Solver = z3Context.mkSolver();
 
 	@Test
 	void solveSingleConstraintOnSinglePositiveDouble() {
+
 		double result = solveReal("y", new String[]{ "> y 588.821" });
 		assertTrue(result > 588.821);
 	}
@@ -27,13 +30,23 @@ class ConstraintSolverTest {
 
 	@Test
 	void solveMultipleConstraints() {
-		double result = solveReal("x", new String[] { "> x 1.118", "< x 1.119" });
+		double result = solveReal("x", new String[]{ "> x 1.118", "< x 1.119" });
 		assertTrue(result > 1.118);
 		assertTrue(result < 1.119);
 	}
 
+	@Test
+	void solveWithNewApi() {
+		IntExpr x = z3Context.mkIntConst("x");
+		IntNum _26 = z3Context.mkInt(26);
+		BoolExpr x_gt_26 = z3Context.mkGt(x, _26);
+		assertEquals(Status.SATISFIABLE, z3Solver.check(x_gt_26));
+		Model model = z3Solver.getModel();
+		System.out.println(model);
+	}
+
 	// Think: Do we need to extract using template method now?
-	private double solveReal(String variable, String[] constraints) {
+	public double solveReal(String variable, String[] constraints) {
 		String smtLibLang = assembleSmtLibLang(variable, constraints, "Real");
 		Model resultModel = makeResultModel(smtLibLang);
 
@@ -42,10 +55,10 @@ class ConstraintSolverTest {
 		String numerator = rational[0];
 		String denominator = rational[1];
 
-		return Double.parseDouble(numerator) / Double.parseDouble( denominator);
+		return Double.parseDouble(numerator) / Double.parseDouble(denominator);
 	}
 
-	private int solveInt(String variable, String[] constraints) {
+	public int solveInt(String variable, String[] constraints) {
 		String smtLibLang = assembleSmtLibLang(variable, constraints, "Int");
 		Model resultModel = makeResultModel(smtLibLang);
 
@@ -62,6 +75,30 @@ class ConstraintSolverTest {
 		return z3Solver.getModel();
 	}
 
+	enum Z3Type {
+		INT, REAL;
+
+		@Override
+		public String toString() {
+			if (this == INT) {
+				return "Int";
+			} else {
+				return "Real";
+			}
+		}
+	}
+
+	class Z3Variable {
+		public final String name;
+		public final Z3Type z3Type;
+
+		public Z3Variable(String name, Z3Type z3Type) {
+			this.name = name;
+			this.z3Type = z3Type;
+		}
+	}
+
+	@Deprecated
 	private String assembleSmtLibLang(
 		String variable,
 		String[] constraint,
@@ -74,6 +111,31 @@ class ConstraintSolverTest {
 			.append(type)
 			.append(")");
 		for (String c: constraint) {
+			builder
+				.append("(assert (")
+				.append(c)
+				.append("))");
+		}
+		return builder.toString();
+	}
+
+	/**
+	 * Assemble into the <a href="https://smtlib.cs.uiowa.edu/">SMT-LIB</a>
+	 * standard language.
+	 */
+	private static String assembleSmtLibLang(
+		Z3Variable[] variables,
+		String[] constraints
+	) {
+		StringBuilder builder = new StringBuilder();
+		for (Z3Variable v: variables) {
+			builder.append("(declare-const ")
+				.append(v.name)
+				.append(" ")
+				.append(v.z3Type)
+				.append(")");
+		}
+		for (String c: constraints) {
 			builder
 				.append("(assert (")
 				.append(c)
