@@ -1,6 +1,7 @@
 package com.seideun.java.test_generator;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.*;
 import soot.options.Options;
@@ -14,7 +15,11 @@ import static com.google.common.collect.Iterables.elementsEqual;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class PrimePathFinderTest {
+/**
+ * The definition of <em>coverage path</em> can be different under circumstances.
+ * For now, we are using the Prime-path method.
+ */
+class CoveragePathFinderTest {
 	static SootClass classUnderTest;
 
 	@BeforeAll
@@ -37,10 +42,10 @@ class PrimePathFinderTest {
 
 	/**
 	 * Sequential methods, i.e. methods with no branches and only one source,
-	 * have only one prime path which is the whole method.
+	 * have only one coverage path which is the whole method.
 	 */
 	@Test
-	void sequentialMethodHasSolePrimePath() {
+	void sequentialMethodHasSoleCoveragePath() {
 		SootMethod methodUnderAnalysis =
 			classUnderTest.getMethodByName("sequential");
 		UnitGraph controlFlowGraph =
@@ -52,5 +57,10 @@ class PrimePathFinderTest {
 
 		assertEquals(1, primePaths.size());
 		assertTrue(elementsEqual(units, primePaths.get(0)));
+	}
+
+	@Test
+	void branchingTreeStructuredMethodHasAPathForEach() {
+
 	}
 }
