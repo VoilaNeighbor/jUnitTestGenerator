@@ -7,8 +7,7 @@ import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static com.google.common.collect.Iterables.elementsEqual;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -59,11 +58,55 @@ class CoveragePathFinderTest {
 	}
 
 	@Test
-	void branchingTreeStructuredMethodHasAPathForEach() {
+	void branchingMethodHasAPathForEachBranch() {
 		SootMethod methodUnderAnalysis =
 			classUnderTest.getMethodByName("twoBranches");
 		UnitGraph controlFlowGraph =
 			new ExceptionalUnitGraph(methodUnderAnalysis.retrieveActiveBody());
-		UnitPatchingChain units = controlFlowGraph.getBody().getUnits();
+		// Todo(Seideun): if units is empty?
+
+		List<List<Unit>> allPaths = new ArrayList<>();
+		List<Unit> heads = controlFlowGraph.getHeads();
+		assert heads.size() == 1 : "methods have only 1 entry point, I suppose?";
+		for (Unit head: heads) {
+			findCoveragePaths(head, new ArrayList<>(), controlFlowGraph, allPaths);
+		}
+
+		List<Unit> units = new ArrayList<>(controlFlowGraph.getBody().getUnits());
+		Set<List<Unit>> expected = new HashSet<>();
+		expected.add(Arrays.asList(
+			units.get(0), units.get(1), units.get(2), units.get(3), units.get(5)));
+		expected.add(Arrays.asList(
+			units.get(0), units.get(1), units.get(4), units.get(5)));
+
+		assertEquals(expected.size(), allPaths.size());
+		for (List<Unit> path: allPaths) {
+			assertTrue(expected.contains(path));
+		}
+	}
+
+	/**
+	 * @param thisUnit This unit under discourse. It is not in
+	 *                 <code>before</code>.
+	 *                 But it may be added to it just at the start of this method.
+	 * @param thisPath takes ownership.
+	 * @param graph    context of our search.
+	 * @param result   container of all paths found.
+	 */
+	static void findCoveragePaths(
+		Unit thisUnit,
+		List<Unit> thisPath,
+		UnitGraph graph,
+		List<List<Unit>> result
+	) {
+		thisPath.add(thisUnit);
+		List<Unit> successors = graph.getSuccsOf(thisUnit);
+		if (successors.isEmpty()) {
+			result.add(thisPath);
+		} else {
+			successors.stream().skip(1).forEach(successor ->
+				findCoveragePaths(successor, new ArrayList<>(thisPath), graph, result));
+			findCoveragePaths(successors.get(0), thisPath, graph, result);
+		}
 	}
 }
