@@ -15,13 +15,13 @@ class ConstraintSolverTest {
 
 	@Test
 	void solveSingleConstraintOnSinglePositiveDouble() {
-		double result = solveReal("y", "> y 588.821");
+		double result = solveReal("y", new String[]{ "> y 588.821" });
 		assertTrue(result > 588.821);
 	}
 
 	@Test
 	void solveSingleConstraintsOnSinglePositiveInt() {
-		int result = solveInt("x", "> x 26");
+		int result = solveInt("x", new String[]{ "> x 26" });
 		assertTrue(result > 26);
 	}
 
@@ -30,7 +30,7 @@ class ConstraintSolverTest {
 //	}
 
 	// Think: Do we need to extract using template method now?
-	private double solveReal(String variable, String constraint) {
+	private double solveReal(String variable, String[] constraint) {
 		String smtLibLang = assembleSmtLibLang(variable, constraint, "Real");
 		Model resultModel = makeResultModel(smtLibLang);
 
@@ -44,7 +44,7 @@ class ConstraintSolverTest {
 		return result;
 	}
 
-	private int solveInt(String variable, String constraint) {
+	private int solveInt(String variable, String[] constraint) {
 		String smtLibLang = assembleSmtLibLang(variable, constraint, "Int");
 		Model resultModel = makeResultModel(smtLibLang);
 
@@ -63,7 +63,7 @@ class ConstraintSolverTest {
 
 	private String assembleSmtLibLang(
 		String variable,
-		String constraint,
+		String[] constraint,
 		String type
 	) {
 		StringBuilder builder = new StringBuilder();
@@ -72,10 +72,12 @@ class ConstraintSolverTest {
 			.append(" ")
 			.append(type)
 			.append(")");
-		builder
-			.append("(assert (")
-			.append(constraint)
-			.append("))");
+		for (String c: constraint) {
+			builder
+				.append("(assert (")
+				.append(c)
+				.append("))");
+		}
 		return builder.toString();
 	}
 }
