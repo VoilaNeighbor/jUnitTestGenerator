@@ -15,25 +15,7 @@ class ConstraintSolverTest {
 
 	@Test
 	void solveSingleConstraintOnSinglePositiveDouble() {
-		String variable = "y";
-		String constraint = "> y 588.821";
-
-		String smtLibLang
-			= "(declare-const " + variable + " Real)(assert (" + constraint + "))";
-
-		BoolExpr[] ast = z3Context.parseSMTLIB2String(
-			smtLibLang, null, null, null, null
-		);
-		z3Solver.check(ast);
-
-		Model resultModel = z3Solver.getModel();
-		RealExpr vExpr = z3Context.mkRealConst(variable);
-		String[] rational = resultModel.eval(vExpr, false).toString().split("/");
-		String numerator = rational[0];
-		String denominator = rational[1];
-
-		double result = Double.parseDouble(numerator) / Double.parseDouble(denominator);
-
+		double result = solveReal("y", "> y 588.821");
 		assertTrue(result > 588.821);
 	}
 
@@ -43,17 +25,45 @@ class ConstraintSolverTest {
 		assertTrue(result > 26);
 	}
 
-	private int solveInt(String variable, String constraint) {
-		String smtLibLang
-			= "(declare-const " + variable + " Int)(assert (" + constraint + "))";
+	private double solveReal(String variable, String constraint) {
+		String smtLibLang = assembleSmtLibLang(variable, constraint, "Real");
 
+		Model resultModel = makeResultModel(smtLibLang);
+
+		RealExpr vExpr = z3Context.mkRealConst(variable);
+		String[] rational = resultModel.eval(vExpr, false).toString().split("/");
+		String numerator = rational[0];
+		String denominator = rational[1];
+
+		double result = Double.parseDouble(numerator) / Double.parseDouble(
+			denominator);
+		return result;
+	}
+
+	private int solveInt(String variable, String constraint) {
+		String smtLibLang = assembleSmtLibLang(variable, constraint, "Int");
+
+		Model resultModel = makeResultModel(smtLibLang);
+
+		IntExpr vExpr = z3Context.mkIntConst(variable);
+		return Integer.parseInt(resultModel.eval(vExpr, false).toString());
+	}
+
+	private Model makeResultModel(String smtLibLang) {
 		BoolExpr[] ast = z3Context.parseSMTLIB2String(
 			smtLibLang, null, null, null, null
 		);
 		z3Solver.check(ast);
 
-		Model resultModel = z3Solver.getModel();
-		IntExpr vExpr = z3Context.mkIntConst(variable);
-		return Integer.parseInt(resultModel.eval(vExpr, false).toString());
+		return z3Solver.getModel();
+	}
+
+	private String assembleSmtLibLang(
+		String variable,
+		String constraint,
+		String type
+	) {
+		return "(declare-const " + variable + " " + type + ")(assert (" +
+			constraint + "))";
 	}
 }
