@@ -2,7 +2,10 @@ package com.seideun.java.test_generator;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import soot.*;
+import soot.Scene;
+import soot.SootClass;
+import soot.SootMethod;
+import soot.Unit;
 import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
@@ -48,13 +51,14 @@ class CoveragePathFinderTest {
 			classUnderTest.getMethodByName("sequential");
 		UnitGraph controlFlowGraph =
 			new ExceptionalUnitGraph(methodUnderAnalysis.retrieveActiveBody());
-		UnitPatchingChain units = controlFlowGraph.getBody().getUnits();
 
-		List<List<Unit>> result = new ArrayList<>();
-		result.add(new ArrayList<>(units));
+		List<List<Unit>> result = findCoveragePaths(controlFlowGraph);
 
 		assertEquals(1, result.size());
-		assertTrue(elementsEqual(units, result.get(0)));
+		assertTrue(elementsEqual(
+			controlFlowGraph.getBody().getUnits(),
+			result.get(0)
+		));
 	}
 
 	@Test
@@ -65,12 +69,7 @@ class CoveragePathFinderTest {
 			new ExceptionalUnitGraph(methodUnderAnalysis.retrieveActiveBody());
 		// Todo(Seideun): if units is empty?
 
-		List<List<Unit>> allPaths = new ArrayList<>();
-		List<Unit> heads = controlFlowGraph.getHeads();
-		assert heads.size() == 1 : "methods have only 1 entry point, I suppose?";
-		for (Unit head: heads) {
-			findCoveragePaths(head, new ArrayList<>(), controlFlowGraph, allPaths);
-		}
+		List<List<Unit>> allPaths = findCoveragePaths(controlFlowGraph);
 
 		List<Unit> units = new ArrayList<>(controlFlowGraph.getBody().getUnits());
 		Set<List<Unit>> expected = new HashSet<>();
@@ -85,6 +84,16 @@ class CoveragePathFinderTest {
 		}
 	}
 
+	public static List<List<Unit>> findCoveragePaths(UnitGraph controlFlowGraph) {
+		List<List<Unit>> allPaths = new ArrayList<>();
+		List<Unit> heads = controlFlowGraph.getHeads();
+		assert heads.size() == 1 : "methods have only 1 entry point, I suppose?";
+		for (Unit head: heads) {
+			findCoveragePaths(head, new ArrayList<>(), controlFlowGraph, allPaths);
+		}
+		return allPaths;
+	}
+
 	/**
 	 * @param thisUnit This unit under discourse. It is not in
 	 *                 <code>before</code>.
@@ -93,7 +102,7 @@ class CoveragePathFinderTest {
 	 * @param graph    context of our search.
 	 * @param result   container of all paths found.
 	 */
-	static void findCoveragePaths(
+	private static void findCoveragePaths(
 		Unit thisUnit,
 		List<Unit> thisPath,
 		UnitGraph graph,
