@@ -25,9 +25,13 @@ class ConstraintSolverTest {
 		assertTrue(result > 26);
 	}
 
+//	@Test
+//	void solveMultipleConstraints() {
+//	}
+
+	// Think: Do we need to extract using template method now?
 	private double solveReal(String variable, String constraint) {
 		String smtLibLang = assembleSmtLibLang(variable, constraint, "Real");
-
 		Model resultModel = makeResultModel(smtLibLang);
 
 		RealExpr vExpr = z3Context.mkRealConst(variable);
@@ -42,7 +46,6 @@ class ConstraintSolverTest {
 
 	private int solveInt(String variable, String constraint) {
 		String smtLibLang = assembleSmtLibLang(variable, constraint, "Int");
-
 		Model resultModel = makeResultModel(smtLibLang);
 
 		IntExpr vExpr = z3Context.mkIntConst(variable);
@@ -63,7 +66,16 @@ class ConstraintSolverTest {
 		String constraint,
 		String type
 	) {
-		return "(declare-const " + variable + " " + type + ")(assert (" +
-			constraint + "))";
+		StringBuilder builder = new StringBuilder();
+		builder.append("(declare-const ")
+			.append(variable)
+			.append(" ")
+			.append(type)
+			.append(")");
+		builder
+			.append("(assert (")
+			.append(constraint)
+			.append("))");
+		return builder.toString();
 	}
 }
