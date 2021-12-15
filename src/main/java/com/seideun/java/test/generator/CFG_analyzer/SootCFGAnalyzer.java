@@ -160,17 +160,8 @@ public class SootCFGAnalyzer {
 	) {
 		List<Path> completeTestPath = new ArrayList<>();
 
-		//int i = 1;
 		for (List<Unit> s: primePath) {
 			Path temp = new Path(ug, s);
-//            System.out.println("num: "+ i + " one complete path is:");
-//            for(Unit m:temp.oneCompletePath){
-//                System.out.println(m.toString());
-//            }
-//            System.out.println("num: "+ i + " path constrain is:");
-//            System.out.println(temp.completePathConstraint);
-//            System.out.println(" ");
-//            i += 1;
 			completeTestPath.add(temp);
 		}
 		//对completeTestPath去重

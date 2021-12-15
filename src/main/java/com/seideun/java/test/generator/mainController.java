@@ -19,7 +19,7 @@ public class mainController {
       "target" +
 			File.separator + "test-classes";
 		String clsName = "cut.LogicStructure";
-		String methodName = "mywhile";
+		String methodName = "multipleIf";
 
 		UnitGraph ug = SootCFG.getMethodCFG(clspath, clsName, methodName);
 		Body body = SootCFG.getMethodBody(clspath, clsName, methodName);

@@ -12,7 +12,31 @@ class ConstraintSolverTest {
 	private final Solver z3Solver = z3Context.mkSolver();
 
 	@Test
+	void solveSingleConstraintsOnSinglePositiveInt() {
+		String variable = "x";
+		String constraint = "> x 26";
+
+		String smtLibLang
+			= "(declare-const " + variable + " Int)(assert (" + constraint + "))";
+
+		BoolExpr[] ast = z3Context.parseSMTLIB2String(
+			smtLibLang, null, null, null, null
+		);
+		z3Solver.check(ast);
+
+		Model resultModel = z3Solver.getModel();
+		IntExpr vExpr = z3Context.mkIntConst(variable);
+		int result = Integer.parseInt(resultModel.eval(vExpr, false).toString());
+
+		assertTrue(result > 26);
+	}
+
+	// - solve double types
+	// - solve negative numbers.
+
+	@Test
 	void solveSimpleIntConstraint() {
+
 		IntExpr x = z3Context.mkIntConst("x");
 		RealExpr y = z3Context.mkRealConst("y");
 

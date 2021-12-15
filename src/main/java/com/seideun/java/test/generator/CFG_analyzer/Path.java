@@ -36,22 +36,6 @@ public class Path {
 
 	//todo：找到路径上的constraint
 	public String calPathConstraint(List<Unit> path, UnitGraph ug) {
-
-//        List<Local> jVars = getJVars(ug.getBody());
-//
-//        for(int i = 0;i < jVars.size();i++){
-//            System.out.println(jVars.get(i));
-//        }
-//
-//        String pathConstraint = "";
-//        String expectedResult = "";
-//
-//        HashMap<String, String> assignList = new HashMap<>();
-//        ArrayList<String> stepConditionsWithJimpleVars = new
-//        ArrayList<String>();
-//        ArrayList<String> stepConditions = new ArrayList<String>();
-
-//
 		List<Local> jVars = getJVars(ug.getBody());
 
 		String pathConstraint = "";
@@ -65,16 +49,12 @@ public class Path {
 			System.out.println(jVars.get(i));
 		}
 		for (Unit stmt: path) {
-
 			if (stmt instanceof JAssignStmt) {
 				String key = ((JAssignStmt) stmt).getLeftOp().toString();
 				//查询是否存在该值
-				LinkedHashMap<String, String> stateSet = assignMap.get(key);
+				LinkedHashMap<String, String> stateSet
+					= assignMap.computeIfAbsent(key, k -> new LinkedHashMap<>());
 				//如果不存在该值,新建
-				if (stateSet == null) {
-					stateSet = new LinkedHashMap<>();
-					assignMap.put(key, stateSet);
-				}
 
 				String value = ((JAssignStmt) stmt).getRightOp().toString();
 				//todo:对负数加括号 ,正则表达式不对
@@ -89,7 +69,6 @@ public class Path {
 						value = value.replaceFirst(value, "(" + getStr + ")");
 						num -= 1;
 					}
-
 				}
 				Set<String> keySet = assignMap.keySet();
 				for (String tmp: keySet) {
@@ -137,20 +116,7 @@ public class Path {
 			}
 		}
 
-		//System.out.println("The step conditions with JimpleVars are: " +
-		// stepConditionsWithJimpleVars);
-
-		//bug 没有考虑jVars为空的情况
 		if (jVars.size() != 0) {
-//            for (String cond : stepConditionsWithJimpleVars) {
-//                //替换条件里的Jimple变量
-//                for (Local lv : jVars) {
-//                    if (cond.contains(lv.toString())) {
-//                        stepConditions.add(cond.replace(lv.toString(),
-//                        assignList.get(lv.toString()).trim()));
-//                    }
-//                }
-//            }
 			stepConditions = stepConditionsWithJimpleVars;
 		} else {
 			stepConditions = stepConditionsWithJimpleVars;
@@ -165,8 +131,6 @@ public class Path {
 			pathConstraint = pathConstraint + " && " + stepConditions.get(i);
 			i++;
 		}
-		//System.out.println("The path expression is: " + pathConstraint);
-
 		return pathConstraint;
 	}
 
