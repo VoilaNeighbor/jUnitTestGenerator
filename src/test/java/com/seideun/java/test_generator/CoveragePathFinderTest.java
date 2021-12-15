@@ -1,7 +1,6 @@
 package com.seideun.java.test_generator;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.*;
 import soot.options.Options;
@@ -45,7 +44,7 @@ class CoveragePathFinderTest {
 	 * have only one coverage path which is the whole method.
 	 */
 	@Test
-	void sequentialMethodHasSoleCoveragePath() {
+	void sequentialMethodHasSolePath() {
 		SootMethod methodUnderAnalysis =
 			classUnderTest.getMethodByName("sequential");
 		UnitGraph controlFlowGraph =
