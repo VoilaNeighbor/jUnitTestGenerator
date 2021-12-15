@@ -3,19 +3,47 @@ package com.seideun.java.test_generator;
 import com.microsoft.z3.*;
 import org.junit.jupiter.api.Test;
 
-import static java.lang.Double.parseDouble;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * - solve double types
+ * - solve negative numbers.
+ */
 class ConstraintSolverTest {
 	private final Context z3Context = new Context();
 	private final Solver z3Solver = z3Context.mkSolver();
 
 	@Test
-	void solveSingleConstraintsOnSinglePositiveInt() {
-		String variable = "x";
-		String constraint = "> x 26";
+	void solveSingleConstraintOnSinglePositiveDouble() {
+		String variable = "y";
+		String constraint = "> y 588.821";
 
+		String smtLibLang
+			= "(declare-const " + variable + " Real)(assert (" + constraint + "))";
+
+		BoolExpr[] ast = z3Context.parseSMTLIB2String(
+			smtLibLang, null, null, null, null
+		);
+		z3Solver.check(ast);
+
+		Model resultModel = z3Solver.getModel();
+		RealExpr vExpr = z3Context.mkRealConst(variable);
+		String[] rational = resultModel.eval(vExpr, false).toString().split("/");
+		String numerator = rational[0];
+		String denominator = rational[1];
+
+		double result = Double.parseDouble(numerator) / Double.parseDouble(denominator);
+
+		assertTrue(result > 588.821);
+	}
+
+	@Test
+	void solveSingleConstraintsOnSinglePositiveInt() {
+		int result = solveInt("x", "> x 26");
+		assertTrue(result > 26);
+	}
+
+	private int solveInt(String variable, String constraint) {
 		String smtLibLang
 			= "(declare-const " + variable + " Int)(assert (" + constraint + "))";
 
@@ -26,40 +54,6 @@ class ConstraintSolverTest {
 
 		Model resultModel = z3Solver.getModel();
 		IntExpr vExpr = z3Context.mkIntConst(variable);
-		int result = Integer.parseInt(resultModel.eval(vExpr, false).toString());
-
-		assertTrue(result > 26);
-	}
-
-	// - solve double types
-	// - solve negative numbers.
-
-	@Test
-	void solveSimpleIntConstraint() {
-
-		IntExpr x = z3Context.mkIntConst("x");
-		RealExpr y = z3Context.mkRealConst("y");
-
-		BoolExpr[] ast = z3Context.parseSMTLIB2String(
-			"(declare-const x Int)" +
-				"(declare-const y Real)" +
-				"(assert (> x 26))" +
-				"(assert (< x 30))" +
-				"(assert (> y 3.338))" +
-				"(assert (< y 3.352))" +
-				"(check-sat)(get-model)",
-			null, null, null, null
-		);
-		assertEquals(Status.SATISFIABLE, z3Solver.check(ast));
-		Model model = z3Solver.getModel();
-
-		int x_value = Integer.parseInt(model.eval(x, false).toString());
-		assertTrue(x_value > 26);
-		assertTrue(x_value < 30);
-
-		String[] y_str = model.eval(y, false).toString().split("/");
-		double y_value = parseDouble(y_str[0]) / parseDouble(y_str[1]);
-		assertTrue(y_value > 3.338);
-		assertTrue(y_value < 3.352);
+		return Integer.parseInt(resultModel.eval(vExpr, false).toString());
 	}
 }
