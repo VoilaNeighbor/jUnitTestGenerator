@@ -60,6 +60,12 @@ class CoveragePathFinderTest {
 
 	@Test
 	void branchingTreeStructuredMethodHasAPathForEach() {
+		SootMethod methodUnderAnalysis =
+			classUnderTest.getMethodByName("sequential");
+		UnitGraph controlFlowGraph =
+			new ExceptionalUnitGraph(methodUnderAnalysis.retrieveActiveBody());
+		UnitPatchingChain units = controlFlowGraph.getBody().getUnits();
+
 
 	}
 }

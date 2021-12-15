@@ -1,6 +1,7 @@
 package com.seideun.java.test_generator;
 
 import com.microsoft.z3.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * directly. We were misled by the damn example our teacher gave us. Dang.
  */
 @Deprecated
+@Disabled
 class ConstraintSolverTest {
 	final Context z3Context = new Context();
 	final Solver z3Solver = z3Context.mkSolver();
