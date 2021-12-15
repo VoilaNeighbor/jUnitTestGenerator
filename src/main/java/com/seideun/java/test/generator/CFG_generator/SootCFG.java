@@ -5,21 +5,9 @@ import soot.options.Options;
 import soot.toolkits.graph.ClassicCompleteUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
-import static java.lang.String.format;
-
 //负责生成控制流图相关信息
 public class SootCFG {
 	public static UnitGraph getMethodCFG(
-		String sourceDirectory,
-		String clsName,
-		String methodName
-	) {
-		Body body = getMethodBody(sourceDirectory, clsName, methodName);
-		UnitGraph ug = new ClassicCompleteUnitGraph(body);
-		return ug;
-	}
-
-	public static Body getMethodBody(
 		String sourceDirectory,
 		String clsName,
 		String methodName
@@ -35,7 +23,7 @@ public class SootCFG {
 		// This is the same on as `sc`. Damn the coder is without a proper head.
 		SootClass mainClass = Scene.v().getSootClass(clsName);
 		SootMethod sm = mainClass.getMethodByName(methodName);
-		return sm.retrieveActiveBody();
+		Body body = sm.retrieveActiveBody();
+		return new ClassicCompleteUnitGraph(body);
 	}
-
 }

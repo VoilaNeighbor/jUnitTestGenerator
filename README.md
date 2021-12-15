@@ -23,3 +23,10 @@ This model is outdated.
 - From Soot Unit Graph, generate a set P of prime paths of a method.
 - Extend P into a set C of complete paths, i.e. from entrance points to end points.
 - Collect constraints on the complete path.
+
+## Reference
+
+### Soot
+
+- [Soot API Document](https://www.sable.mcgill.ca/soot/doc/)
+- [Soot Command-line Options](https://soot-build.cs.uni-paderborn.de/public/origin/develop/soot/soot-develop/options/soot_options.htm), Corresponds to the `Options` class.

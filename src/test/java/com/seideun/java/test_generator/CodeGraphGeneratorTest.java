@@ -17,7 +17,11 @@ class CodeGraphGeneratorTest {
 		sootConfigs.set_prepend_classpath(true);
 		sootConfigs.set_soot_classpath(CLASSPATH);
 		Scene sootScene = Scene.v();
+		// Manually-loaded SootClass's are not set as app class by default.
+		// I don't know of another way to load them yet. So let's bundle the setup
+		// code as here.
 		class_under_test = sootScene.loadClassAndSupport("cut.LogicStructure");
+		class_under_test.setApplicationClass();
 	}
 
 	@Test
