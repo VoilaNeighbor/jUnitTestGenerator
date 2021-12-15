@@ -26,6 +26,10 @@ This model is outdated.
 
 ## Reference
 
+### Prime Paths
+
+[This tutorial](Prime-Path-Coverage_compressed.pdf) shows how to use a brutal method to find simple paths.
+
 ### Soot
 
 - [Soot API Document](https://www.sable.mcgill.ca/soot/doc/)

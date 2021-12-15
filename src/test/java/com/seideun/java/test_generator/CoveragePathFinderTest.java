@@ -10,7 +10,10 @@ import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -22,7 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * The definition of <em>coverage path</em> can be different under circumstances.
  * For now, we are using the Prime-path method.
  *
- * We expect all methods under test to return values.
+ * <p> We expect all methods under test to return values, and we expect that
+ * they all terminate, i.e. have no infinite loop.
  */
 class CoveragePathFinderTest {
 	static SootClass classUnderTest;
@@ -69,17 +73,21 @@ class CoveragePathFinderTest {
 		List<List<Unit>> allPaths = findCoveragePaths(controlFlowGraph);
 
 		Set<List<Unit>> expected = new HashSet<>();
-		List<Unit> allUnits = new ArrayList<>(controlFlowGraph.getBody().getUnits());
-		expected.add(subsetOf(allUnits, 0, 1, 2, 3, 5));
-		expected.add(subsetOf(allUnits, 0, 1, 4, 5));
+		List<Unit> units = new ArrayList<>(controlFlowGraph.getBody().getUnits());
+		expected.add(subsetOf(units, 0, 1, 2, 3, 5));
+		expected.add(subsetOf(units, 0, 1, 4, 5));
 
 		assertEquals(expected.size(), allPaths.size());
 		assertTrue(expected.containsAll(allPaths));
 	}
 
+	// - Jump back to loop entrance.
+	// - Jump back to node before entrance on the current path.
+	// - Jump back to node on other path, no matter visited or not.
+
 	/**
 	 * @param original domain of discourse
-	 * @param indices indices of elements to extract
+	 * @param indices  indices of elements to extract
 	 * @return subset (still a list) of the original list.
 	 */
 	public static List<Unit> subsetOf(List<Unit> original, int... indices) {
