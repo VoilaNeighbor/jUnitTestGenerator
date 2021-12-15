@@ -70,7 +70,6 @@ public class SootCFGAnalyzer {
 									isSimplePath = false;
 									break;
 								}
-
 							}
 						}
 					}
@@ -79,11 +78,8 @@ public class SootCFGAnalyzer {
 						extendPathSet.add(temp);
 						simplePathSet.add(temp);
 					}
-
 				}
-
 				extendPathSet.remove(0);
-
 			}
 		}
 		List<List<Unit>> pathNeedRemove = new ArrayList<>();
