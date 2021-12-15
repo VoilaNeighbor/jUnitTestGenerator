@@ -11,7 +11,10 @@ import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -28,6 +31,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class CoveragePathFinderTest {
 	static SootClass classUnderTest;
+
+	// - Jump back to node before entrance on the current path.
+	// - Jump back to node on other path, no matter visited or not.
+
+	/**
+	 * @param original domain of discourse
+	 * @param indices  indices of elements to extract
+	 * @return subset (still a list) of the original list.
+	 */
+	public static List<Unit> subsetOf(List<Unit> original, int... indices) {
+		return IntStream.of(indices)
+			.mapToObj(original::get)
+			.collect(Collectors.toList());
+	}
+
+	private UnitGraph makeControlFlowGraph(String methodName) {
+		SootMethod method = classUnderTest.getMethodByName(methodName);
+		return new ExceptionalUnitGraph(method.retrieveActiveBody());
+	}
 
 	@BeforeAll
 	static void setupSoot() {
@@ -53,71 +75,49 @@ class CoveragePathFinderTest {
 	 */
 	@Test
 	void sequentialMethodHasSolePath() {
-		UnitGraph controlFlowGraph = makeControlFlowGraph("sequential");
+		controlFlowGraph = makeControlFlowGraph("sequential");
 
-		List<List<Unit>> coveragePaths = findCoveragePaths(controlFlowGraph);
+		findCoveragePaths();
 
-		assertEquals(1, coveragePaths.size());
+		assertEquals(1, result.size());
 		assertTrue(elementsEqual(
 			controlFlowGraph.getBody().getUnits(),
-			coveragePaths.get(0)
+			result.get(0)
 		));
 	}
 
 	@Test
 	void branchingMethodHasAPathForEachBranch() {
-		UnitGraph controlFlowGraph = makeControlFlowGraph("twoBranches");
+		controlFlowGraph = makeControlFlowGraph("twoBranches");
 
-		List<List<Unit>> coveragePaths = findCoveragePaths(controlFlowGraph);
+		findCoveragePaths();
 
 		Set<List<Unit>> expected = new HashSet<>();
 		List<Unit> units = new ArrayList<>(controlFlowGraph.getBody().getUnits());
 		expected.add(subsetOf(units, 0, 1, 2, 3, 5));
 		expected.add(subsetOf(units, 0, 1, 4, 5));
 
-		assertEquals(expected.size(), coveragePaths.size());
-		assertTrue(expected.containsAll(coveragePaths));
+		assertEquals(expected.size(), result.size());
+		assertTrue(expected.containsAll(result));
 	}
 
 	@Test
 	@Disabled("Buggy")
 	void jumpBackToLoopEntranceMakeLoopPaths() {
-		UnitGraph cfg = makeControlFlowGraph("jumpBackToLoopEntrance");
-		List<List<Unit>> coveragePaths = findCoveragePaths(cfg);
+		controlFlowGraph = makeControlFlowGraph("jumpBackToLoopEntrance");
+		findCoveragePaths();
 
 		Set<List<Unit>> expected = new HashSet<>();
-		List<Unit> units = new ArrayList<>(cfg.getBody().getUnits());
-
+		List<Unit> units = new ArrayList<>(controlFlowGraph.getBody().getUnits());
 	}
 
-	// - Jump back to loop entrance.
-	// - Jump back to node before entrance on the current path.
-	// - Jump back to node on other path, no matter visited or not.
-
-	/**
-	 * @param original domain of discourse
-	 * @param indices  indices of elements to extract
-	 * @return subset (still a list) of the original list.
-	 */
-	public static List<Unit> subsetOf(List<Unit> original, int... indices) {
-		return IntStream.of(indices)
-			.mapToObj(original::get)
-			.collect(Collectors.toList());
-	}
-
-	private UnitGraph makeControlFlowGraph(String methodName) {
-		SootMethod method = classUnderTest.getMethodByName(methodName);
-		return new ExceptionalUnitGraph(method.retrieveActiveBody());
-	}
-
-	public static List<List<Unit>> findCoveragePaths(UnitGraph controlFlowGraph) {
-		List<List<Unit>> allPaths = new ArrayList<>();
+	public void findCoveragePaths() {
+		result = new ArrayList<>();
 		List<Unit> heads = controlFlowGraph.getHeads();
 		assert heads.size() == 1 : "methods have only 1 entry point, I suppose?";
 		for (Unit head: heads) {
-			findCoveragePaths(head, new ArrayList<>(), controlFlowGraph, allPaths);
+			findCoveragePaths(head, new ArrayList<>());
 		}
-		return allPaths;
 	}
 
 	/**
@@ -125,23 +125,19 @@ class CoveragePathFinderTest {
 	 *                 <code>before</code>.
 	 *                 But it may be added to it just at the start of this method.
 	 * @param thisPath takes ownership.
-	 * @param graph    context of our search.
-	 * @param result   container of all paths found.
 	 */
-	private static void findCoveragePaths(
-		Unit thisUnit,
-		List<Unit> thisPath,
-		UnitGraph graph,
-		List<List<Unit>> result
-	) {
+	private void findCoveragePaths(Unit thisUnit, List<Unit> thisPath) {
 		thisPath.add(thisUnit);
-		List<Unit> successors = graph.getSuccsOf(thisUnit);
+		List<Unit> successors = controlFlowGraph.getSuccsOf(thisUnit);
 		if (successors.isEmpty()) {
 			result.add(thisPath);
 		} else {
 			for (Unit successor: successors) {
-				findCoveragePaths(successor, new ArrayList<>(thisPath), graph, result);
+				findCoveragePaths(successor, new ArrayList<>(thisPath));
 			}
 		}
 	}
+
+	private UnitGraph controlFlowGraph;
+	private List<List<Unit>> result;
 }
