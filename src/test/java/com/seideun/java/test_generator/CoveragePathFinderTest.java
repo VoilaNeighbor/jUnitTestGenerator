@@ -11,6 +11,8 @@ import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.google.common.collect.Iterables.elementsEqual;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,10 +49,7 @@ class CoveragePathFinderTest {
 	 */
 	@Test
 	void sequentialMethodHasSolePath() {
-		SootMethod methodUnderAnalysis =
-			classUnderTest.getMethodByName("sequential");
-		UnitGraph controlFlowGraph =
-			new ExceptionalUnitGraph(methodUnderAnalysis.retrieveActiveBody());
+		UnitGraph controlFlowGraph = makeControlFlowGraph("sequential");
 
 		List<List<Unit>> result = findCoveragePaths(controlFlowGraph);
 
@@ -63,25 +62,29 @@ class CoveragePathFinderTest {
 
 	@Test
 	void branchingMethodHasAPathForEachBranch() {
-		SootMethod methodUnderAnalysis =
-			classUnderTest.getMethodByName("twoBranches");
-		UnitGraph controlFlowGraph =
-			new ExceptionalUnitGraph(methodUnderAnalysis.retrieveActiveBody());
+		UnitGraph controlFlowGraph = makeControlFlowGraph("twoBranches");
 		// Todo(Seideun): if units is empty?
 
 		List<List<Unit>> allPaths = findCoveragePaths(controlFlowGraph);
 
-		List<Unit> units = new ArrayList<>(controlFlowGraph.getBody().getUnits());
 		Set<List<Unit>> expected = new HashSet<>();
-		expected.add(Arrays.asList(
-			units.get(0), units.get(1), units.get(2), units.get(3), units.get(5)));
-		expected.add(Arrays.asList(
-			units.get(0), units.get(1), units.get(4), units.get(5)));
+		List<Unit> allUnits = new ArrayList<>(controlFlowGraph.getBody().getUnits());
+		expected.add(subsetOf(allUnits, 0, 1, 2, 3, 5));
+		expected.add(subsetOf(allUnits, 0, 1, 4, 5));
 
 		assertEquals(expected.size(), allPaths.size());
-		for (List<Unit> path: allPaths) {
-			assertTrue(expected.contains(path));
-		}
+		assertTrue(expected.containsAll(allPaths));
+	}
+
+	static List<Unit> subsetOf(List<Unit> original, int... indices) {
+		return IntStream.of(indices)
+			.mapToObj(original::get)
+			.collect(Collectors.toList());
+	}
+
+	private UnitGraph makeControlFlowGraph(String methodName) {
+		SootMethod method = classUnderTest.getMethodByName(methodName);
+		return new ExceptionalUnitGraph(method.retrieveActiveBody());
 	}
 
 	public static List<List<Unit>> findCoveragePaths(UnitGraph controlFlowGraph) {
