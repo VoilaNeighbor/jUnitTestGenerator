@@ -102,7 +102,6 @@ class CoveragePathFinderTest {
 	}
 
 	@Test
-	@Disabled("Buggy")
 	void jumpBackToLoopEntranceMakeLoopPaths() {
 		controlFlowGraph = makeControlFlowGraph("jumpBackToLoopEntrance");
 		findCoveragePaths();
@@ -115,9 +114,7 @@ class CoveragePathFinderTest {
 		result = new ArrayList<>();
 		List<Unit> heads = controlFlowGraph.getHeads();
 		assert heads.size() == 1 : "methods have only 1 entry point, I suppose?";
-		for (Unit head: heads) {
-			findCoveragePaths(head, new ArrayList<>());
-		}
+		findCoveragePaths(heads.get(0), new ArrayList<>());
 	}
 
 	/**
