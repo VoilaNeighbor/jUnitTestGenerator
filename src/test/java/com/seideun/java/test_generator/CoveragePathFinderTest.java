@@ -51,21 +51,19 @@ class CoveragePathFinderTest {
 			new ExceptionalUnitGraph(methodUnderAnalysis.retrieveActiveBody());
 		UnitPatchingChain units = controlFlowGraph.getBody().getUnits();
 
-		List<List<Unit>> primePaths = new ArrayList<>();
-		primePaths.add(new ArrayList<>(units));
+		List<List<Unit>> result = new ArrayList<>();
+		result.add(new ArrayList<>(units));
 
-		assertEquals(1, primePaths.size());
-		assertTrue(elementsEqual(units, primePaths.get(0)));
+		assertEquals(1, result.size());
+		assertTrue(elementsEqual(units, result.get(0)));
 	}
 
 	@Test
 	void branchingTreeStructuredMethodHasAPathForEach() {
 		SootMethod methodUnderAnalysis =
-			classUnderTest.getMethodByName("sequential");
+			classUnderTest.getMethodByName("twoBranches");
 		UnitGraph controlFlowGraph =
 			new ExceptionalUnitGraph(methodUnderAnalysis.retrieveActiveBody());
 		UnitPatchingChain units = controlFlowGraph.getBody().getUnits();
-
-
 	}
 }
