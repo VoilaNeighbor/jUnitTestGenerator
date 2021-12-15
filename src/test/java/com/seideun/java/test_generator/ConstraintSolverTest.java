@@ -25,9 +25,12 @@ class ConstraintSolverTest {
 		assertTrue(result > 26);
 	}
 
-//	@Test
-//	void solveMultipleConstraints() {
-//	}
+	@Test
+	void solveMultipleConstraints() {
+		double result = solveReal("x", new String[] { "> x 1.118", "< x 1.119" });
+		assertTrue(result > 1.118);
+		assertTrue(result < 1.119);
+	}
 
 	// Think: Do we need to extract using template method now?
 	private double solveReal(String variable, String[] constraints) {
