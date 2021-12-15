@@ -33,7 +33,7 @@ class CoveragePathFinderTest {
 		// I don't know of another way to load them yet. So let's bundle the setup
 		// code as here.
 		Scene sootScene = Scene.v();
-		final String classname = "com.seideun.java.test_generator.Examples";
+		final String classname = "com.seideun.java.test_generator.ExampleCfgCases";
 		classUnderTest = sootScene.loadClassAndSupport(classname);
 		classUnderTest.setApplicationClass();
 		sootScene.loadNecessaryClasses();
