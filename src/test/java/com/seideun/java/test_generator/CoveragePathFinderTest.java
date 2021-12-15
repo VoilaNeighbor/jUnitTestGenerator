@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * The definition of <em>coverage path</em> can be different under circumstances.
  * For now, we are using the Prime-path method.
+ *
+ * We expect all methods under test to return values.
  */
 class CoveragePathFinderTest {
 	static SootClass classUnderTest;
@@ -63,7 +65,6 @@ class CoveragePathFinderTest {
 	@Test
 	void branchingMethodHasAPathForEachBranch() {
 		UnitGraph controlFlowGraph = makeControlFlowGraph("twoBranches");
-		// Todo(Seideun): if units is empty?
 
 		List<List<Unit>> allPaths = findCoveragePaths(controlFlowGraph);
 
@@ -76,7 +77,12 @@ class CoveragePathFinderTest {
 		assertTrue(expected.containsAll(allPaths));
 	}
 
-	static List<Unit> subsetOf(List<Unit> original, int... indices) {
+	/**
+	 * @param original domain of discourse
+	 * @param indices indices of elements to extract
+	 * @return subset (still a list) of the original list.
+	 */
+	public static List<Unit> subsetOf(List<Unit> original, int... indices) {
 		return IntStream.of(indices)
 			.mapToObj(original::get)
 			.collect(Collectors.toList());
