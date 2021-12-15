@@ -30,8 +30,8 @@ class ConstraintSolverTest {
 //	}
 
 	// Think: Do we need to extract using template method now?
-	private double solveReal(String variable, String[] constraint) {
-		String smtLibLang = assembleSmtLibLang(variable, constraint, "Real");
+	private double solveReal(String variable, String[] constraints) {
+		String smtLibLang = assembleSmtLibLang(variable, constraints, "Real");
 		Model resultModel = makeResultModel(smtLibLang);
 
 		RealExpr vExpr = z3Context.mkRealConst(variable);
@@ -39,13 +39,11 @@ class ConstraintSolverTest {
 		String numerator = rational[0];
 		String denominator = rational[1];
 
-		double result = Double.parseDouble(numerator) / Double.parseDouble(
-			denominator);
-		return result;
+		return Double.parseDouble(numerator) / Double.parseDouble( denominator);
 	}
 
-	private int solveInt(String variable, String[] constraint) {
-		String smtLibLang = assembleSmtLibLang(variable, constraint, "Int");
+	private int solveInt(String variable, String[] constraints) {
+		String smtLibLang = assembleSmtLibLang(variable, constraints, "Int");
 		Model resultModel = makeResultModel(smtLibLang);
 
 		IntExpr vExpr = z3Context.mkIntConst(variable);
