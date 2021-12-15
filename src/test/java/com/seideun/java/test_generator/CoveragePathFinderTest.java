@@ -19,13 +19,6 @@ import static com.seideun.java.test_generator.CoveragePathFinder.findCoveragePat
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * The definition of <em>coverage path</em> can be different under circumstances.
- * For now, we are using the Prime-path method.
- *
- * <p> We expect all methods under test to return values, and we expect that
- * they all terminate, i.e. have no infinite loop.
- */
 class CoveragePathFinderTest {
 	static SootClass classUnderTest;
 
