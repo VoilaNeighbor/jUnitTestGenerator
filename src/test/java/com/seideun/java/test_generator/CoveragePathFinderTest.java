@@ -1,6 +1,7 @@
 package com.seideun.java.test_generator;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.Scene;
 import soot.SootClass;
@@ -10,10 +11,7 @@ import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -57,12 +55,12 @@ class CoveragePathFinderTest {
 	void sequentialMethodHasSolePath() {
 		UnitGraph controlFlowGraph = makeControlFlowGraph("sequential");
 
-		List<List<Unit>> result = findCoveragePaths(controlFlowGraph);
+		List<List<Unit>> coveragePaths = findCoveragePaths(controlFlowGraph);
 
-		assertEquals(1, result.size());
+		assertEquals(1, coveragePaths.size());
 		assertTrue(elementsEqual(
 			controlFlowGraph.getBody().getUnits(),
-			result.get(0)
+			coveragePaths.get(0)
 		));
 	}
 
@@ -70,15 +68,26 @@ class CoveragePathFinderTest {
 	void branchingMethodHasAPathForEachBranch() {
 		UnitGraph controlFlowGraph = makeControlFlowGraph("twoBranches");
 
-		List<List<Unit>> allPaths = findCoveragePaths(controlFlowGraph);
+		List<List<Unit>> coveragePaths = findCoveragePaths(controlFlowGraph);
 
 		Set<List<Unit>> expected = new HashSet<>();
 		List<Unit> units = new ArrayList<>(controlFlowGraph.getBody().getUnits());
 		expected.add(subsetOf(units, 0, 1, 2, 3, 5));
 		expected.add(subsetOf(units, 0, 1, 4, 5));
 
-		assertEquals(expected.size(), allPaths.size());
-		assertTrue(expected.containsAll(allPaths));
+		assertEquals(expected.size(), coveragePaths.size());
+		assertTrue(expected.containsAll(coveragePaths));
+	}
+
+	@Test
+	@Disabled("Buggy")
+	void jumpBackToLoopEntranceMakeLoopPaths() {
+		UnitGraph cfg = makeControlFlowGraph("jumpBackToLoopEntrance");
+		List<List<Unit>> coveragePaths = findCoveragePaths(cfg);
+
+		Set<List<Unit>> expected = new HashSet<>();
+		List<Unit> units = new ArrayList<>(cfg.getBody().getUnits());
+
 	}
 
 	// - Jump back to loop entrance.
@@ -130,9 +139,9 @@ class CoveragePathFinderTest {
 		if (successors.isEmpty()) {
 			result.add(thisPath);
 		} else {
-			successors.stream().skip(1).forEach(successor ->
-				findCoveragePaths(successor, new ArrayList<>(thisPath), graph, result));
-			findCoveragePaths(successors.get(0), thisPath, graph, result);
+			for (Unit successor: successors) {
+				findCoveragePaths(successor, new ArrayList<>(thisPath), graph, result);
+			}
 		}
 	}
 }
