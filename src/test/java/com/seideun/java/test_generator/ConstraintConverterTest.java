@@ -1,9 +1,7 @@
 package com.seideun.java.test_generator;
 
-import com.microsoft.z3.ArithSort;
 import com.microsoft.z3.Context;
-import com.microsoft.z3.Expr;
-import com.microsoft.z3.Solver;
+import com.microsoft.z3.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -22,6 +20,7 @@ import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findP
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressWarnings("unchecked")
 class ConstraintConverterTest {
 	final Context z3Context = new Context();
 	final Solver z3Solver = z3Context.mkSolver();
@@ -48,6 +47,13 @@ class ConstraintConverterTest {
 	UnitGraph makeControlFlowGraph(String methodName) {
 		SootMethod method = classUnderTest.getMethodByName(methodName);
 		return new ExceptionalUnitGraph(method.retrieveActiveBody());
+	}
+
+	@Test
+	@Disabled
+	void seePath() {
+		List<List<Unit>> path = findPrimePaths(makeControlFlowGraph(
+			"twoBranches"));
 	}
 
 	@Test
@@ -85,7 +91,7 @@ class ConstraintConverterTest {
 	 */
 
 	@Test
-	void constraintCollectedAsIsOnTrue() {
+	void collectAsIsIfConditionTrue() {
 		Unit dummy = new JReturnVoidStmt();
 		List<Unit> input = new ArrayList<>();
 		input.add(new JIfStmt(
@@ -100,14 +106,7 @@ class ConstraintConverterTest {
 		constraintStrings.add("(>= i 1)");
 		constraintStrings.add("(>= x 2)");
 
-		List<Expr<?>> result = new ArrayList<>();
-		for (int i = 0, end = input.size() - 1; i != end; ++i) {
-			Unit thisUnit = input.get(i);
-			if (thisUnit instanceof JIfStmt) {
-				JIfStmt jIfStmt = (JIfStmt) thisUnit;
-				result.add(convertJConstraintToZ3Expr(jIfStmt.getCondition()));
-			}
-		}
+		List<Expr<?>> result = collectConstraints(input);
 
 		assertEquals(constraintStrings.size(), result.size());
 		assertTrue(constraintStrings.containsAll(
@@ -118,10 +117,53 @@ class ConstraintConverterTest {
 	}
 
 	@Test
-	@Disabled
-	void seePath() {
-		List<List<Unit>> path = findPrimePaths(makeControlFlowGraph(
-			"twoBranches"));
+	void negateConstraintIfConditionFalse() {
+		Unit dummy = new JReturnVoidStmt();
+		List<Unit> input = new ArrayList<>();
+		input.add(new JIfStmt(
+			new JGeExpr(new JimpleLocal("i", IntType.v()), IntConstant.v(1)), dummy
+		));
+		input.add(new JIfStmt(
+			new JGeExpr(new JimpleLocal("x", IntType.v()), IntConstant.v(2)), dummy
+		));
+		input.add(dummy);
+		Set<String> constraintStrings = new HashSet<>();
+		constraintStrings.add("(not (>= i 1))");
+		constraintStrings.add("(>= x 2)");
+
+		List<Expr<?>> result = collectConstraints(input);
+
+		assertEquals(constraintStrings.size(), result.size());
+		assertTrue(constraintStrings.containsAll(
+			result.stream()
+				.map(Objects::toString)
+				.collect(Collectors.toList())
+		));
+	}
+
+	private List<Expr<?>> collectConstraints(List<Unit> path) {
+		List<Expr<?>> result = new ArrayList<>();
+		for (int i = 0, end = path.size() - 1; i != end; ++i) {
+			Unit thisUnit = path.get(i);
+			if (!(thisUnit instanceof JIfStmt)) { continue; }
+			JIfStmt jIfStmt = (JIfStmt) thisUnit;
+			Expr<BoolSort> z3Expr =
+				(Expr<BoolSort>) convertJConstraintToZ3Expr(jIfStmt.getCondition());
+			if (conditionIsTrue(jIfStmt, i, path)) {
+				result.add(z3Expr);
+			} else {
+				result.add(z3Context.mkNot(z3Expr));
+			}
+		}
+		return result;
+	}
+
+	private boolean conditionIsTrue(
+		JIfStmt node,
+		int indexOfNode,
+		List<Unit> path
+	) {
+		return node.getTarget() == path.get(indexOfNode + 1);
 	}
 
 	private Expr<?> convertJConstraintToZ3Expr(Value jValue) {
@@ -135,7 +177,6 @@ class ConstraintConverterTest {
 			return z3Context.mkInt(((IntConstant) jValue).value);
 		} else if (jValue instanceof JGeExpr) {
 			JGeExpr jGeExpr = (JGeExpr) jValue;
-			//noinspection unchecked
 			return z3Context.mkGe(
 				(Expr<? extends ArithSort>) convertJConstraintToZ3Expr(jGeExpr.getOp1()),
 				(Expr<? extends ArithSort>) convertJConstraintToZ3Expr(jGeExpr.getOp2())
