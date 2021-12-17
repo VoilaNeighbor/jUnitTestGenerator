@@ -62,7 +62,7 @@ class ConstraintConverterTest {
 			new JimpleLocal("i", IntType.v()),
 			IntConstant.v(1)
 		);
-		Expr<?> result = convertJConstraintToZ3Expr(input);
+		Expr<?> result = convertJValueToZ3Expr(input);
 		assertEquals("(>= i 1)", result.toString());
 	}
 
@@ -85,6 +85,8 @@ class ConstraintConverterTest {
 	 * Collect constraint:
 	 * - Every if condition on the path should be collected.
 	 * - A condition should be negated if the JIfStmt evaluates to false.
+	 * When a JIfStmt condition is true, the next node along the path will be
+	 * its target.
 	 * - Re-assigned variables should be distinguished from its old value. E.g.
 	 * we should have x_0, x_1 ... for each def of x.
 	 * - Conditions should be mapped to the SSA-ed form as well.
@@ -141,18 +143,57 @@ class ConstraintConverterTest {
 		));
 	}
 
+	@Test
+	void reassignedVariableDistinguished() {
+		JimpleLocal x = new JimpleLocal("x", IntType.v());
+		JAssignStmt firstAssign = new JAssignStmt(x, IntConstant.v(3));
+		JAssignStmt secondAssign = new JAssignStmt(x, IntConstant.v(2));
+		JGeExpr condition = new JGeExpr(x, IntConstant.v(1));
+		JReturnVoidStmt sink = new JReturnVoidStmt();
+		JIfStmt firstBranch = new JIfStmt(condition, sink);
+		JIfStmt secondBranch = new JIfStmt(condition, sink);
+		JIfStmt thirdBranch = new JIfStmt(condition, sink);
+
+		List<Unit> input = new ArrayList<>();
+		input.add(firstBranch);
+		input.add(firstAssign);
+		input.add(secondBranch);
+		input.add(secondAssign);
+		input.add(thirdBranch);
+		input.add(sink);
+
+		List<String> expected = new ArrayList<>();
+		expected.add("(not (>= x 1))");
+		expected.add("(not (>= x$1 1))");
+		expected.add("(>= x$2 1)");
+
+		List<Expr<?>> result = collectConstraints(input);
+		assertEquals(
+			expected,
+			result.stream()
+				.map(Objects::toString)
+				.collect(Collectors.toList())
+		);
+	}
+
 	private List<Expr<?>> collectConstraints(List<Unit> path) {
 		List<Expr<?>> result = new ArrayList<>();
+		Map<JimpleLocal, Integer> timesLocalsAssigned = new HashMap<>();
 		for (int i = 0, end = path.size() - 1; i != end; ++i) {
 			Unit thisUnit = path.get(i);
-			if (!(thisUnit instanceof JIfStmt)) { continue; }
-			JIfStmt jIfStmt = (JIfStmt) thisUnit;
-			Expr<BoolSort> z3Expr =
-				(Expr<BoolSort>) convertJConstraintToZ3Expr(jIfStmt.getCondition());
-			if (conditionIsTrue(jIfStmt, i, path)) {
-				result.add(z3Expr);
-			} else {
-				result.add(z3Context.mkNot(z3Expr));
+			if (thisUnit instanceof JIfStmt) {
+				JIfStmt jIfStmt = (JIfStmt) thisUnit;
+				Expr<BoolSort> z3Expr = (Expr<BoolSort>)
+					convertJValueToZ3Expr(jIfStmt.getCondition(), timesLocalsAssigned);
+				if (conditionIsTrue(jIfStmt, i, path)) {
+					result.add(z3Expr);
+				} else {
+					result.add(z3Context.mkNot(z3Expr));
+				}
+			} else if (thisUnit instanceof JAssignStmt) {
+				JAssignStmt jAssignStmt = (JAssignStmt) thisUnit;
+				JimpleLocal local = (JimpleLocal) jAssignStmt.getLeftOp();
+				timesLocalsAssigned.compute(local, (_k, v) -> v == null ? 1 : v + 1);
 			}
 		}
 		return result;
@@ -166,11 +207,25 @@ class ConstraintConverterTest {
 		return node.getTarget() == path.get(indexOfNode + 1);
 	}
 
-	private Expr<?> convertJConstraintToZ3Expr(Value jValue) {
+	private Expr<?> convertJValueToZ3Expr(Value jValue) {
+		return convertJValueToZ3Expr(jValue, Collections.EMPTY_MAP);
+	}
+
+	/**
+	 * @param timesLocalsAssigned Used for name remapping
+	 */
+	private Expr<?> convertJValueToZ3Expr(
+		Value jValue,
+		Map<JimpleLocal, Integer> timesLocalsAssigned
+	) {
 		if (jValue instanceof JimpleLocal) {
 			JimpleLocal jimpleLocal = ((JimpleLocal) jValue);
 			if (jimpleLocal.getType() == IntType.v()) {
-				return z3Context.mkIntConst(jimpleLocal.getName());
+				Integer timesReassigned = timesLocalsAssigned.get(jimpleLocal);
+				String name = timesReassigned == null
+					? jimpleLocal.getName()
+					: jimpleLocal.getName() + "$" + timesReassigned;
+				return z3Context.mkIntConst(name);
 			}
 			throw new RuntimeException("todo");
 		} else if (jValue instanceof IntConstant) {
@@ -178,8 +233,14 @@ class ConstraintConverterTest {
 		} else if (jValue instanceof JGeExpr) {
 			JGeExpr jGeExpr = (JGeExpr) jValue;
 			return z3Context.mkGe(
-				(Expr<? extends ArithSort>) convertJConstraintToZ3Expr(jGeExpr.getOp1()),
-				(Expr<? extends ArithSort>) convertJConstraintToZ3Expr(jGeExpr.getOp2())
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1(),
+					timesLocalsAssigned
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2(),
+					timesLocalsAssigned
+				)
 			);
 		}
 		throw new RuntimeException("todo");
