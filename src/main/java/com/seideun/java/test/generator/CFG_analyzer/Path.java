@@ -141,7 +141,6 @@ public class Path {
 		Unit primeStart = myPrimePath.get(0);
 		Unit primeEnd = myPrimePath.get(myPrimePath.size() - 1);
 
-
 		Unit begin = ug.getBody().getUnits().getFirst();
 		List<Unit> end = ug.getTails();
 		//找到前驱
