@@ -1,7 +1,9 @@
 package com.seideun.java.test_generator;
 
+import com.microsoft.z3.ArithSort;
 import com.microsoft.z3.Context;
-import com.microsoft.z3.*;
+import com.microsoft.z3.Expr;
+import com.microsoft.z3.Solver;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import soot.*;
@@ -54,15 +56,12 @@ class ConstraintConverterTest {
 
 	@Test
 	void convertSingleJExprToZ3Expr() {
-		{
-			JGeExpr input = new JGeExpr(
-				new JimpleLocal("i", IntType.v()),
-				IntConstant.v(1)
-			);
-			Expr<?> result = convertJExprToZ3Expr(input);
-
-			assertEquals("(>= i 1)", result.toString());
-		}
+		JGeExpr input = new JGeExpr(
+			new JimpleLocal("i", IntType.v()),
+			IntConstant.v(1)
+		);
+		Expr<?> result = convertJExprToZ3Expr(input);
+		assertEquals("(>= i 1)", result.toString());
 	}
 
 	private Expr<?> convertJExprToZ3Expr(Value jValue) {
