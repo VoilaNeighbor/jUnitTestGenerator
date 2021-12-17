@@ -67,19 +67,6 @@ class ConstraintConverterTest {
 		assertEquals(Arrays.asList("i0", "i1", "i2"), r3);
 	}
 
-	private List<String> findNamesOfParameters(List<Unit> input) {
-		List<String> result = new ArrayList<>();
-		for (Unit unit: input) {
-			if (unit instanceof JIdentityStmt) {
-				JIdentityStmt jIdentityStmt = (JIdentityStmt) unit;
-				if (jIdentityStmt.getRightOp() instanceof ParameterRef) {
-					result.add(jIdentityStmt.getLeftOp().toString());
-				}
-			}
-		}
-		return result;
-	}
-
 	@Test
 	void convertJExprToZ3Expr() {
 		JGeExpr input = new JGeExpr(
@@ -108,5 +95,18 @@ class ConstraintConverterTest {
 			);
 		}
 		throw new RuntimeException("todo");
+	}
+
+	private static List<String> findNamesOfParameters(List<Unit> input) {
+		List<String> result = new ArrayList<>();
+		for (Unit unit: input) {
+			if (unit instanceof JIdentityStmt) {
+				JIdentityStmt jIdentityStmt = (JIdentityStmt) unit;
+				if (jIdentityStmt.getRightOp() instanceof ParameterRef) {
+					result.add(jIdentityStmt.getLeftOp().toString());
+				}
+			}
+		}
+		return result;
 	}
 }
