@@ -54,7 +54,7 @@ class ConstraintConverterTest {
 	@Test
 	void findNameOfMethodParameters() {
 		List<Unit> input
-			= findPrimePaths(makeControlFlowGraph("twoBranches")).get(1);
+			= findPrimePaths(makeControlFlowGraph("oneArg")).get(0);
 
 		List<String> result = new ArrayList<>();
 		for (Unit unit: input) {
