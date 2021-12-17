@@ -53,14 +53,27 @@ class ConstraintConverterTest {
 
 	@Test
 	void convertSingleJExprToZ3Expr() {
-		JGeExpr input = new JGeExpr(
-			new JimpleLocal("i", IntType.v()),
-			IntConstant.v(1)
-		);
-		IntExpr lhs = z3Context.mkIntConst("i");
-		IntExpr rhs = z3Context.mkInt(1);
-		BoolExpr result = z3Context.mkGe(lhs, rhs);
+		{
+			JGeExpr input = new JGeExpr(
+				new JimpleLocal("i", IntType.v()),
+				IntConstant.v(1)
+			);
+			IntExpr lhs = z3Context.mkIntConst("i");
+			IntExpr rhs = z3Context.mkInt(1);
+			BoolExpr result = z3Context.mkGe(lhs, rhs);
 
-		assertEquals("(>= i 1)", result.toString());
+			assertEquals("(>= i 1)", result.toString());
+		}
+		{
+			JGeExpr input = new JGeExpr(
+				new JimpleLocal("x", IntType.v()),
+				IntConstant.v(2)
+			);
+			IntExpr lhs = z3Context.mkIntConst("x");
+			IntExpr rhs = z3Context.mkInt(2);
+			BoolExpr result = z3Context.mkGe(lhs, rhs);
+
+			assertEquals("(>= x 2)", result.toString());
+		}
 	}
 }
