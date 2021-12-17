@@ -59,9 +59,7 @@ class ConstraintConverterTest {
 				new JimpleLocal("i", IntType.v()),
 				IntConstant.v(1)
 			);
-			Expr<?> lhs = convertJExprToZ3Expr(input.getOp1());
-			Expr<?> rhs = convertJExprToZ3Expr(input.getOp2());
-			BoolExpr result = z3Context.mkGe((IntExpr) lhs, (IntExpr) rhs);
+			Expr<?> result = convertJExprToZ3Expr(input);
 
 			assertEquals("(>= i 1)", result.toString());
 		}
@@ -76,6 +74,13 @@ class ConstraintConverterTest {
 			throw new RuntimeException("todo");
 		} else if (jValue instanceof IntConstant) {
 			return z3Context.mkInt(((IntConstant) jValue).value);
+		} else if (jValue instanceof JGeExpr) {
+			JGeExpr jGeExpr = (JGeExpr) jValue;
+			//noinspection unchecked
+			return z3Context.mkGe(
+				(Expr<? extends ArithSort>) convertJExprToZ3Expr(jGeExpr.getOp1()),
+				(Expr<? extends ArithSort>) convertJExprToZ3Expr(jGeExpr.getOp2())
+			);
 		}
 		throw new RuntimeException("todo");
 	}
