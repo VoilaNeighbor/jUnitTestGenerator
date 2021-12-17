@@ -8,12 +8,16 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import soot.*;
 import soot.jimple.IntConstant;
+import soot.jimple.ParameterRef;
 import soot.jimple.internal.JGeExpr;
+import soot.jimple.internal.JIdentityStmt;
 import soot.jimple.internal.JimpleLocal;
 import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
@@ -48,23 +52,34 @@ class ConstraintConverterTest {
 	}
 
 	@Test
-	void singleIf() {
-		List<List<Unit>> paths = findPrimePaths(makeControlFlowGraph("twoBranches"
-		));
+	void findNameOfMethodParameters() {
+		List<Unit> input
+			= findPrimePaths(makeControlFlowGraph("twoBranches")).get(1);
 
+		List<String> result = new ArrayList<>();
+		for (Unit unit: input) {
+			if (unit instanceof JIdentityStmt) {
+				JIdentityStmt jIdentityStmt = (JIdentityStmt) unit;
+				if (jIdentityStmt.getRightOp() instanceof ParameterRef) {
+					result.add(jIdentityStmt.getLeftOp().toString());
+				}
+			}
+		}
+
+		assertEquals(Collections.singletonList("i0"), result);
 	}
 
 	@Test
-	void convertSingleJExprToZ3Expr() {
+	void convertJExprToZ3Expr() {
 		JGeExpr input = new JGeExpr(
 			new JimpleLocal("i", IntType.v()),
 			IntConstant.v(1)
 		);
-		Expr<?> result = convertJExprToZ3Expr(input);
+		Expr<?> result = convertJConstraintToZ3Expr(input);
 		assertEquals("(>= i 1)", result.toString());
 	}
 
-	private Expr<?> convertJExprToZ3Expr(Value jValue) {
+	private Expr<?> convertJConstraintToZ3Expr(Value jValue) {
 		if (jValue instanceof JimpleLocal) {
 			JimpleLocal jimpleLocal = ((JimpleLocal) jValue);
 			if (jimpleLocal.getType() == IntType.v()) {
@@ -77,8 +92,8 @@ class ConstraintConverterTest {
 			JGeExpr jGeExpr = (JGeExpr) jValue;
 			//noinspection unchecked
 			return z3Context.mkGe(
-				(Expr<? extends ArithSort>) convertJExprToZ3Expr(jGeExpr.getOp1()),
-				(Expr<? extends ArithSort>) convertJExprToZ3Expr(jGeExpr.getOp2())
+				(Expr<? extends ArithSort>) convertJConstraintToZ3Expr(jGeExpr.getOp1()),
+				(Expr<? extends ArithSort>) convertJConstraintToZ3Expr(jGeExpr.getOp2())
 			);
 		}
 		throw new RuntimeException("todo");
