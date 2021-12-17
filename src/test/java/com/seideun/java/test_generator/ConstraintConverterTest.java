@@ -15,13 +15,12 @@ import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConstraintConverterTest {
 	final Context z3Context = new Context();
@@ -87,16 +86,35 @@ class ConstraintConverterTest {
 
 	@Test
 	void constraintCollectedAsIsOnTrue() {
-		Unit nextUnit = new JReturnVoidStmt();
+		Unit dummy = new JReturnVoidStmt();
 		List<Unit> input = new ArrayList<>();
 		input.add(new JIfStmt(
-			new JGeExpr(new JimpleLocal("i", IntType.v()), IntConstant.v(1)), nextUnit
+			new JGeExpr(new JimpleLocal("i", IntType.v()), IntConstant.v(1)), dummy
 		));
-		input.add(nextUnit);
+		input.add(dummy);
+		input.add(new JIfStmt(
+			new JGeExpr(new JimpleLocal("x", IntType.v()), IntConstant.v(2)), dummy
+		));
+		input.add(dummy);
+		Set<String> constraintStrings = new HashSet<>();
+		constraintStrings.add("(>= i 1)");
+		constraintStrings.add("(>= x 2)");
 
-		JIfStmt unit = (JIfStmt) input.get(0);
-		Expr<?> result = convertJConstraintToZ3Expr(unit.getCondition());
-		assertEquals("(>= i 1)", result.toString());
+		List<Expr<?>> result = new ArrayList<>();
+		for (int i = 0, end = input.size() - 1; i != end; ++i) {
+			Unit thisUnit = input.get(i);
+			if (thisUnit instanceof JIfStmt) {
+				JIfStmt jIfStmt = (JIfStmt) thisUnit;
+				result.add(convertJConstraintToZ3Expr(jIfStmt.getCondition()));
+			}
+		}
+
+		assertEquals(constraintStrings.size(), result.size());
+		assertTrue(constraintStrings.containsAll(
+			result.stream()
+				.map(Objects::toString)
+				.collect(Collectors.toList())
+		));
 	}
 
 	@Test
