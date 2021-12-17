@@ -1,7 +1,7 @@
 package com.seideun.java.test_generator;
 
-import com.microsoft.z3.*;
 import com.microsoft.z3.Context;
+import com.microsoft.z3.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import soot.*;
@@ -47,7 +47,8 @@ class ConstraintConverterTest {
 
 	@Test
 	void singleIf() {
-		List<List<Unit>> paths = findPrimePaths(makeControlFlowGraph("twoBranches"));
+		List<List<Unit>> paths = findPrimePaths(makeControlFlowGraph("twoBranches"
+		));
 
 	}
 
@@ -58,22 +59,24 @@ class ConstraintConverterTest {
 				new JimpleLocal("i", IntType.v()),
 				IntConstant.v(1)
 			);
-			IntExpr lhs = z3Context.mkIntConst("i");
-			IntExpr rhs = z3Context.mkInt(1);
-			BoolExpr result = z3Context.mkGe(lhs, rhs);
+			Expr<?> lhs = convertJExprToZ3Expr(input.getOp1());
+			Expr<?> rhs = convertJExprToZ3Expr(input.getOp2());
+			BoolExpr result = z3Context.mkGe((IntExpr) lhs, (IntExpr) rhs);
 
 			assertEquals("(>= i 1)", result.toString());
 		}
-		{
-			JGeExpr input = new JGeExpr(
-				new JimpleLocal("x", IntType.v()),
-				IntConstant.v(2)
-			);
-			IntExpr lhs = z3Context.mkIntConst("x");
-			IntExpr rhs = z3Context.mkInt(2);
-			BoolExpr result = z3Context.mkGe(lhs, rhs);
+	}
 
-			assertEquals("(>= x 2)", result.toString());
+	private Expr<?> convertJExprToZ3Expr(Value jValue) {
+		if (jValue instanceof JimpleLocal) {
+			JimpleLocal jimpleLocal = ((JimpleLocal) jValue);
+			if (jimpleLocal.getType() == IntType.v()) {
+				return z3Context.mkIntConst(jimpleLocal.getName());
+			}
+			throw new RuntimeException("todo");
+		} else if (jValue instanceof IntConstant) {
+			return z3Context.mkInt(((IntConstant) jValue).value);
 		}
+		throw new RuntimeException("todo");
 	}
 }
