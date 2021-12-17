@@ -1,5 +1,6 @@
 package com.seideun.java.test_generator;
 
+import com.google.common.collect.Lists;
 import com.microsoft.z3.ArithSort;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
@@ -17,6 +18,7 @@ import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,9 +55,19 @@ class ConstraintConverterTest {
 
 	@Test
 	void findNameOfMethodParameters() {
-		List<Unit> input
-			= findPrimePaths(makeControlFlowGraph("oneArg")).get(0);
+		List<String> r1 = findNamesOfParameters(
+			findPrimePaths(makeControlFlowGraph("oneArg")).get(0));
+		List<String> r2 = findNamesOfParameters(
+			findPrimePaths(makeControlFlowGraph("twoArgs")).get(0));
+		List<String> r3 = findNamesOfParameters(
+			findPrimePaths(makeControlFlowGraph("threeArgs")).get(0));
 
+		assertEquals(Collections.singletonList("i0"), r1);
+		assertEquals(Arrays.asList("i0", "i1"), r2);
+		assertEquals(Arrays.asList("i0", "i1", "i2"), r3);
+	}
+
+	private List<String> findNamesOfParameters(List<Unit> input) {
 		List<String> result = new ArrayList<>();
 		for (Unit unit: input) {
 			if (unit instanceof JIdentityStmt) {
@@ -65,8 +77,7 @@ class ConstraintConverterTest {
 				}
 			}
 		}
-
-		assertEquals(Collections.singletonList("i0"), result);
+		return result;
 	}
 
 	@Test
