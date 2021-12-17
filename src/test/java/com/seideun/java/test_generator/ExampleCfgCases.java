@@ -16,6 +16,13 @@ final class ExampleCfgCases {
 		return a + b * c;
 	}
 
+	public static int redefinition(int a) {
+		int b = a * 2;
+		b -= 1;
+		b += 5;
+		return b;
+	}
+
 	public static int sequential(int a) {
 		return 3 * a;
 	}

@@ -1,18 +1,16 @@
 package com.seideun.java.test_generator;
 
-import com.google.common.collect.Lists;
 import com.microsoft.z3.ArithSort;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.Solver;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.*;
 import soot.jimple.IntConstant;
 import soot.jimple.ParameterRef;
-import soot.jimple.internal.JGeExpr;
-import soot.jimple.internal.JIdentityStmt;
-import soot.jimple.internal.JimpleLocal;
+import soot.jimple.internal.*;
 import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
@@ -54,7 +52,18 @@ class ConstraintConverterTest {
 	}
 
 	@Test
+	void convertJExprToZ3Expr() {
+		JGeExpr input = new JGeExpr(
+			new JimpleLocal("i", IntType.v()),
+			IntConstant.v(1)
+		);
+		Expr<?> result = convertJConstraintToZ3Expr(input);
+		assertEquals("(>= i 1)", result.toString());
+	}
+
+	@Test
 	void findNameOfMethodParameters() {
+		// How can we put a stub here?
 		List<String> r1 = findNamesOfParameters(
 			findPrimePaths(makeControlFlowGraph("oneArg")).get(0));
 		List<String> r2 = findNamesOfParameters(
@@ -67,14 +76,34 @@ class ConstraintConverterTest {
 		assertEquals(Arrays.asList("i0", "i1", "i2"), r3);
 	}
 
+	/**
+	 * Collect constraint:
+	 * - Every if condition on the path should be collected.
+	 * - A condition should be negated if the JIfStmt evaluates to false.
+	 * - Re-assigned variables should be distinguished from its old value. E.g.
+	 * we should have x_0, x_1 ... for each def of x.
+	 * - Conditions should be mapped to the SSA-ed form as well.
+	 */
+
 	@Test
-	void convertJExprToZ3Expr() {
-		JGeExpr input = new JGeExpr(
-			new JimpleLocal("i", IntType.v()),
-			IntConstant.v(1)
-		);
-		Expr<?> result = convertJConstraintToZ3Expr(input);
+	void constraintCollectedAsIsOnTrue() {
+		Unit nextUnit = new JReturnVoidStmt();
+		List<Unit> input = new ArrayList<>();
+		input.add(new JIfStmt(
+			new JGeExpr(new JimpleLocal("i", IntType.v()), IntConstant.v(1)), nextUnit
+		));
+		input.add(nextUnit);
+
+		JIfStmt unit = (JIfStmt) input.get(0);
+		Expr<?> result = convertJConstraintToZ3Expr(unit.getCondition());
 		assertEquals("(>= i 1)", result.toString());
+	}
+
+	@Test
+	@Disabled
+	void seePath() {
+		List<List<Unit>> path = findPrimePaths(makeControlFlowGraph(
+			"twoBranches"));
 	}
 
 	private Expr<?> convertJConstraintToZ3Expr(Value jValue) {
