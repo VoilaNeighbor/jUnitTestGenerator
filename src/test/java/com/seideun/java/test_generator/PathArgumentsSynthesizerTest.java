@@ -39,7 +39,7 @@ class PathArgumentsSynthesizerTest extends PathArgumentsSynthesizer {
 		constraintStrings.add("(>= i 1)");
 		constraintStrings.add("(>= x 2)");
 
-		storePath(input);
+		store(input);
 		List<Expr<?>> result = getConstraints();
 
 		assertEquals(constraintStrings.size(), result.size());
@@ -65,7 +65,7 @@ class PathArgumentsSynthesizerTest extends PathArgumentsSynthesizer {
 		constraintStrings.add("(not (>= i 1))");
 		constraintStrings.add("(>= x 2)");
 
-		storePath(input);
+		store(input);
 		List<Expr<?>> result = getConstraints();
 
 		assertEquals(constraintStrings.size(), result.size());
@@ -100,7 +100,7 @@ class PathArgumentsSynthesizerTest extends PathArgumentsSynthesizer {
 		expected.add("(not (>= x$1 1))");
 		expected.add("(>= x$2 1)");
 
-		storePath(input);
+		store(input);
 		List<Expr<?>> result = getConstraints();
 		assertEquals(
 			expected,
@@ -137,8 +137,8 @@ class PathArgumentsSynthesizerTest extends PathArgumentsSynthesizer {
 		expected.add("(not (>= x$3 1))");
 		expected.add("(>= x$4 1)");
 
-		storePath(input);
-		storePath(input);
+		store(input);
+		store(input);
 		List<Expr<?>> result = getConstraints();
 
 		assertEquals(
@@ -167,7 +167,7 @@ class PathArgumentsSynthesizerTest extends PathArgumentsSynthesizer {
 		input.add(new JIfStmt(ltConstraint, sink));
 		input.add(sink);
 
-		storePath(input);
+		store(input);
 		List<Object> result = synthesizeArguments().get();
 		double arg = (double) result.get(0);
 
@@ -186,7 +186,7 @@ class PathArgumentsSynthesizerTest extends PathArgumentsSynthesizer {
 		List<Unit> path = new ArrayList<>();
 		path.add(arg);
 		path.add(sink);
-		storePath(path);
+		store(path);
 
 		List<Object> result = synthesizeArguments().get();
 

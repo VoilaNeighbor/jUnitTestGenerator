@@ -2,8 +2,10 @@ package com.seideun.java.test_generator;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import soot.Unit;
 import soot.toolkits.graph.UnitGraph;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
@@ -19,7 +21,7 @@ class AcceptanceTest {
 	void sequential() {
 		UnitGraph controlFlowGraph = sootAgent.makeControlFlowGraph("sequential");
 		PathArgumentsSynthesizer solver = new PathArgumentsSynthesizer();
-		solver.storePath(findPrimePaths(controlFlowGraph).get(0));
+		solver.store(findPrimePaths(controlFlowGraph).get(0));
 
 		List<Object> synthesizedArgs = solver.synthesizeArguments().get();
 
@@ -28,17 +30,19 @@ class AcceptanceTest {
 	}
 
 	@Test
-	@Disabled
 	void twoBranches() {
 		UnitGraph controlFlowGraph = sootAgent.makeControlFlowGraph("twoBranches");
-		PathArgumentsSynthesizer finder = new PathArgumentsSynthesizer();
-
-		List<Object> results = finder.synthesizeArguments().get();
 
 		boolean branch1 = false;
 		boolean branch2 = false;
-		for (Object x: results) {
-			if ((int) x < 1) {
+
+		List<List<Object>> result =
+			PathArgumentsSynthesizer.synthesize(findPrimePaths(controlFlowGraph));
+		assertEquals(2, result.size());
+
+		for (List<Object> args: result) {
+			assertEquals(1, args.size());
+			if ((int) args.get(0) < 1) {
 				branch1 = true;
 			} else {
 				branch2 = true;

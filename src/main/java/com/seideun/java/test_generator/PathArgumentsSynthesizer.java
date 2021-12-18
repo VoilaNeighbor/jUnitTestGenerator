@@ -15,6 +15,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * Reads a path and synthesize arguments that satisfy the constraints along it.
+ * <p>
  * It can synthesize <em>ONE</em> path only. Use multiple instances of this
  * if you want to solve many paths.
  */
@@ -25,13 +27,25 @@ public class PathArgumentsSynthesizer {
 	private final List<BoolExpr> constraints = new ArrayList<>();
 	private List<Expr<?>> methodArgs;
 
+	public static List<List<Object>> synthesize(Collection<List<Unit>> paths) {
+		return paths.stream()
+			.map(path -> {
+				PathArgumentsSynthesizer synthesizer =
+					new PathArgumentsSynthesizer();
+				synthesizer.store(path);
+				return synthesizer.synthesizeArguments().get();
+			}).collect(Collectors.toList());
+	}
+
 	/**
 	 * Store the parameters and constraints along the path.
 	 * <p>
-	 * It is possible to store multiple paths. This class will try to solve all
-	 * constraints on the paths together.
+	 * There are occasions when a complete path is consisted of multiple parts.
+	 * So the class supports storing them incrementally. This class will try to
+	 * solve all constraints on the paths together when you call
+	 * {@link #synthesizeArguments() synthesizeArguments}.
 	 */
-	public void storePath(List<Unit> path) {
+	public void store(List<Unit> path) {
 		// JIfStmts and JGotoStmts are guaranteed to have nodes following them.
 		if (path.get(path.size() - 1) instanceof JIfStmt) {
 			throw new IllFormedJIfStmtException(path);
