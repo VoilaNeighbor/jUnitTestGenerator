@@ -18,14 +18,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
- * Collect constraint:
- * - Every if condition on the path should be collected.
- * - A condition should be negated if the JIfStmt evaluates to false.
- * When a JIfStmt condition is true, the next node along the path will be
- * its target.
- * - Re-assigned variables should be distinguished from its old value. E.g.
- * we should have x$0, x$1 ... for each def of x.
- * - Conditions should be mapped to the SSA-ed form as well.
+ * Todo(Seideun):
+ *   - Can get input suite.
+ *   - Connectives of bool expressions in conditions.
+ *   - Member access of class.
  */
 class ConstraintSolverTest extends ConstraintSolver {
 	static final String classname = "com.seideun.java.test_generator" +
@@ -184,7 +180,6 @@ class ConstraintSolverTest extends ConstraintSolver {
 	}
 
 	@Test
-	@Disabled
 	void testSolveConstraints() {
 		JimpleLocal y = new JimpleLocal("y", DoubleType.v());
 		JGeExpr geConstraint = new JGeExpr(y, DoubleConstant.v(2.33));

@@ -11,7 +11,9 @@ import soot.jimple.internal.*;
 import java.util.*;
 
 /**
- * This class converts constraints in the form of Jimple ASTs to Z3 expressions.
+ * I'm a bridge connecting Soot with Z3.
+ * <p>
+ * I convert constraints in the form of Jimple ASTs to Z3 expressions.
  */
 @SuppressWarnings("unchecked")
 public class ConstraintSolver {
@@ -33,21 +35,14 @@ public class ConstraintSolver {
 
 	/**
 	 * Store the parameters and constraints along the path.
-	 *
+	 * <p>
 	 * It is possible to store multiple paths. This class will try to solve all
 	 * constraints on the paths together.
 	 */
 	public void storePath(List<Unit> path) {
 		findJNamesOfArgs(path, jNamesOfArgs);
 		// JIfStmts and JGotoStmts are guaranteed to have nodes following them.
-		for (int i = 0, end = path.size() - 1; i != end; ++i) {
-			Unit thisUnit = path.get(i);
-			if (thisUnit instanceof JAssignStmt) {
-				incrementTimesAssigned((JAssignStmt) thisUnit);
-			} else if (thisUnit instanceof JIfStmt) {
-				constraints.add(extractConstraintOf((JIfStmt) thisUnit, i, path));
-			}
-		}
+		collectConstraints(path);
 	}
 
 	public void solveConstraints() {
@@ -63,12 +58,10 @@ public class ConstraintSolver {
 	protected Expr<?> convertJValueToZ3Expr(Value jValue) {
 		if (jValue instanceof JimpleLocal) {
 			JimpleLocal jimpleLocal = ((JimpleLocal) jValue);
+			Integer timesReassigned = timesLocalsAssigned.get(jimpleLocal);
+			String postfix = timesReassigned == null ? "" : ("$" + timesReassigned);
 			if (jimpleLocal.getType() == IntType.v()) {
-				Integer timesReassigned = timesLocalsAssigned.get(jimpleLocal);
-				String name = timesReassigned == null
-					? jimpleLocal.getName()
-					: (jimpleLocal.getName() + "$" + timesReassigned);
-				return z3Context.mkIntConst(name);
+				return z3Context.mkIntConst(jimpleLocal.getName() + postfix);
 			}
 			throw new TodoException();
 		} else if (jValue instanceof IntConstant) {
@@ -83,19 +76,19 @@ public class ConstraintSolver {
 					jGeExpr.getOp2()
 				)
 			);
+		} else if (jValue instanceof JLtExpr) {
+			JLtExpr jGeExpr = (JLtExpr) jValue;
+			return z3Context.mkLt(
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1()
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2()
+				)
+			);
 		} else {
 			throw new TodoException();
 		}
-	}
-
-	private Expr<BoolSort> extractConstraintOf(
-		JIfStmt theIf, int idxInPath, List<Unit> path
-	) {
-		Expr<BoolSort> z3Expr = (Expr<BoolSort>)
-			convertJValueToZ3Expr(theIf.getCondition());
-		return theIf.getTarget() != path.get(idxInPath + 1)
-			? z3Context.mkNot(z3Expr)
-			: z3Expr;
 	}
 
 	private static void findJNamesOfArgs(Iterable<Unit> path, List<String> out) {
@@ -109,8 +102,29 @@ public class ConstraintSolver {
 		}
 	}
 
+	private void collectConstraints(List<Unit> path) {
+		for (int i = 0, end = path.size() - 1; i != end; ++i) {
+			Unit thisUnit = path.get(i);
+			if (thisUnit instanceof JAssignStmt) {
+				incrementTimesAssigned((JAssignStmt) thisUnit);
+			} else if (thisUnit instanceof JIfStmt) {
+				constraints.add(extractConstraintOf((JIfStmt) thisUnit, i, path));
+			}
+		}
+	}
+
 	private void incrementTimesAssigned(JAssignStmt jAssignStmt) {
 		JimpleLocal local = (JimpleLocal) jAssignStmt.getLeftOp();
 		timesLocalsAssigned.compute(local, (k, v) -> 1 + (v == null ? 0 : v));
+	}
+
+	private Expr<BoolSort> extractConstraintOf(
+		JIfStmt theIf, int idxInPath, List<Unit> path
+	) {
+		Expr<BoolSort> z3Expr = (Expr<BoolSort>)
+			convertJValueToZ3Expr(theIf.getCondition());
+		return theIf.getTarget() != path.get(idxInPath + 1)
+			? z3Context.mkNot(z3Expr)
+			: z3Expr;
 	}
 }
