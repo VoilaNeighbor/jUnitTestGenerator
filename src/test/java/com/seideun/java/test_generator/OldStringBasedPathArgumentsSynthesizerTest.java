@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @Deprecated
 @Disabled
-class OldStringBasedConstraintSolverTest {
+class OldStringBasedPathArgumentsSynthesizerTest {
 	final Context z3Context = new Context();
 	final Solver z3Solver = z3Context.mkSolver();
 

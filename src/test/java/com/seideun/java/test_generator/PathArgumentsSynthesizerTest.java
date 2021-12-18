@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   - Can get input suite.
  *   - Member access of class.
  */
-class ConstraintSolverTest extends ConstraintSolver {
+class PathArgumentsSynthesizerTest extends PathArgumentsSynthesizer {
 	@Test
 	void collectAsIsIfConditionTrue() {
 		Unit dummy = new JReturnVoidStmt();

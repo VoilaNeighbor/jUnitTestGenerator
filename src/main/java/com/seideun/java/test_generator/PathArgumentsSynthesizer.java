@@ -15,12 +15,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * I'm a bridge connecting Soot with Z3.
- * <p>
- * I convert constraints in the form of Jimple ASTs to Z3 expressions.
+ * It can synthesize <em>ONE</em> path only. Use multiple instances of this
+ * if you want to solve many paths.
  */
 @SuppressWarnings("unchecked")
-public class ConstraintSolver {
+public class PathArgumentsSynthesizer {
 	private final Context z3Context = new Context();
 	private final Map<JimpleLocal, Integer> timesLocalsAssigned = new HashMap<>();
 	private final List<BoolExpr> constraints = new ArrayList<>();
