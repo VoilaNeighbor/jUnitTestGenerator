@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.*;
 import soot.jimple.IntConstant;
-import soot.jimple.ParameterRef;
 import soot.jimple.internal.*;
 import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
@@ -20,10 +19,7 @@ import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findP
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SuppressWarnings("unchecked")
-class ConstraintConverterTest {
-	final Context z3Context = new Context();
-	final Solver z3Solver = z3Context.mkSolver();
+class ConstraintConverterTest extends ConstraintConverter {
 	static SootClass classUnderTest;
 
 	@BeforeAll
@@ -176,86 +172,4 @@ class ConstraintConverterTest {
 		);
 	}
 
-	private List<Expr<?>> collectConstraints(List<Unit> path) {
-		List<Expr<?>> result = new ArrayList<>();
-		Map<JimpleLocal, Integer> timesLocalsAssigned = new HashMap<>();
-		for (int i = 0, end = path.size() - 1; i != end; ++i) {
-			Unit thisUnit = path.get(i);
-			if (thisUnit instanceof JIfStmt) {
-				JIfStmt jIfStmt = (JIfStmt) thisUnit;
-				Expr<BoolSort> z3Expr = (Expr<BoolSort>)
-					convertJValueToZ3Expr(jIfStmt.getCondition(), timesLocalsAssigned);
-				if (conditionIsTrue(jIfStmt, i, path)) {
-					result.add(z3Expr);
-				} else {
-					result.add(z3Context.mkNot(z3Expr));
-				}
-			} else if (thisUnit instanceof JAssignStmt) {
-				JAssignStmt jAssignStmt = (JAssignStmt) thisUnit;
-				JimpleLocal local = (JimpleLocal) jAssignStmt.getLeftOp();
-				timesLocalsAssigned.compute(local, (_k, v) -> v == null ? 1 : v + 1);
-			}
-		}
-		return result;
-	}
-
-	private boolean conditionIsTrue(
-		JIfStmt node,
-		int indexOfNode,
-		List<Unit> path
-	) {
-		return node.getTarget() == path.get(indexOfNode + 1);
-	}
-
-	private Expr<?> convertJValueToZ3Expr(Value jValue) {
-		return convertJValueToZ3Expr(jValue, Collections.EMPTY_MAP);
-	}
-
-	/**
-	 * @param timesLocalsAssigned Used for name remapping
-	 */
-	private Expr<?> convertJValueToZ3Expr(
-		Value jValue,
-		Map<JimpleLocal, Integer> timesLocalsAssigned
-	) {
-		if (jValue instanceof JimpleLocal) {
-			JimpleLocal jimpleLocal = ((JimpleLocal) jValue);
-			if (jimpleLocal.getType() == IntType.v()) {
-				Integer timesReassigned = timesLocalsAssigned.get(jimpleLocal);
-				String name = timesReassigned == null
-					? jimpleLocal.getName()
-					: jimpleLocal.getName() + "$" + timesReassigned;
-				return z3Context.mkIntConst(name);
-			}
-			throw new RuntimeException("todo");
-		} else if (jValue instanceof IntConstant) {
-			return z3Context.mkInt(((IntConstant) jValue).value);
-		} else if (jValue instanceof JGeExpr) {
-			JGeExpr jGeExpr = (JGeExpr) jValue;
-			return z3Context.mkGe(
-				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-					jGeExpr.getOp1(),
-					timesLocalsAssigned
-				),
-				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-					jGeExpr.getOp2(),
-					timesLocalsAssigned
-				)
-			);
-		}
-		throw new RuntimeException("todo");
-	}
-
-	private static List<String> findNamesOfParameters(List<Unit> input) {
-		List<String> result = new ArrayList<>();
-		for (Unit unit: input) {
-			if (unit instanceof JIdentityStmt) {
-				JIdentityStmt jIdentityStmt = (JIdentityStmt) unit;
-				if (jIdentityStmt.getRightOp() instanceof ParameterRef) {
-					result.add(jIdentityStmt.getLeftOp().toString());
-				}
-			}
-		}
-		return result;
-	}
 }
