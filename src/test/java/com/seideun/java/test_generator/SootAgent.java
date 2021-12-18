@@ -7,8 +7,12 @@ import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
-public class SootUtils {
+/**
+ * I'm an agent that configures and talks with Soot!
+ */
+public class SootAgent {
 	private static final Scene sootScene;
+	private final SootClass classUnderAnalyses;
 
 	static {
 		final String rootClasspath =
@@ -19,21 +23,14 @@ public class SootUtils {
 		sootScene = Scene.v();
 	}
 
-	public static SootClass loadClass(String className) {
-		SootClass result = sootScene.loadClassAndSupport(className);
-		// Manually-loaded SootClass's are not set as app class by default.
-		// I don't know of another way to load them yet. So let's bundle the setup
-		// code as here.
-		result.setApplicationClass();
+	public SootAgent(Class<?> theClass) {
+		classUnderAnalyses = sootScene.loadClassAndSupport(theClass.getName());
+		classUnderAnalyses.setApplicationClass();
 		sootScene.loadNecessaryClasses();
-		return result;
 	}
 
-	public static UnitGraph makeControlFlowGraph(
-		String methodName,
-		SootClass theClass
-	) {
-		SootMethod method = theClass.getMethodByName(methodName);
+	public UnitGraph makeControlFlowGraph(String methodName) {
+		SootMethod method = classUnderAnalyses.getMethodByName(methodName);
 		return new ExceptionalUnitGraph(method.retrieveActiveBody());
 	}
 }
