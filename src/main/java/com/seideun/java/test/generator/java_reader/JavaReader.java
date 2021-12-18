@@ -14,8 +14,10 @@ public class JavaReader {
 		new JavaReader(defaultClsPath, className, methodName);
 	}
 
-	public JavaReader(String defaultClsPath, String className,
-		String methodName) {
+	public JavaReader(
+		String defaultClsPath, String className,
+		String methodName
+	) {
 		clsPath = defaultClsPath;
 		clsName = className;
 		mtdName = methodName;

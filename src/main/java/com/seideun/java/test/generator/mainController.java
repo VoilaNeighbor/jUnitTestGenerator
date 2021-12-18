@@ -4,7 +4,6 @@ import com.seideun.java.test.generator.CFG_analyzer.Path;
 import com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer;
 import com.seideun.java.test.generator.CFG_generator.SootCFG;
 import com.seideun.java.test.generator.constriant_solver.Z3Solver;
-import soot.Body;
 import soot.Unit;
 import soot.toolkits.graph.UnitGraph;
 

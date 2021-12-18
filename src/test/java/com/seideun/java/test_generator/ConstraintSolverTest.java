@@ -1,23 +1,18 @@
 package com.seideun.java.test_generator;
 
 import com.microsoft.z3.Expr;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.DoubleType;
 import soot.IntType;
-import soot.SootClass;
 import soot.Unit;
 import soot.jimple.DoubleConstant;
 import soot.jimple.IntConstant;
 import soot.jimple.ParameterRef;
 import soot.jimple.internal.*;
-import soot.toolkits.graph.UnitGraph;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
-import static com.seideun.java.test_generator.SootUtils.makeControlFlowGraph;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -28,19 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   - Member access of class.
  */
 class ConstraintSolverTest extends ConstraintSolver {
-	static final String classname = "com.seideun.java.test_generator" +
-		".ExampleCfgCases";
-	static SootClass classUnderTest = SootUtils.loadClass(classname);
-
-	@Test
-	@Disabled
-	void seePath() {
-		SootClass myClass = SootUtils.loadClass(
-			"com.seideun.java.test_generator.ExampleCfgCases");
-		UnitGraph ug = makeControlFlowGraph("boolConnective", classUnderTest);
-		List<List<Unit>> primePaths = findPrimePaths(ug);
-	}
-
 	@Test
 	void collectAsIsIfConditionTrue() {
 		Unit dummy = new JReturnVoidStmt();
@@ -173,7 +155,10 @@ class ConstraintSolverTest extends ConstraintSolver {
 		JGeExpr geConstraint = new JGeExpr(y, DoubleConstant.v(2.33));
 		JLtExpr ltConstraint = new JLtExpr(y, DoubleConstant.v(2.34));
 		JReturnVoidStmt sink = new JReturnVoidStmt();
-		JIdentityStmt parameter = new JIdentityStmt(y, new ParameterRef(IntType.v(), 0));
+		JIdentityStmt parameter = new JIdentityStmt(
+			y,
+			new ParameterRef(IntType.v(), 0)
+		);
 
 		List<Unit> input = new ArrayList<>();
 		input.add(parameter);

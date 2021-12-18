@@ -29,7 +29,10 @@ public class SootUtils {
 		return result;
 	}
 
-	public static UnitGraph makeControlFlowGraph(String methodName, SootClass theClass) {
+	public static UnitGraph makeControlFlowGraph(
+		String methodName,
+		SootClass theClass
+	) {
 		SootMethod method = theClass.getMethodByName(methodName);
 		return new ExceptionalUnitGraph(method.retrieveActiveBody());
 	}

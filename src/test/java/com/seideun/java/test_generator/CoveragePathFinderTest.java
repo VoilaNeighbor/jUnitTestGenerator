@@ -10,7 +10,10 @@ import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -57,6 +60,15 @@ class CoveragePathFinderTest {
 		));
 	}
 
+	UnitGraph makeControlFlowGraph(String methodName) {
+		SootMethod method = classUnderTest.getMethodByName(methodName);
+		return new ExceptionalUnitGraph(method.retrieveActiveBody());
+	}
+
+	// - Jump back to node at entrance of loop.
+	// - Jump back to node before entrance on the current path.
+	// - Jump back to node on other path, no matter visited or not.
+
 	@Test
 	void branchingMethodHasAPathForEachBranch() {
 		UnitGraph controlFlowGraph = makeControlFlowGraph("twoBranches");
@@ -72,10 +84,6 @@ class CoveragePathFinderTest {
 		assertTrue(expected.containsAll(coveragePaths));
 	}
 
-	// - Jump back to node at entrance of loop.
-	// - Jump back to node before entrance on the current path.
-	// - Jump back to node on other path, no matter visited or not.
-
 	/**
 	 * @param original domain of discourse
 	 * @param indices  indices of elements to extract
@@ -85,10 +93,5 @@ class CoveragePathFinderTest {
 		return IntStream.of(indices)
 			.mapToObj(original::get)
 			.collect(Collectors.toList());
-	}
-
-	UnitGraph makeControlFlowGraph(String methodName) {
-		SootMethod method = classUnderTest.getMethodByName(methodName);
-		return new ExceptionalUnitGraph(method.retrieveActiveBody());
 	}
 }

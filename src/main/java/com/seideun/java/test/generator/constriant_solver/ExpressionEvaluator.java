@@ -129,7 +129,8 @@ public class ExpressionEvaluator {
 			// 取得操作符
 			beforeExpNode = stackOperator.pop();
 			if (beforeExpNode.getType() == ExpressionNodeType.LParentheses) {
-				throw new ExpressionException(String.format("表达式\"%s\"中括号不匹配,丢失右括号!",
+				throw new ExpressionException(String.format(
+					"表达式\"%s\"中括号不匹配,丢失右括号!",
 					expParser.getExpression(),
 					expParser.getPosition()
 				));

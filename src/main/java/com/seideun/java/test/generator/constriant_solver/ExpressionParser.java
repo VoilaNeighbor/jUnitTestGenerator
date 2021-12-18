@@ -96,7 +96,8 @@ public class ExpressionParser {
 		}
 		ExpressionNode node = new ExpressionNode(buffer.toString());
 		if (node.getType() == ExpressionNodeType.Unknown) {
-			throw new ExpressionException(String.format("表达式\"%s\"在位置%s上的字符\"%s\"非法!",
+			throw new ExpressionException(String.format(
+				"表达式\"%s\"在位置%s上的字符\"%s\"非法!",
 				this.getExpression(),
 				this.getPosition() - node.getValue().length(),
 				node.getValue()
