@@ -3,10 +3,14 @@ package com.seideun.java.test_generator;
 import com.microsoft.z3.Expr;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import soot.*;
+import soot.DoubleType;
+import soot.IntType;
+import soot.SootClass;
+import soot.Unit;
 import soot.jimple.DoubleConstant;
 import soot.jimple.IntConstant;
 import soot.jimple.internal.*;
+import soot.toolkits.graph.UnitGraph;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,13 +24,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Todo(Seideun):
  *   - Can get input suite.
- *   - Connectives of bool expressions in conditions.
  *   - Member access of class.
  */
 class ConstraintSolverTest extends ConstraintSolver {
 	static final String classname = "com.seideun.java.test_generator" +
 		".ExampleCfgCases";
 	static SootClass classUnderTest = SootUtils.loadClass(classname);
+
+	@Test
+	@Disabled
+	void seePath() {
+		SootClass myClass = SootUtils.loadClass(
+			"com.seideun.java.test_generator.ExampleCfgCases");
+		UnitGraph ug = makeControlFlowGraph("boolConnective", classUnderTest);
+		List<List<Unit>> primePaths = findPrimePaths(ug);
+	}
 
 	@Test
 	void convertJExprToZ3Expr() {
@@ -36,21 +48,6 @@ class ConstraintSolverTest extends ConstraintSolver {
 		);
 		Expr<?> result = convertJValueToZ3Expr(input);
 		assertEquals("(>= i 1)", result.toString());
-	}
-
-	@Test
-	void findNameOfMethodParameters() {
-		// How can we put a stub here?
-		List<Unit> path1 =
-			findPrimePaths(makeControlFlowGraph("oneArg", classUnderTest)).get(0);
-		List<Unit> path2 =
-			findPrimePaths(makeControlFlowGraph("twoArgs", classUnderTest)).get(0);
-		List<Unit> path3 =
-			findPrimePaths(makeControlFlowGraph("threeArgs", classUnderTest)).get(0);
-
-		assertEquals(Collections.singletonList("i0"), findJNamesOfArgs(path1));
-		assertEquals(Arrays.asList("i0", "i1"), findJNamesOfArgs(path2));
-		assertEquals(Arrays.asList("i0", "i1", "i2"), findJNamesOfArgs(path3));
 	}
 
 	@Test
@@ -107,7 +104,7 @@ class ConstraintSolverTest extends ConstraintSolver {
 	}
 
 	@Test
-	void reassignedVariableDistinguished() {
+	void reassignedVariableHasNewName() {
 		JimpleLocal x = new JimpleLocal("x", IntType.v());
 		JAssignStmt firstAssign = new JAssignStmt(x, IntConstant.v(3));
 		JAssignStmt secondAssign = new JAssignStmt(x, IntConstant.v(2));
@@ -180,7 +177,8 @@ class ConstraintSolverTest extends ConstraintSolver {
 	}
 
 	@Test
-	void testSolveConstraints() {
+	@Disabled
+	void canSynthesizeInput() {
 		JimpleLocal y = new JimpleLocal("y", DoubleType.v());
 		JGeExpr geConstraint = new JGeExpr(y, DoubleConstant.v(2.33));
 		JLtExpr ltConstraint = new JLtExpr(y, DoubleConstant.v(2.34));
@@ -193,6 +191,6 @@ class ConstraintSolverTest extends ConstraintSolver {
 		input.add(sink);
 
 		storePath(input);
-
+		List<Object> result = synthesizeArguments();
 	}
 }

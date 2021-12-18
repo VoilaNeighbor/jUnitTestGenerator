@@ -1,5 +1,14 @@
 package com.seideun.java.test_generator;
 
+import org.junit.jupiter.api.Test;
+import soot.SootClass;
+import soot.Unit;
+import soot.toolkits.graph.UnitGraph;
+
+import java.util.List;
+
+import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
+
 /**
  * Example methods for tests on control-flow-graph analyzers.
  */
@@ -37,4 +46,13 @@ final class ExampleCfgCases {
 		}
 		return a;
 	}
+
+	public static int boolConnective(int a, int b) {
+		if (a < 2 && b > 5) {
+			return a + b;
+		} else {
+			return a - b;
+		}
+	}
+
 }
