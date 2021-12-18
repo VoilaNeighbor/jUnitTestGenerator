@@ -1,10 +1,10 @@
 package com.seideun.java.test_generator;
 
 import com.microsoft.z3.Expr;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import soot.IntType;
-import soot.SootClass;
-import soot.Unit;
+import soot.*;
+import soot.jimple.DoubleConstant;
 import soot.jimple.IntConstant;
 import soot.jimple.internal.*;
 
@@ -52,9 +52,9 @@ class ConstraintSolverTest extends ConstraintSolver {
 		List<Unit> path3 =
 			findPrimePaths(makeControlFlowGraph("threeArgs", classUnderTest)).get(0);
 
-		assertEquals(Collections.singletonList("i0"), findNamesOfParameters(path1));
-		assertEquals(Arrays.asList("i0", "i1"), findNamesOfParameters(path2));
-		assertEquals(Arrays.asList("i0", "i1", "i2"), findNamesOfParameters(path3));
+		assertEquals(Collections.singletonList("i0"), findJNamesOfArgs(path1));
+		assertEquals(Arrays.asList("i0", "i1"), findJNamesOfArgs(path2));
+		assertEquals(Arrays.asList("i0", "i1", "i2"), findJNamesOfArgs(path3));
 	}
 
 	@Test
@@ -73,7 +73,7 @@ class ConstraintSolverTest extends ConstraintSolver {
 		constraintStrings.add("(>= i 1)");
 		constraintStrings.add("(>= x 2)");
 
-		storeConstraints(input);
+		storePath(input);
 		List<Expr<?>> result = getConstraints();
 
 		assertEquals(constraintStrings.size(), result.size());
@@ -99,7 +99,7 @@ class ConstraintSolverTest extends ConstraintSolver {
 		constraintStrings.add("(not (>= i 1))");
 		constraintStrings.add("(>= x 2)");
 
-		storeConstraints(input);
+		storePath(input);
 		List<Expr<?>> result = getConstraints();
 
 		assertEquals(constraintStrings.size(), result.size());
@@ -134,7 +134,7 @@ class ConstraintSolverTest extends ConstraintSolver {
 		expected.add("(not (>= x$1 1))");
 		expected.add("(>= x$2 1)");
 
-		storeConstraints(input);
+		storePath(input);
 		List<Expr<?>> result = getConstraints();
 		assertEquals(
 			expected,
@@ -171,8 +171,8 @@ class ConstraintSolverTest extends ConstraintSolver {
 		expected.add("(not (>= x$3 1))");
 		expected.add("(>= x$4 1)");
 
-		storeConstraints(input);
-		storeConstraints(input);
+		storePath(input);
+		storePath(input);
 		List<Expr<?>> result = getConstraints();
 
 		assertEquals(
@@ -181,5 +181,23 @@ class ConstraintSolverTest extends ConstraintSolver {
 				.map(Objects::toString)
 				.collect(Collectors.toList())
 		);
+	}
+
+	@Test
+	@Disabled
+	void testSolveConstraints() {
+		JimpleLocal y = new JimpleLocal("y", DoubleType.v());
+		JGeExpr geConstraint = new JGeExpr(y, DoubleConstant.v(2.33));
+		JLtExpr ltConstraint = new JLtExpr(y, DoubleConstant.v(2.34));
+		JReturnVoidStmt sink = new JReturnVoidStmt();
+
+		List<Unit> input = new ArrayList<>();
+		input.add(new JIfStmt(geConstraint, sink));
+		input.add(sink);
+		input.add(new JIfStmt(ltConstraint, sink));
+		input.add(sink);
+
+		storePath(input);
+
 	}
 }

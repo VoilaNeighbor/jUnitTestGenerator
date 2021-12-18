@@ -18,30 +18,27 @@ public class ConstraintSolver {
 	private final Context z3Context = new Context();
 	private final Map<JimpleLocal, Integer> timesLocalsAssigned = new HashMap<>();
 	private final List<Expr<?>> constraints = new ArrayList<>();
+	private final List<String> jNamesOfArgs = new ArrayList<>();
 
 	/**
 	 * Jimple swipes out the original names of the method, replacing with i0, i1
 	 * etc. Besides, there are locals in the Units. This method sorts out the
 	 * arguments from the input, and return their names in Jimple.
 	 */
-	public static List<String> findNamesOfParameters(Iterable<Unit> input) {
+	public static List<String> findJNamesOfArgs(Iterable<Unit> path) {
 		List<String> result = new ArrayList<>();
-		for (Unit unit: input) {
-			if (unit instanceof JIdentityStmt) {
-				JIdentityStmt jIdentityStmt = (JIdentityStmt) unit;
-				if (jIdentityStmt.getRightOp() instanceof ParameterRef) {
-					result.add(jIdentityStmt.getLeftOp().toString());
-				}
-			}
-		}
+		findJNamesOfArgs(path, result);
 		return result;
 	}
 
 	/**
+	 * Store the parameters and constraints along the path.
+	 *
 	 * It is possible to store multiple paths. This class will try to solve all
 	 * constraints on the paths together.
 	 */
-	public void storeConstraints(List<Unit> path) {
+	public void storePath(List<Unit> path) {
+		findJNamesOfArgs(path, jNamesOfArgs);
 		// JIfStmts and JGotoStmts are guaranteed to have nodes following them.
 		for (int i = 0, end = path.size() - 1; i != end; ++i) {
 			Unit thisUnit = path.get(i);
@@ -51,6 +48,12 @@ public class ConstraintSolver {
 				constraints.add(extractConstraintOf((JIfStmt) thisUnit, i, path));
 			}
 		}
+	}
+
+	public void solveConstraints() {
+		Solver solver = z3Context.mkSolver();
+		Status status = solver.check();
+		Model model = solver.getModel();
 	}
 
 	public List<Expr<?>> getConstraints() {
@@ -93,6 +96,17 @@ public class ConstraintSolver {
 		return theIf.getTarget() != path.get(idxInPath + 1)
 			? z3Context.mkNot(z3Expr)
 			: z3Expr;
+	}
+
+	private static void findJNamesOfArgs(Iterable<Unit> path, List<String> out) {
+		for (Unit unit: path) {
+			if (unit instanceof JIdentityStmt) {
+				JIdentityStmt jIdentityStmt = (JIdentityStmt) unit;
+				if (jIdentityStmt.getRightOp() instanceof ParameterRef) {
+					out.add(jIdentityStmt.getLeftOp().toString());
+				}
+			}
+		}
 	}
 
 	private void incrementTimesAssigned(JAssignStmt jAssignStmt) {
