@@ -9,6 +9,7 @@ import soot.SootClass;
 import soot.Unit;
 import soot.jimple.DoubleConstant;
 import soot.jimple.IntConstant;
+import soot.jimple.ParameterRef;
 import soot.jimple.internal.*;
 import soot.toolkits.graph.UnitGraph;
 
@@ -167,20 +168,26 @@ class ConstraintSolverTest extends ConstraintSolver {
 	}
 
 	@Test
-	@Disabled
 	void canSynthesizeInput() {
 		JimpleLocal y = new JimpleLocal("y", DoubleType.v());
 		JGeExpr geConstraint = new JGeExpr(y, DoubleConstant.v(2.33));
 		JLtExpr ltConstraint = new JLtExpr(y, DoubleConstant.v(2.34));
 		JReturnVoidStmt sink = new JReturnVoidStmt();
+		JIdentityStmt parameter = new JIdentityStmt(y, new ParameterRef(IntType.v(), 0));
 
 		List<Unit> input = new ArrayList<>();
+		input.add(parameter);
 		input.add(new JIfStmt(geConstraint, sink));
 		input.add(sink);
 		input.add(new JIfStmt(ltConstraint, sink));
 		input.add(sink);
 
 		storePath(input);
-		List<Object> result = synthesizeArguments();
+		List<Object> result = synthesizeArguments().get();
+		double arg = (double) result.get(0);
+
+		assertEquals(1, result.size());
+		assertTrue(arg >= 2.33);
+		assertTrue(arg < 2.34);
 	}
 }

@@ -5,7 +5,7 @@ public class TodoException extends RuntimeException {
 		super("Todo");
 	}
 
-	public TodoException(String todo) {
-		super("Todo: " + todo);
+	public TodoException(Object todo) {
+		super("<Todo>" + todo + "</Todo>");
 	}
 }

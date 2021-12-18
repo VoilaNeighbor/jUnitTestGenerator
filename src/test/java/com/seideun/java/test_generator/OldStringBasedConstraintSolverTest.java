@@ -19,7 +19,6 @@ class OldStringBasedConstraintSolverTest {
 
 	@Test
 	void solveSingleConstraintOnSinglePositiveDouble() {
-
 		double result = solveReal("y", new String[]{ "> y 588.821" });
 		assertTrue(result > 588.821);
 	}
@@ -53,7 +52,8 @@ class OldStringBasedConstraintSolverTest {
 		Model resultModel = makeResultModel(smtLibLang);
 
 		RealExpr vExpr = z3Context.mkRealConst(variable);
-		String[] rational = resultModel.eval(vExpr, false).toString().split("/");
+		Expr<RealSort> interpretation = resultModel.eval(vExpr, false);
+		String[] rational = interpretation.toString().split("/");
 		String numerator = rational[0];
 		String denominator = rational[1];
 
@@ -65,7 +65,8 @@ class OldStringBasedConstraintSolverTest {
 		Model resultModel = makeResultModel(smtLibLang);
 
 		IntExpr vExpr = z3Context.mkIntConst(variable);
-		return Integer.parseInt(resultModel.eval(vExpr, false).toString());
+		Expr<IntSort> interpretation = resultModel.eval(vExpr, false);
+		return Integer.parseInt(interpretation.toString());
 	}
 
 	private Model makeResultModel(String smtLibLang) {
