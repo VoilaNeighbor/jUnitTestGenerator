@@ -56,11 +56,15 @@ public class ConstraintSolver {
 		for (Expr<?> arg: methodArgs) {
 			Expr<?> value = model.eval(arg, false);
 			if (value instanceof IntNum) {
-				result.add(((IntNum) value).getInt64());
+				result.add(((IntNum) value).getInt());
 			} else if (value instanceof RatNum) {
 				RatNum ratNum = (RatNum) value;
 				result.add((double) ratNum.getNumerator().getInt64() /
 					(double) ratNum.getDenominator().getInt64());
+			} else if (value instanceof IntExpr) {
+				result.add(0);
+			} else if (value instanceof RealExpr) {
+				result.add(0.0);
 			} else {
 				throw new TodoException(value);
 			}

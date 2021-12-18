@@ -175,4 +175,22 @@ class ConstraintSolverTest extends ConstraintSolver {
 		assertTrue(arg >= 2.33);
 		assertTrue(arg < 2.34);
 	}
+
+	@Test
+	void makeRandomInputForUnboundedArguments() {
+		JIdentityStmt arg = new JIdentityStmt(
+			new JimpleLocal("x", IntType.v()),
+			new ParameterRef(IntType.v(), 0)
+		);
+		JReturnVoidStmt sink = new JReturnVoidStmt();
+		List<Unit> path = new ArrayList<>();
+		path.add(arg);
+		path.add(sink);
+		storePath(path);
+
+		List<Object> result = synthesizeArguments().get();
+
+		assertEquals(1, result.size());
+		assertTrue(result.get(0) instanceof Integer);
+	}
 }
