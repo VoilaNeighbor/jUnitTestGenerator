@@ -41,16 +41,6 @@ class ConstraintSolverTest extends ConstraintSolver {
 	}
 
 	@Test
-	void convertJExprToZ3Expr() {
-		JGeExpr input = new JGeExpr(
-			new JimpleLocal("i", IntType.v()),
-			IntConstant.v(1)
-		);
-		Expr<?> result = convertJValueToZ3Expr(input);
-		assertEquals("(>= i 1)", result.toString());
-	}
-
-	@Test
 	void collectAsIsIfConditionTrue() {
 		Unit dummy = new JReturnVoidStmt();
 		List<Unit> input = new ArrayList<>();

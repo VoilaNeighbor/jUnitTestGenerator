@@ -44,7 +44,7 @@ public class ConstraintSolver {
 		return result;
 	}
 
-	protected Expr<?> convertJValueToZ3Expr(Value jValue) {
+	private Expr<?> convertJValueToZ3Expr(Value jValue) {
 		if (jValue instanceof JimpleLocal) {
 			JimpleLocal jimpleLocal = ((JimpleLocal) jValue);
 			Integer timesReassigned = timesLocalsAssigned.get(jimpleLocal);
