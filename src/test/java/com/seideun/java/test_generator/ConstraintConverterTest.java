@@ -1,56 +1,34 @@
 package com.seideun.java.test_generator;
 
-import com.microsoft.z3.Context;
 import com.microsoft.z3.*;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.*;
 import soot.jimple.IntConstant;
 import soot.jimple.internal.*;
-import soot.options.Options;
-import soot.toolkits.graph.ExceptionalUnitGraph;
-import soot.toolkits.graph.UnitGraph;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
+import static com.seideun.java.test_generator.SootUtils.makeControlFlowGraph;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+
+/**
+ * Collect constraint:
+ * - Every if condition on the path should be collected.
+ * - A condition should be negated if the JIfStmt evaluates to false.
+ * When a JIfStmt condition is true, the next node along the path will be
+ * its target.
+ * - Re-assigned variables should be distinguished from its old value. E.g.
+ * we should have x$0, x$1 ... for each def of x.
+ * - Conditions should be mapped to the SSA-ed form as well.
+ */
 class ConstraintConverterTest extends ConstraintConverter {
-	static SootClass classUnderTest;
-
-	@BeforeAll
-	static void setupSoot() {
-		final String rootClasspath =
-			System.getProperty("user.dir") + "/target/test-classes";
-		Options sootConfigs = Options.v();
-		sootConfigs.set_prepend_classpath(true);
-		sootConfigs.set_soot_classpath(rootClasspath);
-
-		// Manually-loaded SootClass's are not set as app class by default.
-		// I don't know of another way to load them yet. So let's bundle the setup
-		// code as here.
-		Scene sootScene = Scene.v();
-		final String classname = "com.seideun.java.test_generator.ExampleCfgCases";
-		classUnderTest = sootScene.loadClassAndSupport(classname);
-		classUnderTest.setApplicationClass();
-		sootScene.loadNecessaryClasses();
-	}
-
-	UnitGraph makeControlFlowGraph(String methodName) {
-		SootMethod method = classUnderTest.getMethodByName(methodName);
-		return new ExceptionalUnitGraph(method.retrieveActiveBody());
-	}
-
-	@Test
-	@Disabled
-	void seePath() {
-		List<List<Unit>> path = findPrimePaths(makeControlFlowGraph(
-			"twoBranches"));
-	}
+	static final String classname = "com.seideun.java.test_generator.ExampleCfgCases";
+	static SootClass classUnderTest = SootUtils.loadClass(classname);
 
 	@Test
 	void convertJExprToZ3Expr() {
@@ -65,28 +43,17 @@ class ConstraintConverterTest extends ConstraintConverter {
 	@Test
 	void findNameOfMethodParameters() {
 		// How can we put a stub here?
-		List<String> r1 = findNamesOfParameters(
-			findPrimePaths(makeControlFlowGraph("oneArg")).get(0));
-		List<String> r2 = findNamesOfParameters(
-			findPrimePaths(makeControlFlowGraph("twoArgs")).get(0));
-		List<String> r3 = findNamesOfParameters(
-			findPrimePaths(makeControlFlowGraph("threeArgs")).get(0));
+		List<Unit> path1 =
+			findPrimePaths(makeControlFlowGraph("oneArg", classUnderTest)).get(0);
+		List<Unit> path2 =
+			findPrimePaths(makeControlFlowGraph("twoArgs", classUnderTest)).get(0);
+		List<Unit> path3 =
+			findPrimePaths(makeControlFlowGraph("threeArgs", classUnderTest)).get(0);
 
-		assertEquals(Collections.singletonList("i0"), r1);
-		assertEquals(Arrays.asList("i0", "i1"), r2);
-		assertEquals(Arrays.asList("i0", "i1", "i2"), r3);
+		assertEquals(Collections.singletonList("i0"), findNamesOfParameters(path1));
+		assertEquals(Arrays.asList("i0", "i1"), findNamesOfParameters(path2));
+		assertEquals(Arrays.asList("i0", "i1", "i2"), findNamesOfParameters(path3));
 	}
-
-	/**
-	 * Collect constraint:
-	 * - Every if condition on the path should be collected.
-	 * - A condition should be negated if the JIfStmt evaluates to false.
-	 * When a JIfStmt condition is true, the next node along the path will be
-	 * its target.
-	 * - Re-assigned variables should be distinguished from its old value. E.g.
-	 * we should have x_0, x_1 ... for each def of x.
-	 * - Conditions should be mapped to the SSA-ed form as well.
-	 */
 
 	@Test
 	void collectAsIsIfConditionTrue() {
@@ -104,7 +71,7 @@ class ConstraintConverterTest extends ConstraintConverter {
 		constraintStrings.add("(>= i 1)");
 		constraintStrings.add("(>= x 2)");
 
-		List<Expr<?>> result = collectConstraints(input);
+		List<Expr<?>> result = storeConstraints(input);
 
 		assertEquals(constraintStrings.size(), result.size());
 		assertTrue(constraintStrings.containsAll(
@@ -129,7 +96,7 @@ class ConstraintConverterTest extends ConstraintConverter {
 		constraintStrings.add("(not (>= i 1))");
 		constraintStrings.add("(>= x 2)");
 
-		List<Expr<?>> result = collectConstraints(input);
+		List<Expr<?>> result = storeConstraints(input);
 
 		assertEquals(constraintStrings.size(), result.size());
 		assertTrue(constraintStrings.containsAll(
@@ -163,7 +130,7 @@ class ConstraintConverterTest extends ConstraintConverter {
 		expected.add("(not (>= x$1 1))");
 		expected.add("(>= x$2 1)");
 
-		List<Expr<?>> result = collectConstraints(input);
+		List<Expr<?>> result = storeConstraints(input);
 		assertEquals(
 			expected,
 			result.stream()

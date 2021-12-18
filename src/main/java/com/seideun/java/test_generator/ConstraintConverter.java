@@ -39,7 +39,7 @@ public class ConstraintConverter {
 		return result;
 	}
 
-	public List<Expr<? extends Sort>> collectConstraints(List<Unit> path) {
+	public List<Expr<? extends Sort>> storeConstraints(List<Unit> path) {
 		List<Expr<?>> result = new ArrayList<>();
 		timesLocalsAssigned.clear();
 		// JIfStmts and JGotoStmts are guaranteed to have nodes following them.
