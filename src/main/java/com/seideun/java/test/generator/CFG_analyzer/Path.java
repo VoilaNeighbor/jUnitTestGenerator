@@ -31,7 +31,7 @@ public class Path {
 		this.myPrimePath = myPrimePath;
 		this.oneCompletePath = findOneCompletePath(ug, myPrimePath);
 		this.completePathConstraint = calPathConstraint(oneCompletePath, ug);
-		findValueList(ug);
+		//findValueList(ug);
 	}
 
 	//todo：找到路径上的constraint
