@@ -177,7 +177,7 @@ class ConstraintSolverTest extends ConstraintSolver {
 	}
 
 	@Test
-	void makeRandomInputForUnboundedArguments() {
+	void canMakeRandomInputForUnboundedArguments() {
 		JIdentityStmt arg = new JIdentityStmt(
 			new JimpleLocal("x", IntType.v()),
 			new ParameterRef(IntType.v(), 0)
