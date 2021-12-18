@@ -17,9 +17,10 @@ import java.util.Map;
  * This class converts constraints in the form of Jimple ASTs to Z3 expressions.
  */
 @SuppressWarnings("unchecked")
-public class ConstraintConverter {
+public class ConstraintSolver {
 	private final Context z3Context = new Context();
 	private final Map<JimpleLocal, Integer> timesLocalsAssigned = new HashMap<>();
+	private final List<Expr<?>> constraints = new ArrayList<>();
 
 	/**
 	 * Jimple swipes out the original names of the method, replacing with i0, i1
@@ -39,22 +40,32 @@ public class ConstraintConverter {
 		return result;
 	}
 
-	public List<Expr<? extends Sort>> storeConstraints(List<Unit> path) {
+	/**
+	 * It is possible to store multiple paths. This class will try to solve all
+	 * constraints on the paths together.
+	 * @return
+	 */
+	public List<Expr<?>> storeConstraints(List<Unit> path) {
 		List<Expr<?>> result = new ArrayList<>();
 		timesLocalsAssigned.clear();
 		// JIfStmts and JGotoStmts are guaranteed to have nodes following them.
 		for (int i = 0, end = path.size() - 1; i != end; ++i) {
 			Unit thisUnit = path.get(i);
-			if (thisUnit instanceof JIfStmt) {
-				result.add(extractConstraintOf((JIfStmt) thisUnit, i, path));
-			} else if (thisUnit instanceof JAssignStmt) {
+			if (thisUnit instanceof JAssignStmt) {
 				incrementTimesAssigned((JAssignStmt) thisUnit);
+			} else if (thisUnit instanceof JIfStmt) {
+				result.add(extractConstraintOf((JIfStmt) thisUnit, i, path));
 			}
 		}
+		constraints.addAll(result);
 		return result;
 	}
 
-	protected Expr<? extends Sort> convertJValueToZ3Expr(Value jValue) {
+	public List<Expr<?>> getConstraints() {
+		return constraints;
+	}
+
+	protected Expr<?> convertJValueToZ3Expr(Value jValue) {
 		if (jValue instanceof JimpleLocal) {
 			JimpleLocal jimpleLocal = ((JimpleLocal) jValue);
 			if (jimpleLocal.getType() == IntType.v()) {

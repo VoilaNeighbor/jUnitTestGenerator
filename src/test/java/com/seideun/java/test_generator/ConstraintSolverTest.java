@@ -1,148 +1,147 @@
 package com.seideun.java.test_generator;
 
-import com.microsoft.z3.*;
-import org.junit.jupiter.api.Disabled;
+import com.microsoft.z3.Expr;
 import org.junit.jupiter.api.Test;
+import soot.IntType;
+import soot.SootClass;
+import soot.Unit;
+import soot.jimple.IntConstant;
+import soot.jimple.internal.*;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
+import static com.seideun.java.test_generator.SootUtils.makeControlFlowGraph;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+
 /**
- * It is too weird to parse to SMT-LIB strings! We could have used the Java API
- * directly. We were misled by the damn example our teacher gave us. Dang.
+ * Collect constraint:
+ * - Every if condition on the path should be collected.
+ * - A condition should be negated if the JIfStmt evaluates to false.
+ * When a JIfStmt condition is true, the next node along the path will be
+ * its target.
+ * - Re-assigned variables should be distinguished from its old value. E.g.
+ * we should have x$0, x$1 ... for each def of x.
+ * - Conditions should be mapped to the SSA-ed form as well.
  */
-@Deprecated
-@Disabled
-class ConstraintSolverTest {
-	final Context z3Context = new Context();
-	final Solver z3Solver = z3Context.mkSolver();
+class ConstraintSolverTest extends ConstraintSolver {
+	static final String classname = "com.seideun.java.test_generator" +
+		".ExampleCfgCases";
+	static SootClass classUnderTest = SootUtils.loadClass(classname);
 
 	@Test
-	void solveSingleConstraintOnSinglePositiveDouble() {
-
-		double result = solveReal("y", new String[]{ "> y 588.821" });
-		assertTrue(result > 588.821);
-	}
-
-	@Test
-	void solveSingleConstraintsOnSinglePositiveInt() {
-		int result = solveInt("x", new String[]{ "> x 26" });
-		assertTrue(result > 26);
-	}
-
-	@Test
-	void solveMultipleConstraints() {
-		double result = solveReal("x", new String[]{ "> x 1.118", "< x 1.119" });
-		assertTrue(result > 1.118);
-		assertTrue(result < 1.119);
-	}
-
-	@Test
-	void solveWithNewApi() {
-		IntExpr x = z3Context.mkIntConst("x");
-		IntNum _26 = z3Context.mkInt(26);
-		BoolExpr x_gt_26 = z3Context.mkGt(x, _26);
-		assertEquals(Status.SATISFIABLE, z3Solver.check(x_gt_26));
-		Model model = z3Solver.getModel();
-		System.out.println(model);
-	}
-
-	// Think: Do we need to extract using template method now?
-	public double solveReal(String variable, String[] constraints) {
-		String smtLibLang = assembleSmtLibLang(variable, constraints, "Real");
-		Model resultModel = makeResultModel(smtLibLang);
-
-		RealExpr vExpr = z3Context.mkRealConst(variable);
-		String[] rational = resultModel.eval(vExpr, false).toString().split("/");
-		String numerator = rational[0];
-		String denominator = rational[1];
-
-		return Double.parseDouble(numerator) / Double.parseDouble(denominator);
-	}
-
-	public int solveInt(String variable, String[] constraints) {
-		String smtLibLang = assembleSmtLibLang(variable, constraints, "Int");
-		Model resultModel = makeResultModel(smtLibLang);
-
-		IntExpr vExpr = z3Context.mkIntConst(variable);
-		return Integer.parseInt(resultModel.eval(vExpr, false).toString());
-	}
-
-	private Model makeResultModel(String smtLibLang) {
-		BoolExpr[] ast = z3Context.parseSMTLIB2String(
-			smtLibLang, null, null, null, null
+	void convertJExprToZ3Expr() {
+		JGeExpr input = new JGeExpr(
+			new JimpleLocal("i", IntType.v()),
+			IntConstant.v(1)
 		);
-		z3Solver.check(ast);
-
-		return z3Solver.getModel();
+		Expr<?> result = convertJValueToZ3Expr(input);
+		assertEquals("(>= i 1)", result.toString());
 	}
 
-	enum Z3Type {
-		INT, REAL;
+	@Test
+	void findNameOfMethodParameters() {
+		// How can we put a stub here?
+		List<Unit> path1 =
+			findPrimePaths(makeControlFlowGraph("oneArg", classUnderTest)).get(0);
+		List<Unit> path2 =
+			findPrimePaths(makeControlFlowGraph("twoArgs", classUnderTest)).get(0);
+		List<Unit> path3 =
+			findPrimePaths(makeControlFlowGraph("threeArgs", classUnderTest)).get(0);
 
-		@Override
-		public String toString() {
-			if (this == INT) {
-				return "Int";
-			} else {
-				return "Real";
-			}
-		}
+		assertEquals(Collections.singletonList("i0"), findNamesOfParameters(path1));
+		assertEquals(Arrays.asList("i0", "i1"), findNamesOfParameters(path2));
+		assertEquals(Arrays.asList("i0", "i1", "i2"), findNamesOfParameters(path3));
 	}
 
-	class Z3Variable {
-		public final String name;
-		public final Z3Type z3Type;
+	@Test
+	void collectAsIsIfConditionTrue() {
+		Unit dummy = new JReturnVoidStmt();
+		List<Unit> input = new ArrayList<>();
+		input.add(new JIfStmt(
+			new JGeExpr(new JimpleLocal("i", IntType.v()), IntConstant.v(1)), dummy
+		));
+		input.add(dummy);
+		input.add(new JIfStmt(
+			new JGeExpr(new JimpleLocal("x", IntType.v()), IntConstant.v(2)), dummy
+		));
+		input.add(dummy);
+		Set<String> constraintStrings = new HashSet<>();
+		constraintStrings.add("(>= i 1)");
+		constraintStrings.add("(>= x 2)");
 
-		public Z3Variable(String name, Z3Type z3Type) {
-			this.name = name;
-			this.z3Type = z3Type;
-		}
+		storeConstraints(input);
+		List<Expr<?>> result = getConstraints();
+
+		assertEquals(constraintStrings.size(), result.size());
+		assertTrue(constraintStrings.containsAll(
+			result.stream()
+				.map(Objects::toString)
+				.collect(Collectors.toList())
+		));
 	}
 
-	@Deprecated
-	private String assembleSmtLibLang(
-		String variable,
-		String[] constraint,
-		String type
-	) {
-		StringBuilder builder = new StringBuilder();
-		builder.append("(declare-const ")
-			.append(variable)
-			.append(" ")
-			.append(type)
-			.append(")");
-		for (String c: constraint) {
-			builder
-				.append("(assert (")
-				.append(c)
-				.append("))");
-		}
-		return builder.toString();
+	@Test
+	void negateConstraintIfConditionFalse() {
+		Unit dummy = new JReturnVoidStmt();
+		List<Unit> input = new ArrayList<>();
+		input.add(new JIfStmt(
+			new JGeExpr(new JimpleLocal("i", IntType.v()), IntConstant.v(1)), dummy
+		));
+		input.add(new JIfStmt(
+			new JGeExpr(new JimpleLocal("x", IntType.v()), IntConstant.v(2)), dummy
+		));
+		input.add(dummy);
+		Set<String> constraintStrings = new HashSet<>();
+		constraintStrings.add("(not (>= i 1))");
+		constraintStrings.add("(>= x 2)");
+
+		storeConstraints(input);
+		List<Expr<?>> result = getConstraints();
+
+		assertEquals(constraintStrings.size(), result.size());
+		assertTrue(constraintStrings.containsAll(
+			result.stream()
+				.map(Objects::toString)
+				.collect(Collectors.toList())
+		));
 	}
 
-	/**
-	 * Assemble into the <a href="https://smtlib.cs.uiowa.edu/">SMT-LIB</a>
-	 * standard language.
-	 */
-	private static String assembleSmtLibLang(
-		Z3Variable[] variables,
-		String[] constraints
-	) {
-		StringBuilder builder = new StringBuilder();
-		for (Z3Variable v: variables) {
-			builder.append("(declare-const ")
-				.append(v.name)
-				.append(" ")
-				.append(v.z3Type)
-				.append(")");
-		}
-		for (String c: constraints) {
-			builder
-				.append("(assert (")
-				.append(c)
-				.append("))");
-		}
-		return builder.toString();
+	@Test
+	void reassignedVariableDistinguished() {
+		JimpleLocal x = new JimpleLocal("x", IntType.v());
+		JAssignStmt firstAssign = new JAssignStmt(x, IntConstant.v(3));
+		JAssignStmt secondAssign = new JAssignStmt(x, IntConstant.v(2));
+		JGeExpr condition = new JGeExpr(x, IntConstant.v(1));
+		JReturnVoidStmt sink = new JReturnVoidStmt();
+		JIfStmt firstBranch = new JIfStmt(condition, sink);
+		JIfStmt secondBranch = new JIfStmt(condition, sink);
+		JIfStmt thirdBranch = new JIfStmt(condition, sink);
+
+		List<Unit> input = new ArrayList<>();
+		input.add(firstBranch);
+		input.add(firstAssign);
+		input.add(secondBranch);
+		input.add(secondAssign);
+		input.add(thirdBranch);
+		input.add(sink);
+
+		List<String> expected = new ArrayList<>();
+		expected.add("(not (>= x 1))");
+		expected.add("(not (>= x$1 1))");
+		expected.add("(>= x$2 1)");
+
+		storeConstraints(input);
+		List<Expr<?>> result = getConstraints();
+		assertEquals(
+			expected,
+			result.stream()
+				.map(Objects::toString)
+				.collect(Collectors.toList())
+		);
 	}
+
 }
