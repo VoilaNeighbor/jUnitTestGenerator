@@ -44,42 +44,6 @@ public class ConstraintSolver {
 		return result;
 	}
 
-	private Expr<?> convertJValueToZ3Expr(Value jValue) {
-		if (jValue instanceof JimpleLocal) {
-			JimpleLocal jimpleLocal = ((JimpleLocal) jValue);
-			Integer timesReassigned = timesLocalsAssigned.get(jimpleLocal);
-			String postfix = timesReassigned == null ? "" : ("$" + timesReassigned);
-			if (jimpleLocal.getType() == IntType.v()) {
-				return z3Context.mkIntConst(jimpleLocal.getName() + postfix);
-			}
-			throw new TodoException();
-		} else if (jValue instanceof IntConstant) {
-			return z3Context.mkInt(((IntConstant) jValue).value);
-		} else if (jValue instanceof JGeExpr) {
-			JGeExpr jGeExpr = (JGeExpr) jValue;
-			return z3Context.mkGe(
-				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-					jGeExpr.getOp1()
-				),
-				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-					jGeExpr.getOp2()
-				)
-			);
-		} else if (jValue instanceof JLtExpr) {
-			JLtExpr jGeExpr = (JLtExpr) jValue;
-			return z3Context.mkLt(
-				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-					jGeExpr.getOp1()
-				),
-				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-					jGeExpr.getOp2()
-				)
-			);
-		} else {
-			throw new TodoException();
-		}
-	}
-
 	/**
 	 * Jimple swipes out the original names of the method, replacing with i0, i1
 	 * etc. Besides, there are locals in the Units. This method sorts out the
@@ -122,5 +86,41 @@ public class ConstraintSolver {
 		return theIf.getTarget() != path.get(idxInPath + 1)
 			? z3Context.mkNot(z3Expr)
 			: z3Expr;
+	}
+
+	private Expr<?> convertJValueToZ3Expr(Value jValue) {
+		if (jValue instanceof JimpleLocal) {
+			JimpleLocal jimpleLocal = ((JimpleLocal) jValue);
+			Integer timesReassigned = timesLocalsAssigned.get(jimpleLocal);
+			String postfix = timesReassigned == null ? "" : ("$" + timesReassigned);
+			if (jimpleLocal.getType() == IntType.v()) {
+				return z3Context.mkIntConst(jimpleLocal.getName() + postfix);
+			}
+			throw new TodoException();
+		} else if (jValue instanceof IntConstant) {
+			return z3Context.mkInt(((IntConstant) jValue).value);
+		} else if (jValue instanceof JGeExpr) {
+			JGeExpr jGeExpr = (JGeExpr) jValue;
+			return z3Context.mkGe(
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1()
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2()
+				)
+			);
+		} else if (jValue instanceof JLtExpr) {
+			JLtExpr jGeExpr = (JLtExpr) jValue;
+			return z3Context.mkLt(
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1()
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2()
+				)
+			);
+		} else {
+			throw new TodoException();
+		}
 	}
 }
