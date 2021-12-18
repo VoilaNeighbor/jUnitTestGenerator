@@ -144,4 +144,42 @@ class ConstraintSolverTest extends ConstraintSolver {
 		);
 	}
 
+	@Test
+	void canStoreMultiplePaths() {
+		JimpleLocal x = new JimpleLocal("x", IntType.v());
+		JAssignStmt firstAssign = new JAssignStmt(x, IntConstant.v(3));
+		JAssignStmt secondAssign = new JAssignStmt(x, IntConstant.v(2));
+		JGeExpr condition = new JGeExpr(x, IntConstant.v(1));
+		JReturnVoidStmt sink = new JReturnVoidStmt();
+		JIfStmt firstBranch = new JIfStmt(condition, sink);
+		JIfStmt secondBranch = new JIfStmt(condition, sink);
+		JIfStmt thirdBranch = new JIfStmt(condition, sink);
+
+		List<Unit> input = new ArrayList<>();
+		input.add(firstBranch);
+		input.add(firstAssign);
+		input.add(secondBranch);
+		input.add(secondAssign);
+		input.add(thirdBranch);
+		input.add(sink);
+
+		List<String> expected = new ArrayList<>();
+		expected.add("(not (>= x 1))");
+		expected.add("(not (>= x$1 1))");
+		expected.add("(>= x$2 1)");
+		expected.add("(not (>= x$2 1))");
+		expected.add("(not (>= x$3 1))");
+		expected.add("(>= x$4 1)");
+
+		storeConstraints(input);
+		storeConstraints(input);
+		List<Expr<?>> result = getConstraints();
+
+		assertEquals(
+			expected,
+			result.stream()
+				.map(Objects::toString)
+				.collect(Collectors.toList())
+		);
+	}
 }

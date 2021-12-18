@@ -8,10 +8,7 @@ import soot.jimple.IntConstant;
 import soot.jimple.ParameterRef;
 import soot.jimple.internal.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class converts constraints in the form of Jimple ASTs to Z3 expressions.
@@ -43,26 +40,21 @@ public class ConstraintSolver {
 	/**
 	 * It is possible to store multiple paths. This class will try to solve all
 	 * constraints on the paths together.
-	 * @return
 	 */
-	public List<Expr<?>> storeConstraints(List<Unit> path) {
-		List<Expr<?>> result = new ArrayList<>();
-		timesLocalsAssigned.clear();
+	public void storeConstraints(List<Unit> path) {
 		// JIfStmts and JGotoStmts are guaranteed to have nodes following them.
 		for (int i = 0, end = path.size() - 1; i != end; ++i) {
 			Unit thisUnit = path.get(i);
 			if (thisUnit instanceof JAssignStmt) {
 				incrementTimesAssigned((JAssignStmt) thisUnit);
 			} else if (thisUnit instanceof JIfStmt) {
-				result.add(extractConstraintOf((JIfStmt) thisUnit, i, path));
+				constraints.add(extractConstraintOf((JIfStmt) thisUnit, i, path));
 			}
 		}
-		constraints.addAll(result);
-		return result;
 	}
 
 	public List<Expr<?>> getConstraints() {
-		return constraints;
+		return Collections.unmodifiableList(constraints);
 	}
 
 	protected Expr<?> convertJValueToZ3Expr(Value jValue) {
