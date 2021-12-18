@@ -20,7 +20,7 @@ public class ConstraintSolver {
 	private final Context z3Context = new Context();
 	private final Map<JimpleLocal, Integer> timesLocalsAssigned = new HashMap<>();
 	private final List<Expr<?>> constraints = new ArrayList<>();
-	private final List<JimpleLocal> jMethodArgs = new ArrayList<>();
+	private final List<Expr<?>> methodArgs = new ArrayList<>();
 
 	/**
 	 * Store the parameters and constraints along the path.
@@ -29,8 +29,30 @@ public class ConstraintSolver {
 	 * constraints on the paths together.
 	 */
 	public void storePath(List<Unit> path) {
+		if (path.get(path.size() - 1) instanceof JIfStmt) {
+			// JIfStmts and JGotoStmts are guaranteed to have nodes following them.
+			throw new IllFormedJIfStmt(path);
+		}
 		collectArgs(path);
-		collectConstraints(path);
+		for (int i = 0, end = path.size() - 1; i != end; ++i) {
+			Unit thisUnit = path.get(i);
+			if (thisUnit instanceof JAssignStmt) {
+				incrementTimesAssigned((JAssignStmt) thisUnit);
+			} else if (thisUnit instanceof JIfStmt) {
+				constraints.add(extractConstraintOf((JIfStmt) thisUnit, i, path));
+			}
+		}
+	}
+
+	private void collectArgs(List<Unit> path) {
+		for (Unit unit: path) {
+			if (unit instanceof JIdentityStmt) {
+				JIdentityStmt jIdentityStmt = (JIdentityStmt) unit;
+				if (jIdentityStmt.getRightOp() instanceof ParameterRef) {
+					methodArgs.add(convertJValueToZ3Expr(jIdentityStmt.getLeftOp()));
+				}
+			}
+		}
 	}
 
 	public List<Expr<?>> getConstraints() {
@@ -42,35 +64,6 @@ public class ConstraintSolver {
 		Model model = solver.getModel();
 		List<Object> result = new ArrayList<>();
 		return result;
-	}
-
-	/**
-	 * Jimple swipes out the original names of the method, replacing with i0, i1
-	 * etc. Besides, there are locals in the Units. This method sorts out the
-	 * arguments from the input, and return their names in Jimple.
-	 */
-	private void collectArgs(Iterable<Unit> path) {
-		for (Unit unit: path) {
-			if (unit instanceof JIdentityStmt) {
-				JIdentityStmt jIdentityStmt = (JIdentityStmt) unit;
-				if (jIdentityStmt.getRightOp() instanceof ParameterRef) {
-					jMethodArgs.add(((JimpleLocal) jIdentityStmt.getLeftOp()));
-				}
-			}
-		}
-	}
-
-	private void collectConstraints(List<Unit> path) {
-		// JIfStmts and JGotoStmts are guaranteed to have nodes following them.
-		// So we do not have to check the last unit.
-		for (int i = 0, end = path.size() - 1; i != end; ++i) {
-			Unit thisUnit = path.get(i);
-			if (thisUnit instanceof JAssignStmt) {
-				incrementTimesAssigned((JAssignStmt) thisUnit);
-			} else if (thisUnit instanceof JIfStmt) {
-				constraints.add(extractConstraintOf((JIfStmt) thisUnit, i, path));
-			}
-		}
 	}
 
 	private void incrementTimesAssigned(JAssignStmt jAssignStmt) {
