@@ -33,6 +33,10 @@ public class JUnitTestGenerator {
 		return builder.toString();
 	}
 
+	private void makeMethodAccessExpression() {
+		methodAccess = objectName + '.' + methodName;
+	}
+
 	private void buildAssertion(TestCase testCase) {
 		builder.append(format(
 			"assertEquals(%s,%s(%s));",
@@ -40,16 +44,6 @@ public class JUnitTestGenerator {
 			methodAccess,
 			makeArgumentLiterals(testCase.arguments)
 		));
-	}
-
-	private void makeMethodAccessExpression() {
-		methodAccess = objectName + '.' + methodName;
-	}
-
-	private static String makeArgumentLiterals(Collection<Object> arguments) {
-		return arguments.stream()
-			.map(JUnitTestGenerator::toLiteral)
-			.collect(Collectors.joining(","));
 	}
 
 	/**
@@ -63,6 +57,12 @@ public class JUnitTestGenerator {
 		} else {
 			return x.toString();
 		}
+	}
+
+	private static String makeArgumentLiterals(Collection<Object> arguments) {
+		return arguments.stream()
+			.map(JUnitTestGenerator::toLiteral)
+			.collect(Collectors.joining(","));
 	}
 
 	public static class NoTestCaseException extends RuntimeException {

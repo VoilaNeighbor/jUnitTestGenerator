@@ -1,4 +1,4 @@
-package com.seideun.java.test.generator.constraint_solver;
+package com.seideun.java.test.generator.constriant_solver;
 
 import soot.Scene;
 import soot.SootClass;
@@ -16,7 +16,7 @@ public class SootAgent {
 
 	static {
 		final String rootClasspath =
-			System.getProperty("user.dir") + "/target/test-classes";
+			System.getProperty("user.dir") + "/target/classes";
 		Options sootConfigs = Options.v();
 		sootConfigs.set_prepend_classpath(true);
 		sootConfigs.set_soot_classpath(rootClasspath);

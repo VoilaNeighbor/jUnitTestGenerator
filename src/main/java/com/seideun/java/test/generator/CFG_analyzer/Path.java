@@ -169,30 +169,6 @@ public class Path {
 		return temp;
 	}
 
-	//找到路径中的赋值语句
-	public void findValueList(UnitGraph ug) {
-
-		valueList = new ArrayList<>();
-
-		Unit end = oneCompletePath.get(oneCompletePath.size() - 1);
-		String endValue = end.toString().replace("return", "").trim();
-		for (Unit s: oneCompletePath) {
-			if (s instanceof JAssignStmt) {
-				String temp1 = s.toString();
-				Object temp = ((JAssignStmt) s).leftBox.getValue();
-				Object temp2 = ((JAssignStmt) s).rightBox.getValue();
-				// System.out.println(temp2);
-				valueList.add(temp1);
-			}
-		}
-
-		LinkedHashMap<String, String> endSet = assignMap.get(endValue);
-		Entry<String, String> lastValue = getTail(endSet);
-		expectResult = lastValue.getValue();
-
-
-	}
-
 	private List<Local> getJVars(Body body) {
 		//Jimple自身增加的Locals，不是被测代码真正的变量
 		ArrayList<Local> jimpleVars = new ArrayList<Local>();
@@ -301,5 +277,29 @@ public class Path {
 
 		}
 		return endPath;
+	}
+
+	//找到路径中的赋值语句
+	public void findValueList(UnitGraph ug) {
+
+		valueList = new ArrayList<>();
+
+		Unit end = oneCompletePath.get(oneCompletePath.size() - 1);
+		String endValue = end.toString().replace("return", "").trim();
+		for (Unit s: oneCompletePath) {
+			if (s instanceof JAssignStmt) {
+				String temp1 = s.toString();
+				Object temp = ((JAssignStmt) s).leftBox.getValue();
+				Object temp2 = ((JAssignStmt) s).rightBox.getValue();
+				// System.out.println(temp2);
+				valueList.add(temp1);
+			}
+		}
+
+		LinkedHashMap<String, String> endSet = assignMap.get(endValue);
+		Entry<String, String> lastValue = getTail(endSet);
+		expectResult = lastValue.getValue();
+
+
 	}
 }

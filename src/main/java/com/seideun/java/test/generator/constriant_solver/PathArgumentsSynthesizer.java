@@ -22,10 +22,14 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("unchecked")
 public class PathArgumentsSynthesizer {
-	private final Context z3Context = new Context();
-	private final Map<JimpleLocal, Integer> timesLocalsAssigned = new HashMap<>();
-	private final List<BoolExpr> constraints = new ArrayList<>();
+	private Context z3Context;
+	private Map<JimpleLocal, Integer> timesLocalsAssigned;
+	private List<BoolExpr> constraints;
 	private List<Expr<?>> methodArgs;
+
+	public PathArgumentsSynthesizer() {
+		clear();
+	}
 
 	public static List<List<Object>> synthesize(Collection<List<Unit>> paths) {
 		return paths.stream()
@@ -55,6 +59,12 @@ public class PathArgumentsSynthesizer {
 
 	public List<Expr<?>> getConstraints() {
 		return Collections.unmodifiableList(constraints);
+	}
+
+	public void clear() {
+		z3Context = new Context();
+		timesLocalsAssigned = new HashMap<>();
+		constraints = new ArrayList<>();
 	}
 
 	public Optional<List<Object>> synthesizeArguments() {
@@ -138,7 +148,7 @@ public class PathArgumentsSynthesizer {
 			} else if (jimpleLocal.getType() == DoubleType.v()) {
 				return z3Context.mkRealConst(varName);
 			}
-			throw new TodoException();
+			throw new TodoException(jimpleLocal.getType());
 		} else if (jValue instanceof IntConstant) {
 			return z3Context.mkInt(((IntConstant) jValue).value);
 		} else if (jValue instanceof RealConstant) {
