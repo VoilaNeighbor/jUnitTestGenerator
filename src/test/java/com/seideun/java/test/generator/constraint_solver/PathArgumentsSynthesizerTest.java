@@ -1,6 +1,7 @@
-package com.seideun.java.test_generator;
+package com.seideun.java.test.generator.constraint_solver;
 
 import com.microsoft.z3.Expr;
+import com.seideun.java.test.generator.constriant_solver.PathArgumentsSynthesizer;
 import org.junit.jupiter.api.Test;
 import soot.DoubleType;
 import soot.IntType;

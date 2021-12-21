@@ -1,4 +1,4 @@
-package com.seideun.java.test_generator;
+package com.seideun.java.test.generator.constraint_solver;
 
 /**
  * Example methods for tests on control-flow-graph analyzers.

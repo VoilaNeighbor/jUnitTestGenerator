@@ -1,4 +1,4 @@
-package com.seideun.java.test_generator;
+package com.seideun.java.test.generator.constraint_solver;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.google.common.collect.Iterables.elementsEqual;
-import static com.seideun.java.test_generator.CoveragePathFinder.findCoveragePaths;
+import static com.seideun.java.test.generator.constriant_solver.CoveragePathFinder.findCoveragePaths;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

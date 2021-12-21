@@ -1,4 +1,4 @@
-package com.seideun.java.test_generator;
+package com.seideun.java.test.generator.constriant_solver;
 
 import com.microsoft.z3.*;
 import soot.DoubleType;
@@ -30,10 +30,9 @@ public class PathArgumentsSynthesizer {
 	public static List<List<Object>> synthesize(Collection<List<Unit>> paths) {
 		return paths.stream()
 			.map(path -> {
-				PathArgumentsSynthesizer synthesizer =
-					new PathArgumentsSynthesizer();
-				synthesizer.store(path);
-				return synthesizer.synthesizeArguments().get();
+				PathArgumentsSynthesizer x = new PathArgumentsSynthesizer();
+				x.store(path);
+				return x.synthesizeArguments().get();
 			}).collect(Collectors.toList());
 	}
 

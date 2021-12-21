@@ -1,4 +1,4 @@
-package com.seideun.java.test_generator;
+package com.seideun.java.test.generator.constriant_solver;
 
 import static com.google.common.math.IntMath.gcd;
 
