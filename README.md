@@ -3,18 +3,23 @@
 ## Targets
 
 -
+
 Generate
 JTest
 based
 on
 Prime-paths.
-	-
-	Expected
-	output
 -
+Expected
+output
+
+-
+
 Support
 loops.
+
 -
+
 Support
 tests
 on
@@ -29,6 +34,7 @@ is
 outdated.
 
 1.
+
 Load
 Java
 source
@@ -38,13 +44,17 @@ parse
 it
 into
 AST.
+
 2.
+
 Analyze
 AST,
 and
 generate
 CFG.
+
 3.
+
 Find
 prime
 paths
@@ -59,7 +69,9 @@ result
 on
 each
 path.
+
 4.
+
 Solve
 the
 constraints,
@@ -78,7 +90,9 @@ to
 produce
 test
 cases.
+
 5.
+
 Generate
 JUnit
 code
@@ -100,7 +114,9 @@ can
 check
 it
 correctness.
+
 6.
+
 Format
 the
 code
@@ -111,6 +127,7 @@ human-readable.
 ## What We've Done
 
 -
+
 From
 Soot
 Unit
@@ -125,7 +142,9 @@ paths
 of
 a
 method.
+
 -
+
 Extend
 P
 into
@@ -142,7 +161,9 @@ points
 to
 end
 points.
+
 -
+
 Collect
 constraints
 on

@@ -9,11 +9,14 @@ git
 commits.
 
 -
+
 c.
 Comments
 and
 notes.
+
 -
+
 p.
 Plus.
 A
@@ -21,7 +24,9 @@ new
 feature
 is
 added.
+
 -
+
 u.
 Unify.
 Duplicated
@@ -33,11 +38,15 @@ special
 case
 of
 refactor.
+
 -
+
 e.
 Extract
 something.
+
 -
+
 r.
 Refactor.
 Other
@@ -46,7 +55,9 @@ methods,
 such
 as
 renaming.
+
 -
+
 f.
 Fix
 a
@@ -57,6 +68,8 @@ part
 in
 previous
 commits.
+
 -
+
 d.
 Delete.

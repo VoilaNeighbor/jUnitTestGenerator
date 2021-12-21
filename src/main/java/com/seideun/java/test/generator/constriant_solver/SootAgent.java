@@ -1,4 +1,4 @@
-package com.seideun.java.test.generator.constraint_solver;
+package com.seideun.java.test.generator.constriant_solver;
 
 import soot.Scene;
 import soot.SootClass;
@@ -12,16 +12,17 @@ import soot.toolkits.graph.UnitGraph;
  */
 public class SootAgent {
 	private static final Scene sootScene;
-	private final SootClass classUnderAnalyses;
 
 	static {
 		final String rootClasspath =
-			System.getProperty("user.dir") + "/target/test-classes";
+			System.getProperty("user.dir") + "/target/classes";
 		Options sootConfigs = Options.v();
 		sootConfigs.set_prepend_classpath(true);
 		sootConfigs.set_soot_classpath(rootClasspath);
 		sootScene = Scene.v();
 	}
+
+	private final SootClass classUnderAnalyses;
 
 	public SootAgent(Class<?> theClass) {
 		classUnderAnalyses = sootScene.loadClassAndSupport(theClass.getName());

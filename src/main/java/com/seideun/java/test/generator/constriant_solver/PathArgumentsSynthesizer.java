@@ -22,10 +22,20 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("unchecked")
 public class PathArgumentsSynthesizer {
-	private final Context z3Context = new Context();
-	private final Map<JimpleLocal, Integer> timesLocalsAssigned = new HashMap<>();
-	private final List<BoolExpr> constraints = new ArrayList<>();
+	private Context z3Context;
+	private Map<JimpleLocal, Integer> timesLocalsAssigned;
+	private List<BoolExpr> constraints;
 	private List<Expr<?>> methodArgs;
+
+	public PathArgumentsSynthesizer() {
+		clear();
+	}
+
+	public void clear() {
+		z3Context = new Context();
+		timesLocalsAssigned = new HashMap<>();
+		constraints = new ArrayList<>();
+	}
 
 	public static List<List<Object>> synthesize(Collection<List<Unit>> paths) {
 		return paths.stream()
@@ -34,6 +44,16 @@ public class PathArgumentsSynthesizer {
 				x.store(path);
 				return x.synthesizeArguments().get();
 			}).collect(Collectors.toList());
+	}
+
+	private static Object makeRandom(Expr<?> variable) {
+		if (variable instanceof IntExpr) {
+			return 0;
+		} else if (variable instanceof RealExpr) {
+			return 0.0;
+		} else {
+			throw new TodoException(variable);
+		}
 	}
 
 	/**
@@ -78,16 +98,6 @@ public class PathArgumentsSynthesizer {
 			}
 		}
 		return Optional.of(result);
-	}
-
-	private static Object makeRandom(Expr<?> variable) {
-		if (variable instanceof IntExpr) {
-			return 0;
-		} else if (variable instanceof RealExpr) {
-			return 0.0;
-		} else {
-			throw new TodoException(variable);
-		}
 	}
 
 	private void collectArgs(List<Unit> path) {
@@ -138,7 +148,7 @@ public class PathArgumentsSynthesizer {
 			} else if (jimpleLocal.getType() == DoubleType.v()) {
 				return z3Context.mkRealConst(varName);
 			}
-			throw new TodoException();
+			throw new TodoException(jimpleLocal.getType());
 		} else if (jValue instanceof IntConstant) {
 			return z3Context.mkInt(((IntConstant) jValue).value);
 		} else if (jValue instanceof RealConstant) {

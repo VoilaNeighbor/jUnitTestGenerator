@@ -1,9 +1,9 @@
-package com.seideun.java.test.generator.constraint_solver;
+package com.seideun.java.test.generator;
 
 /**
  * Example methods for tests on control-flow-graph analyzers.
  */
-final class ExampleCfgCases {
+public class ExampleCfgCases {
 	public static int oneArg(int a) {
 		return a * 2;
 	}

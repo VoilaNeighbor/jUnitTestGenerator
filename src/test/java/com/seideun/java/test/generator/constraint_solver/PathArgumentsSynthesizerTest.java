@@ -178,7 +178,7 @@ class PathArgumentsSynthesizerTest extends PathArgumentsSynthesizer {
 	}
 
 	@Test
-	void canMakeRandomInputForUnboundedArguments() {
+	void canMakeRandomInputForUnboundedArguments() throws NoSuchMethodException {
 		JIdentityStmt arg = new JIdentityStmt(
 			new JimpleLocal("x", IntType.v()),
 			new ParameterRef(IntType.v(), 0)
@@ -187,6 +187,7 @@ class PathArgumentsSynthesizerTest extends PathArgumentsSynthesizer {
 		List<Unit> path = new ArrayList<>();
 		path.add(arg);
 		path.add(sink);
+
 		store(path);
 
 		List<Object> result = synthesizeArguments().get();
