@@ -1,5 +1,7 @@
 package com.seideun.java.test_generator;
 
+import soot.toolkits.graph.UnitGraph;
+
 import java.util.List;
 
 public class JUnitTestGenerator {
@@ -67,7 +69,7 @@ public class JUnitTestGenerator {
 	}
 
 	public String makeJUnitTest(Class<?> theClass, String methodName) {
-		ControlFlowGraph cfg = cfgMaker.makeCfgOfMethod(theClass, methodName);
+		UnitGraph cfg = cfgMaker.makeCfgOfMethod(theClass, methodName);
 		List<Path> paths = primePathFinder.findPrimePaths(cfg);
 		List<ArgumentList> arguments = solver.makeSatisfiableInput(paths);
 		List<TestDatum> testData = testDataAssembler.assemble(theClass, arguments);

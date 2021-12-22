@@ -1,5 +1,7 @@
 package com.seideun.java.test_generator;
 
+import soot.toolkits.graph.UnitGraph;
+
 interface ControlFlowGraphMaker {
-	ControlFlowGraph makeCfgOfMethod(Class<?> theClass, String methodName);
+	UnitGraph makeCfgOfMethod(Class<?> theClass, String methodName);
 }
