@@ -69,11 +69,11 @@ public class JUnitTestGenerator {
 	}
 
 	public String makeJUnitTest(Class<?> theClass, String methodName) {
-		UnitGraph cfg = cfgMaker.makeCfgOfMethod(theClass, methodName);
+		UnitGraph cfg = cfgMaker.makeControlFlowGraph(theClass, methodName);
 		List<Path> paths = primePathFinder.findPrimePaths(cfg);
 		List<ArgumentList> arguments = solver.makeSatisfiableInput(paths);
 		List<TestDatum> testData = testDataAssembler.assemble(theClass, arguments);
-		return jUnitAssembler.makeTestMethod(methodName, testData);
+		return jUnitAssembler.assembleTestMethod(methodName, testData);
 	}
 }
 
