@@ -1,10 +1,8 @@
 package com.seideun.java.test.generator.constriant_solver;
 
 import com.microsoft.z3.*;
-import soot.DoubleType;
-import soot.IntType;
-import soot.Unit;
-import soot.Value;
+import com.microsoft.z3.Context;
+import soot.*;
 import soot.jimple.DoubleConstant;
 import soot.jimple.IntConstant;
 import soot.jimple.ParameterRef;
@@ -22,7 +20,7 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("unchecked")
 public class PathArgumentsSynthesizer {
-	private Context z3Context;
+	protected Context z3Context;
 	private Map<JimpleLocal, Integer> timesLocalsAssigned;
 	private List<BoolExpr> constraints;
 	private List<Expr<?>> methodArgs;
@@ -46,14 +44,21 @@ public class PathArgumentsSynthesizer {
 			}).collect(Collectors.toList());
 	}
 
-	private static Object makeRandom(Expr<?> variable) {
+	private Object makeRandom(Expr<?> variable) {
 		if (variable instanceof IntExpr) {
 			return 0;
 		} else if (variable instanceof RealExpr) {
 			return 0.0;
-		} else {
+		} else if(variable instanceof ArrayExpr){
+			if(variable.getSort() == z3Context.mkCharSort())
+			return "aaa";
+			else if(variable.getSort() == z3Context.mkIntSort()){
+				return new int[]{1,2,4};
+			}
+		}else {
 			throw new TodoException(variable);
 		}
+		return new Object();
 	}
 
 	/**
@@ -101,12 +106,17 @@ public class PathArgumentsSynthesizer {
 	}
 
 	private void collectArgs(List<Unit> path) {
-		methodArgs = path.stream()
-			.filter(JIdentityStmt.class::isInstance)
-			.map(JIdentityStmt.class::cast)
-			.filter(x -> x.getRightOp() instanceof ParameterRef)
-			.map(x -> convertJValueToZ3Expr(x.getLeftOp()))
-			.collect(Collectors.toList());
+		List<Expr<?>> list = new ArrayList<>();
+		for (Unit unit : path) {
+			if (unit instanceof JIdentityStmt) {
+				JIdentityStmt x = (JIdentityStmt) unit;
+				if (x.getRightOp() instanceof ParameterRef) {
+					Expr<?> expr = convertJValueToZ3Expr(x.getLeftOp());
+					list.add(expr);
+				}
+			}
+		}
+		methodArgs = list;
 	}
 
 	private void collectConstraints(List<Unit> path) {
@@ -147,6 +157,12 @@ public class PathArgumentsSynthesizer {
 				return z3Context.mkIntConst(varName);
 			} else if (jimpleLocal.getType() == DoubleType.v()) {
 				return z3Context.mkRealConst(varName);
+			} else if(jimpleLocal.getType() == ArrayType.v(IntType.v(),1)){
+			   Expr<?> a = z3Context.mkArrayConst(varName, z3Context.mkIntSort(), z3Context.mkIntSort());
+			   return a;
+			}else if(jimpleLocal.getType() == RefType.v("java.lang.String")){
+				Expr<?> a = z3Context.mkArrayConst(varName, z3Context.mkIntSort(), z3Context.mkCharSort());
+				return a;
 			}
 			throw new TodoException(jimpleLocal.getType());
 		} else if (jValue instanceof IntConstant) {

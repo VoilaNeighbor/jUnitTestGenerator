@@ -31,10 +31,8 @@ public class Path {
 		this.myPrimePath = myPrimePath;
 		this.oneCompletePath = findOneCompletePath(ug, myPrimePath);
 		this.completePathConstraint = calPathConstraint(oneCompletePath, ug);
-		//findValueList(ug);
 	}
 
-	//todo：找到路径上的constraint
 	public String calPathConstraint(List<Unit> path, UnitGraph ug) {
 		List<Local> jVars = getJVars(ug.getBody());
 

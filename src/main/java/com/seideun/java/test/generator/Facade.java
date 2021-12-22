@@ -36,7 +36,9 @@ public class Facade {
 		// Needs rework.
 		try {
 			List<TestCase> testCases = new ArrayList<>();
+			//生产控制流图
 			UnitGraph controlFlowGraph = sootAgent.makeControlFlowGraph(methodName);
+
 			for (List<Unit> path: findPrimePaths(controlFlowGraph)) {
 				pathArgumentsSynthesizer.store(path);
 				Optional<List<Object>> synthesizeResult =
@@ -47,11 +49,12 @@ public class Facade {
 				List<Object> arguments = synthesizeResult.get();
 				Class<?>[] argumentClasses = new Class<?>[arguments.size()];
 				for (int i = 0; i != arguments.size(); ++i) {
-					// argumentClasses[i] = arguments.get(i).getClass();
-					argumentClasses[i] = int.class;
+					 argumentClasses[i] = arguments.get(i).getClass();
+					//argumentClasses[i] = int.class;
 				}
+				//得到预期结果
 				Object expectedOutput = theClass.getMethod(methodName, argumentClasses)
-					.invoke(null, (int)arguments.get(0));
+					.invoke(null, arguments.get(0));
 				testCases.add(new TestCase(arguments, expectedOutput));
 			}
 			return jUnitTestGenerator.generateAssertForEachCase(testCases);
@@ -67,13 +70,13 @@ public class Facade {
 			new PathArgumentsSynthesizer();
 		JUnitTestGenerator jUnitTestGenerator = new JUnitTestGenerator(
 			ExampleCfgCases.class.getSimpleName().toLowerCase(Locale.ROOT),
-			"jumpBackToLoopEntrance"
+			"StringTest"
 		);
 		Facade facade = new Facade(
 			sootAgent,
 			argumentsSynthesizer,
 			jUnitTestGenerator
 		);
-		System.out.println(facade.makeTest(ExampleCfgCases.class, "jumpBackToLoopEntrance"));
+		System.out.println(facade.makeTest(ExampleCfgCases.class, "StringTest"));
 	}
 }
