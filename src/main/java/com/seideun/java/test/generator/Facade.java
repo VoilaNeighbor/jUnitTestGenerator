@@ -1,5 +1,7 @@
 package com.seideun.java.test.generator;
 
+import com.seideun.java.test.generator.CFG_analyzer.Path;
+import com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer;
 import com.seideun.java.test.generator.constriant_solver.JUnitTestGenerator;
 import com.seideun.java.test.generator.constriant_solver.PathArgumentsSynthesizer;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
@@ -38,9 +40,10 @@ public class Facade {
 			List<TestCase> testCases = new ArrayList<>();
 			//生产控制流图
 			UnitGraph controlFlowGraph = sootAgent.makeControlFlowGraph(methodName);
-
-			for (List<Unit> path: findPrimePaths(controlFlowGraph)) {
-				pathArgumentsSynthesizer.store(path);
+			List<List<Unit>>  primePath = findPrimePaths(controlFlowGraph);
+			List<Path> completePath = SootCFGAnalyzer.findCompleteTest(primePath,controlFlowGraph);
+			for (Path path: completePath) {
+				pathArgumentsSynthesizer.store(path.oneCompletePath);
 				Optional<List<Object>> synthesizeResult =
 					pathArgumentsSynthesizer.synthesizeArguments();
 				if (!synthesizeResult.isPresent()) {
@@ -70,13 +73,13 @@ public class Facade {
 			new PathArgumentsSynthesizer();
 		JUnitTestGenerator jUnitTestGenerator = new JUnitTestGenerator(
 			ExampleCfgCases.class.getSimpleName().toLowerCase(Locale.ROOT),
-			"StringTest"
+			"arrayTest"
 		);
 		Facade facade = new Facade(
 			sootAgent,
 			argumentsSynthesizer,
 			jUnitTestGenerator
 		);
-		System.out.println(facade.makeTest(ExampleCfgCases.class, "StringTest"));
+		System.out.println(facade.makeTest(ExampleCfgCases.class, "arrayTest"));
 	}
 }

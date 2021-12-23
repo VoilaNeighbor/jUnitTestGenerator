@@ -3,7 +3,6 @@ package com.seideun.java.test.generator;
 import com.seideun.java.test.generator.CFG_analyzer.Path;
 import com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer;
 import com.seideun.java.test.generator.CFG_generator.SootCFG;
-import com.seideun.java.test.generator.constriant_solver.Z3Solver;
 import soot.Unit;
 import soot.toolkits.graph.UnitGraph;
 
@@ -18,7 +17,7 @@ public class mainController {
 			"target" +
 			File.separator + "test-classes";
 		String clsName = "cut.LogicStructure";
-		String methodName = "multipleIf";
+		String methodName = "arrayTest";
 
 		UnitGraph ug = SootCFG.getMethodCFG(clspath, clsName, methodName);
 
@@ -44,15 +43,7 @@ public class mainController {
 		}
 
 		//求解
-		List<Object> testValue = new ArrayList<>();
-		for (Path s: completeTestPath) {
-			try {
-				System.out.println(
-					"ans:" + Z3Solver.solve(s.completePathConstraint, testValue) +
-						" expect: " + s.expectResult + " valueList: " + s.valueList);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+
 	}
+
 }

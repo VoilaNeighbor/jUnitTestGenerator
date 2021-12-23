@@ -45,8 +45,8 @@ public class ExampleCfgCases {
 			return a - b;
 		}
 	}
-	public int arrayTest(int[] a){
-		if(a.length != 0){
+	public static int arrayTest(int[] a){
+		if(a.length > 4){
 			return a[0];
 		}
 		return 1;
