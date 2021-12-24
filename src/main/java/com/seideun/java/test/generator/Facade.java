@@ -1,5 +1,7 @@
 package com.seideun.java.test.generator;
 
+import com.seideun.java.test.generator.CFG_analyzer.Path;
+import com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer;
 import com.seideun.java.test.generator.constriant_solver.JUnitTestGenerator;
 import com.seideun.java.test.generator.constriant_solver.PathArgumentsSynthesizer;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
@@ -36,9 +38,12 @@ public class Facade {
 		// Needs rework.
 		try {
 			List<TestCase> testCases = new ArrayList<>();
+			//生产控制流图
 			UnitGraph controlFlowGraph = sootAgent.makeControlFlowGraph(methodName);
-			for (List<Unit> path: findPrimePaths(controlFlowGraph)) {
-				pathArgumentsSynthesizer.store(path);
+			List<List<Unit>>  primePath = findPrimePaths(controlFlowGraph);
+			List<Path> completePath = SootCFGAnalyzer.findCompleteTest(primePath,controlFlowGraph);
+			for (Path path: completePath) {
+				pathArgumentsSynthesizer.store(path.oneCompletePath);
 				Optional<List<Object>> synthesizeResult =
 					pathArgumentsSynthesizer.synthesizeArguments();
 				if (!synthesizeResult.isPresent()) {
@@ -47,11 +52,12 @@ public class Facade {
 				List<Object> arguments = synthesizeResult.get();
 				Class<?>[] argumentClasses = new Class<?>[arguments.size()];
 				for (int i = 0; i != arguments.size(); ++i) {
-					// argumentClasses[i] = arguments.get(i).getClass();
-					argumentClasses[i] = int.class;
+					 argumentClasses[i] = arguments.get(i).getClass();
+					//argumentClasses[i] = int.class;
 				}
+				//得到预期结果
 				Object expectedOutput = theClass.getMethod(methodName, argumentClasses)
-					.invoke(null, (int)arguments.get(0));
+					.invoke(null, arguments.get(0));
 				testCases.add(new TestCase(arguments, expectedOutput));
 			}
 			return jUnitTestGenerator.generateAssertForEachCase(testCases);
@@ -67,13 +73,13 @@ public class Facade {
 			new PathArgumentsSynthesizer();
 		JUnitTestGenerator jUnitTestGenerator = new JUnitTestGenerator(
 			ExampleCfgCases.class.getSimpleName().toLowerCase(Locale.ROOT),
-			"jumpBackToLoopEntrance"
+			"arrayTest"
 		);
 		Facade facade = new Facade(
 			sootAgent,
 			argumentsSynthesizer,
 			jUnitTestGenerator
 		);
-		System.out.println(facade.makeTest(ExampleCfgCases.class, "jumpBackToLoopEntrance"));
+		System.out.println(facade.makeTest(ExampleCfgCases.class, "arrayTest"));
 	}
 }

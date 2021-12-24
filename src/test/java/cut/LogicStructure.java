@@ -1,5 +1,8 @@
 package cut;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LogicStructure {
 
 	public int sequence(int a, int b) {
@@ -69,18 +72,44 @@ public class LogicStructure {
 		}
 		return n;
 	}
-
-	public int myfor(int op) {
+	public int for2(int op) {
 		int n = 1;
-		for (int i = 0; i < op; i++) {
-			n = n * 2;
+		for(int i = 0;i < 3;i++){
+			n = n * op;
 		}
 		return n;
 	}
+
+	public int myfor(int a,int b) {
+		int result = 0;
+		for (int i = 0; i <= b; ++i) {
+			result += i;
+		}
+		if (result < 5) {
+			for (int i = 0; i <= a; ++i) {
+				result += 1;
+			}
+		}
+		return result;
+	}
+	public List<Integer> Arraryfor2(int op) {
+		List<Integer>  a = new ArrayList<>();
+		for (int i = 0; i < op; i++) {
+			a.add(i);
+		}
+		return a;
+	}
+
 
 	public class Foo {
 		int bar(int n) {
 			return n + 13;
 		}
+	}
+	public int arrayTest(int[] a){
+		if(a.length != 0){
+			return a[0];
+		}
+		return 1;
 	}
 }
