@@ -12,19 +12,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class NewConstraintSolverTest {
 	NewConstraintSolver solver = new NewConstraintSolver();
 
-	// Input locals are of type JParameterRef in Soot.
 	@Test
 	void findAllInputSymbols() {
 		var exampleGraph = exampleCfg("twoArgs");
-		var aSimplePath = new ArrayList<>(findPrimePaths(exampleGraph).get(0));
-		var expected = new ArrayList<>() {{
-			var units = exampleGraph.getBody().getUnits().stream().toList();
-			add(((AbstractDefinitionStmt) units.get(0)).getLeftOp());
-			add(((AbstractDefinitionStmt) units.get(1)).getLeftOp());
-		}};
+		var thePath = new ArrayList<>(findPrimePaths(exampleGraph).get(0));
+		var inputSymbols = new ArrayList<>();
+		var units = exampleGraph.getBody().getUnits().stream().toList();
+		inputSymbols.add(((AbstractDefinitionStmt) units.get(0)).getLeftOp());
+		inputSymbols.add(((AbstractDefinitionStmt) units.get(1)).getLeftOp());
 
-		var result = solver.findAllInputSymbols(aSimplePath);
+		var result = solver.findAllInputSymbols(thePath);
 
-		assertEquals(expected, result);
+		assertEquals(inputSymbols, result);
 	}
 }
