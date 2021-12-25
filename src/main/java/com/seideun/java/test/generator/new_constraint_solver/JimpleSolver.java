@@ -60,7 +60,7 @@ public class JimpleSolver {
 			var constraint = switch (path.get(i)) {
 				case JIfStmt x -> {
 					var c = x.getCondition();
-					yield path.get(i + 1) instanceof JGotoStmt ? new JNegExpr(c) : c;
+					yield path.get(i + 1) == x.getTarget() ? new JInvertCondition(c) : c;
 				}
 				case JAssignStmt x -> x;
 				default -> null;
@@ -108,7 +108,7 @@ public class JimpleSolver {
 		JimpleLocal symbol, List<Value> relatedConstraints
 	) {
 		var solver = z3.mkSolver();
-		var status = solver.check(z3.add(relatedConstraints));
+		var status = solver.check(z3.add((List)relatedConstraints));
 		if (status == Status.SATISFIABLE) {
 			var value = findConcreteValueOf(z3.add(symbol), solver.getModel());
 			return Pair.of(value, status);
@@ -119,7 +119,7 @@ public class JimpleSolver {
 
 	// Todo(Seideun): Untested
 	public Pair<List<Object>, Status> findConcreteValueOf(
-		List<JimpleLocal> symbols, List<Value> relatedConstraints
+		List<JimpleLocal> symbols, List<Switchable> relatedConstraints
 	) {
 		var solver = z3.mkSolver();
 		var status = solver.check(z3.add(relatedConstraints));

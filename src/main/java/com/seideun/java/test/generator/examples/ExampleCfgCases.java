@@ -50,6 +50,14 @@ public class ExampleCfgCases {
 		}
 	}
 
+	public static int boolNegate(int a, int b) {
+		if (!(a < 3) && !(b * a > 1)) {
+			return a + b;
+		} else {
+			return a - b;
+		}
+	}
+
 	public static int array(int[] a){
 		if(a.length > 4){
 			return a[0];

@@ -9,6 +9,6 @@ import static com.seideun.java.test.generator.constriant_solver.SootAgent.exampl
 class SeeJimple {
 	@Test
 	void see( ){
-		var ug = exampleCfg("twoBranches");
+		var ug = exampleCfg("boolNegate");
 	}
 }

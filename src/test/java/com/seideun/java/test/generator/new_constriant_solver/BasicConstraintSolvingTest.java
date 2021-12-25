@@ -2,10 +2,8 @@ package com.seideun.java.test.generator.new_constriant_solver;
 
 import com.microsoft.z3.Status;
 import org.junit.jupiter.api.Test;
-import soot.DoubleType;
 import soot.IntType;
 import soot.Unit;
-import soot.jimple.DoubleConstant;
 import soot.jimple.IntConstant;
 import soot.jimple.internal.*;
 import soot.toolkits.graph.UnitGraph;
@@ -59,7 +57,10 @@ class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 		var constraint1 = new JGeExpr(symbol, IntConstant.v(-10));
 		var constraint2 = new JLtExpr(symbol, IntConstant.v(-5));
 
-		var result = solver.findConcreteValueOf(symbol, List.of(constraint1, constraint2));
+		var result = solver.findConcreteValueOf(
+			symbol,
+			List.of(constraint1, constraint2)
+		);
 
 		assertEquals(Status.SATISFIABLE, result.getRight());
 		assertTrue((int) result.getLeft() >= -10);
@@ -68,40 +69,53 @@ class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 
 	@Test
 	void findConstraints() {
+		// I'm being lazy here. Logic included:
+		// 1. JIfStmt extract conditions, and negate if do not jump.
+		// 2. JAssignStmt reserved.
 		var ug = exampleCfg("twoBranches");
 		var paths = findPrimePaths(ug);
-		var constraints = solver.findConstraints(paths.get(0));
-		assertEquals("[i0 >= 1, $b1 = 9]", constraints.toString());
+		var constraints = paths.stream().map(solver::findConstraints).toList();
+		assertEquals(
+			"[[i0 >= 1, $b1 = 9], [i0 !( >= ) 1, $b1 = 6]]",
+			constraints.toString()
+		);
 	}
 
-//	@Test
-//	void solveCompleteCase() {
-//		var ug = exampleCfg("equalComparison");
-//		var paths = findPrimePaths(ug);
-//		for (List<Unit> path: paths) {
-//			var inputs = solver.findInputSymbols(path);
-//			var values = solver.findConcreteValueOf(inputs, path);
-//		}
-//	}
+	@Test
+	void solveCompleteCase() {
+		var ug = exampleCfg("equalComparison");
+		var paths = findPrimePaths(ug);
+		for (List<Unit> path: paths) {
+			var inputs = solver.findInputSymbols(path);
+			var constraints = solver.findConstraints(path);
+			var result = solver.findConcreteValueOf(inputs, constraints);
+			System.out.printf("<path>%s<path>\n", path);
+			System.out.printf("<inputSymbols>%s<inputSymbols>\n", inputs);
+			System.out.printf("<constraints>%s<constraints>\n", constraints);
+			System.out.printf("<result>%s<result>\n", result);
+		}
+	}
 
-//	@Test
-//	void solveTwoSymbols() {
-//		var x = new JimpleLocal("x", DoubleType.v());
-//		var y = new JimpleLocal("y", DoubleType.v());
-//		var z = new JimpleLocal("z", DoubleType.v());
-//		var constraint1 = new JGeExpr(x, DoubleConstant.v(2.2));
-//		var constraint2 = new JLtExpr(x, DoubleConstant.v(-1.3));
-//		var constraint3 = new JAssignStmt(z, new JAddExpr(y, DoubleConstant.v(9.1)));
-//		var constraint4 = new JEqExpr(x, z);
-//
-//		var result = solver.findConcreteValueOf(List.of(x, y), List.of(constraint1, constraint2, constraint3));
-//		var xValue = (double) result.getLeft().get(0);
-//		var yValue = (double) result.getLeft().get(1);
-//
-//		assertTrue(xValue >= 2.2);
-//		assertTrue(yValue <= -1.3);
-//		assertEquals(xValue, yValue + 9.1, 0.00001);
-//	}
+	//	@Test
+	//	void solveTwoSymbols() {
+	//		var x = new JimpleLocal("x", DoubleType.v());
+	//		var y = new JimpleLocal("y", DoubleType.v());
+	//		var z = new JimpleLocal("z", DoubleType.v());
+	//		var constraint1 = new JGeExpr(x, DoubleConstant.v(2.2));
+	//		var constraint2 = new JLtExpr(x, DoubleConstant.v(-1.3));
+	//		var constraint3 = new JAssignStmt(z, new JAddExpr(y, DoubleConstant.v(9
+	//		.1)));
+	//		var constraint4 = new JEqExpr(x, z);
+	//
+	//		var result = solver.findConcreteValueOf(List.of(x, y), List.of
+	//		(constraint1, constraint2, constraint3));
+	//		var xValue = (double) result.getLeft().get(0);
+	//		var yValue = (double) result.getLeft().get(1);
+	//
+	//		assertTrue(xValue >= 2.2);
+	//		assertTrue(yValue <= -1.3);
+	//		assertEquals(xValue, yValue + 9.1, 0.00001);
+	//	}
 
 	@Test
 	void reportUnsatisfiableConstraints() {
