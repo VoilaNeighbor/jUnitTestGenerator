@@ -286,18 +286,12 @@ public class Path {
 		String endValue = end.toString().replace("return", "").trim();
 		for (Unit s: oneCompletePath) {
 			if (s instanceof JAssignStmt) {
-				String temp1 = s.toString();
-				Object temp = ((JAssignStmt) s).leftBox.getValue();
-				Object temp2 = ((JAssignStmt) s).rightBox.getValue();
-				// System.out.println(temp2);
-				valueList.add(temp1);
+				valueList.add(s.toString());
 			}
 		}
 
 		LinkedHashMap<String, String> endSet = assignMap.get(endValue);
 		Entry<String, String> lastValue = getTail(endSet);
 		expectResult = lastValue.getValue();
-
-
 	}
 }

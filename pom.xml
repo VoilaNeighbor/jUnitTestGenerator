@@ -9,11 +9,22 @@
 	<version>1.0-SNAPSHOT</version>
 
 	<properties>
-		<maven.compiler.source>8</maven.compiler.source>
-		<maven.compiler.target>8</maven.compiler.target>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.soot-oss</groupId>
+			<artifactId>soot</artifactId>
+			<version>4.3.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.22</version>
+			<scope>provided</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
@@ -22,22 +33,18 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.16.0</version>
-		</dependency><dependency>
-		<groupId>net.openhft</groupId>
-		<artifactId>compiler</artifactId>
-		<version>2.21ea80</version>
-	</dependency>
+			<version>2.17.0</version>
+		</dependency>
+		<dependency>
+			<groupId>net.openhft</groupId>
+			<artifactId>compiler</artifactId>
+			<version>2.21ea80</version>
+		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
 			<version>5.8.2</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.soot-oss</groupId>
-			<artifactId>soot</artifactId>
-			<version>4.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.platform</groupId>
@@ -73,4 +80,13 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	<repositories>
+		<repository>
+			<id>sonatype-snapshots</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+		</repository>
+	</repositories>
 </project>
