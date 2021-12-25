@@ -6,8 +6,7 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import soot.Unit;
 import soot.Value;
-import soot.jimple.internal.JIdentityStmt;
-import soot.jimple.internal.JimpleLocal;
+import soot.jimple.internal.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +45,30 @@ public class JimpleSolver {
 			.filter(x -> x instanceof JIdentityStmt)
 			.map(x -> ((JimpleLocal) ((JIdentityStmt) x).getLeftOp()))
 			.toList();
+	}
+
+	/**
+	 * Traverse the path and extract constraints.
+	 * <p>
+	 * This is put here temporarily. I don't think the solver should take the
+	 * responsibility of finding constraints.
+	 */
+	public List<Value> findConstraints(List<Unit> path) {
+		var result = new ArrayList<Value>();
+		for (int i = 0, iEnd = path.size(); i != iEnd; ++i) {
+			var constraint = switch (path.get(i)) {
+				case JIfStmt x -> {
+					var c = x.getCondition();
+					yield path.get(i + 1) instanceof JGotoStmt ? new JNegExpr(c) : c;
+				}
+				case JAssignStmt x -> new JEqExpr(x.getLeftOp(), x.getRightOp());
+				default -> null;
+			};
+			if (constraint != null) {
+				result.add(constraint);
+			}
+		}
+		return result;
 	}
 
 	public List<Object> solveSymbols(
@@ -100,7 +123,8 @@ public class JimpleSolver {
 		var solver = z3.mkSolver();
 		var status = solver.check(z3.add(relatedConstraints));
 		if (status == Status.SATISFIABLE) {
-			var concreteValues = symbols.stream().sequential()
+			var concreteValues = symbols.stream()
+				.sequential()
 				.map(s -> findConcreteValueOf(z3.add(s), solver.getModel()))
 				.toList();
 			return Pair.of(concreteValues, status);

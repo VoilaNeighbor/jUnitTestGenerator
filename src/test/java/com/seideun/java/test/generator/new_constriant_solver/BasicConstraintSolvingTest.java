@@ -68,7 +68,10 @@ class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 
 	@Test
 	void findConstraints() {
-
+		var ug = exampleCfg("twoBranches");
+		var paths = findPrimePaths(ug);
+		var constraints = solver.findConstraints(paths.get(0));
+		assertEquals("[i0 >= 1, $b1 == 9]", constraints.toString());
 	}
 
 //	@Test
