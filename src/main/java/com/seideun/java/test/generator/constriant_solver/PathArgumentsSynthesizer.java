@@ -103,13 +103,14 @@ public class PathArgumentsSynthesizer {
 		for (Expr<?> arg: methodArgs) {
 			Expr<?> value = model.eval(arg, false);
 			if (listValue.get(arg) != null) {
-				int[] a;
 				Value name = listValue.get(arg);
 				if (listLengthTable.containsKey(name)) {
-					IntExpr lenValue = (IntExpr) model.eval(listLengthTable.get(name),
-						false);
+					IntExpr lenValue = (IntExpr) model.eval(
+						listLengthTable.get(name),
+						false
+					);
 					int len = ((IntNum) (lenValue)).getInt();
-					a = new int[len];
+					var a = new int[len];
 					HashMap<Integer, Expr<?>> listExp = listMember.get(name);
 					Set<Integer> keySet = listExp.keySet();
 					for (Integer index: keySet) {
@@ -124,7 +125,7 @@ public class PathArgumentsSynthesizer {
 						HashMap<Integer, Expr<?>> listExp = listMember.get(name);
 						Set<Integer> keySet = listExp.keySet();
 						int len = Collections.max(keySet);
-						a = new int[len + 1];
+						var a = new int[len + 1];
 						for (Integer index: keySet) {
 							Expr<?> temp = listExp.get(index);
 							temp = model.eval(temp, false);

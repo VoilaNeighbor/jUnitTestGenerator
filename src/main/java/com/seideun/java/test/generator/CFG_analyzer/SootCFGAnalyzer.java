@@ -11,8 +11,8 @@ import java.util.List;
 
 public class SootCFGAnalyzer {
 
-//    private UnitGraph ug; //zoot控制流图
-//    private Body body; //一个函数里面的变量
+	//    private UnitGraph ug; //zoot控制流图
+	//    private Body body; //一个函数里面的变量
 
 	public static List<List<Unit>> findPrimePaths(UnitGraph ug) {
 		List<List<Unit>> simplePathSet = new ArrayList<>();
@@ -26,7 +26,7 @@ public class SootCFGAnalyzer {
 			simplePathSet.add(temp);
 		}
 
-		List<List<Unit>> extendPathSet  = new ArrayList<>(simplePathSet);
+		List<List<Unit>> extendPathSet = new ArrayList<>(simplePathSet);
 		while (!extendPathSet.isEmpty()) {
 			List<Unit> p = extendPathSet.get(0);
 			//判断p中是否有return语句
@@ -83,6 +83,7 @@ public class SootCFGAnalyzer {
 		}
 		List<List<Unit>> pathNeedRemove = new ArrayList<>();
 		//对primePathSet去重
+		// Note(Seideun): Logic here is a bit strange?
 		for (int i = 0; i < simplePathSet.size(); i++) {
 			List<Unit> patha = simplePathSet.get(i);
 			for (int j = i + 1; j < simplePathSet.size(); j++) {
@@ -90,28 +91,34 @@ public class SootCFGAnalyzer {
 					continue;
 				}
 				List<Unit> pathb = simplePathSet.get(j);
+				if (!hasSameArr(patha, pathb)) {
+					continue;
+				}
+
+				List<Unit> lhs;
+				List<Unit> rhs;
 				if (pathb.size() > patha.size()) {
-					if (hasSameArr(patha, pathb)) {
-						boolean c = pathNeedRemove.contains(patha);
-						if (!c) {
-							pathNeedRemove.add(patha);
-						}
-					}
+					lhs = patha;
+					rhs = pathb;
 				} else {
-					if (hasSameArr(pathb, patha)) {
-						boolean c = pathNeedRemove.contains(pathb);
-						if (!c) {
-							pathNeedRemove.add(pathb);
-						}
-					}
+					lhs = pathb;
+					rhs = patha;
+				}
+
+				if (hasSameArr(lhs, rhs) && !pathNeedRemove.contains(lhs)) {
+					pathNeedRemove.add(lhs);
 				}
 			}
 		}
 		for (List<Unit> p: pathNeedRemove) {
 			simplePathSet.remove(p);
 		}
-		int i = 1;
+		//printPaths(simplePathSet);
+		return simplePathSet;
+	}
 
+	private static void printPaths(List<List<Unit>> simplePathSet) {
+		int i = 1;
 		for (List<Unit> p: simplePathSet) {
 			System.out.println("num: " + i + " one prime path is: ");
 			for (Unit s: p) {
@@ -120,8 +127,6 @@ public class SootCFGAnalyzer {
 			i++;
 			System.out.println(" ");
 		}
-		return simplePathSet;
-
 	}
 
 	public static boolean hasSameArr(List<Unit> patha, List<Unit> pathb) {
@@ -148,6 +153,7 @@ public class SootCFGAnalyzer {
 
 		return false;
 	}
+
 	public static List<Path> findCompleteTest(
 		List<List<Unit>> primePath,
 		UnitGraph ug

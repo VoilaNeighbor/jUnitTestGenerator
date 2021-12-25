@@ -43,10 +43,11 @@ public class Facade {
 			List<List<Unit>>  primePath = findPrimePaths(controlFlowGraph);
 			List<Path> completePath = SootCFGAnalyzer.findCompleteTest(primePath,controlFlowGraph);
 			for (Path path: completePath) {
+				pathArgumentsSynthesizer.clear();
 				pathArgumentsSynthesizer.store(path.oneCompletePath);
 				Optional<List<Object>> synthesizeResult =
 					pathArgumentsSynthesizer.synthesizeArguments();
-				if (!synthesizeResult.isPresent()) {
+				if (synthesizeResult.isEmpty()) {
 					continue;
 				}
 				List<Object> arguments = synthesizeResult.get();

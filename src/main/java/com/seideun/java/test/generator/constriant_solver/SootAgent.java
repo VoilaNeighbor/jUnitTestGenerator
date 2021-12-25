@@ -1,5 +1,6 @@
 package com.seideun.java.test.generator.constriant_solver;
 
+import com.seideun.java.test.generator.ExampleCfgCases;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
@@ -33,5 +34,11 @@ public class SootAgent {
 	public UnitGraph makeControlFlowGraph(String methodName) {
 		SootMethod method = classUnderAnalyses.getMethodByName(methodName);
 		return new ExceptionalUnitGraph(method.retrieveActiveBody());
+	}
+
+	private static final SootAgent exampleCfgInstance =
+		new SootAgent(ExampleCfgCases.class);
+	public static UnitGraph exampleCfg(String methodName) {
+		return exampleCfgInstance.makeControlFlowGraph(methodName);
 	}
 }
