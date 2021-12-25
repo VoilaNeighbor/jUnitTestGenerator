@@ -7,6 +7,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.internal.*;
+import soot.util.Switchable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,15 +54,15 @@ public class JimpleSolver {
 	 * This is put here temporarily. I don't think the solver should take the
 	 * responsibility of finding constraints.
 	 */
-	public List<Value> findConstraints(List<Unit> path) {
-		var result = new ArrayList<Value>();
+	public List<Switchable> findConstraints(List<Unit> path) {
+		var result = new ArrayList<Switchable>();
 		for (int i = 0, iEnd = path.size(); i != iEnd; ++i) {
 			var constraint = switch (path.get(i)) {
 				case JIfStmt x -> {
 					var c = x.getCondition();
 					yield path.get(i + 1) instanceof JGotoStmt ? new JNegExpr(c) : c;
 				}
-				case JAssignStmt x -> new JEqExpr(x.getLeftOp(), x.getRightOp());
+				case JAssignStmt x -> x;
 				default -> null;
 			};
 			if (constraint != null) {
