@@ -31,6 +31,10 @@ public class ExampleCfgCases {
 		return a < 1 ? 9 : 6;
 	}
 
+	public static double equalComparison(int a, double b) {
+		return a == 1 ? (b * 2.2) : (b - 3.3);
+	}
+
 	public static int jumpBackToLoopEntrance(int a) {
 		while (a < 20) {
 			a *= 2;
@@ -45,7 +49,8 @@ public class ExampleCfgCases {
 			return a - b;
 		}
 	}
-	public static int arrayTest(int[] a){
+
+	public static int array(int[] a){
 		if(a.length > 4){
 			return a[0];
 		}

@@ -93,6 +93,22 @@ public class JimpleSolver {
 		}
 	}
 
+	// Todo(Seideun): Untested
+	public Pair<List<Object>, Status> findConcreteValueOf(
+		List<JimpleLocal> symbols, List<Value> relatedConstraints
+	) {
+		var solver = z3.mkSolver();
+		var status = solver.check(z3.add(relatedConstraints));
+		if (status == Status.SATISFIABLE) {
+			var concreteValues = symbols.stream().sequential()
+				.map(s -> findConcreteValueOf(z3.add(s), solver.getModel()))
+				.toList();
+			return Pair.of(concreteValues, status);
+		} else {
+			return Pair.of(null, status);
+		}
+	}
+
 	private static Object findConcreteValueOf(Expr z3Symbol, Model z3Model) {
 		// More on the 2nd bool parameter in `z3Model.eval`:
 		// https://z3prover.github.io/api/html/group__capi.html#gadb6ff55c26f5ef5607774514ee184957
