@@ -16,7 +16,6 @@ public class SootCFGAnalyzer {
 
 	public static List<List<Unit>> findPrimePaths(UnitGraph ug) {
 		List<List<Unit>> simplePathSet = new ArrayList<>();
-		List<List<Unit>> extendPathSet = new ArrayList<>();
 
 		//初始化simplePathSet = N(长度为0的集合)
 
@@ -27,7 +26,7 @@ public class SootCFGAnalyzer {
 			simplePathSet.add(temp);
 		}
 
-		extendPathSet = new ArrayList<>(simplePathSet);
+		List<List<Unit>> extendPathSet  = new ArrayList<>(simplePathSet);
 		while (!extendPathSet.isEmpty()) {
 			List<Unit> p = extendPathSet.get(0);
 			//判断p中是否有return语句

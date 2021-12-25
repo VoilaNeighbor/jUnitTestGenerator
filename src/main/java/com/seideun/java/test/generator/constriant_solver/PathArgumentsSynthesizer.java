@@ -1,7 +1,7 @@
 package com.seideun.java.test.generator.constriant_solver;
 
-import com.microsoft.z3.*;
 import com.microsoft.z3.Context;
+import com.microsoft.z3.*;
 import soot.*;
 import soot.jimple.DoubleConstant;
 import soot.jimple.IntConstant;
@@ -24,10 +24,10 @@ public class PathArgumentsSynthesizer {
 	private Map<JimpleLocal, Integer> timesLocalsAssigned;
 	private List<BoolExpr> constraints;
 	private List<Expr<?>> methodArgs;
-	private HashMap<Expr<?>,Value> listValue;
+	private HashMap<Expr<?>, Value> listValue;
 	private List<Expr<?>> listArgs;
-	private HashMap<Value,Expr<?>> listLengthTable;
-	private HashMap<Value,HashMap<Integer,Expr<?>>> listMember;
+	private HashMap<Value, Expr<?>> listLengthTable;
+	private HashMap<Value, HashMap<Integer, Expr<?>>> listMember;
 
 	public PathArgumentsSynthesizer() {
 		clear();
@@ -57,14 +57,14 @@ public class PathArgumentsSynthesizer {
 			return 0;
 		} else if (variable instanceof RealExpr) {
 			return 0.0;
-		} else if(variable instanceof ArrayExpr){
-//			if(variable.getSort() == z3Context.mkCharSort())
-//			return "aaa";
-//			else if(variable.getSort() == z3Context.mkIntSort()){
-//				return new int[]{1,2,4};
-//			}
-			return new int[]{1,2,4};
-		}else {
+		} else if (variable instanceof ArrayExpr) {
+			//			if(variable.getSort() == z3Context.mkCharSort())
+			//			return "aaa";
+			//			else if(variable.getSort() == z3Context.mkIntSort()){
+			//				return new int[]{1,2,4};
+			//			}
+			return new int[]{ 1, 2, 4 };
+		} else {
 			throw new TodoException(variable);
 		}
 
@@ -102,40 +102,45 @@ public class PathArgumentsSynthesizer {
 
 		for (Expr<?> arg: methodArgs) {
 			Expr<?> value = model.eval(arg, false);
-			if(listValue.get(arg)!=null){
+			if (listValue.get(arg) != null) {
 				int[] a;
 				Value name = listValue.get(arg);
-                if(listLengthTable.containsKey(name)){
-					IntExpr lenValue = (IntExpr) model.eval(listLengthTable.get(name),false);
+				if (listLengthTable.containsKey(name)) {
+					IntExpr lenValue = (IntExpr) model.eval(listLengthTable.get(name),
+						false);
 					int len = ((IntNum) (lenValue)).getInt();
 					a = new int[len];
-					HashMap<Integer,Expr<?>> listExp = listMember.get(name);
-					Set<Integer> keySet =listExp.keySet();
-					for(Integer index:keySet){
+					HashMap<Integer, Expr<?>> listExp = listMember.get(name);
+					Set<Integer> keySet = listExp.keySet();
+					for (Integer index: keySet) {
 						Expr<?> temp = listExp.get(index);
-						temp = model.eval(temp,false);
+						temp = model.eval(temp, false);
 						a[index] = ((IntNum) (temp)).getInt();
 					}
-					result.add(a);continue;
-				}else{
-					if(listMember.containsKey(name)){
-						HashMap<Integer,Expr<?>> listExp = listMember.get(name);
-						Set<Integer> keySet =listExp.keySet();
+					result.add(a);
+					continue;
+				} else {
+					if (listMember.containsKey(name)) {
+						HashMap<Integer, Expr<?>> listExp = listMember.get(name);
+						Set<Integer> keySet = listExp.keySet();
 						int len = Collections.max(keySet);
-						a = new int[len+1];
-						for(Integer index:keySet){
+						a = new int[len + 1];
+						for (Integer index: keySet) {
 							Expr<?> temp = listExp.get(index);
-							temp = model.eval(temp,false);
+							temp = model.eval(temp, false);
 							a[index] = ((IntNum) (temp)).getInt();
 						}
-						result.add(a);continue;
-					}else{
+						result.add(a);
+						continue;
+					} else {
 						result.add(makeRandom(value));
 					}
 				}
 
 			}
-			if(listArgs.contains(arg))continue;
+			if (listArgs.contains(arg)) {
+				continue;
+			}
 			if (value instanceof IntNum) {
 				result.add(((IntNum) value).getInt());
 			} else if (value instanceof RatNum) {
@@ -152,43 +157,45 @@ public class PathArgumentsSynthesizer {
 	private void collectArgs(List<Unit> path) {
 		List<Expr<?>> list = new ArrayList<>();
 		List<Value> values = new ArrayList<>();
-		for (Unit unit : path) {
+		for (Unit unit: path) {
 			if (unit instanceof JIdentityStmt || unit instanceof JAssignStmt) {
-				if(unit instanceof JAssignStmt){
+				if (unit instanceof JAssignStmt) {
 					JAssignStmt x = (JAssignStmt) unit;
 					Value temp2 = x.getLeftOp();
-                    if(!values.contains(temp2)){
+					if (!values.contains(temp2)) {
 						if (x.getRightOp() instanceof ParameterRef) {
 							Value name = x.getLeftOp();
 							Expr<?> expr = convertJValueToZ3Expr(name);
 							list.add(expr);
 							values.add(name);
-							if(x.getRightOp().getType() instanceof ArrayType){
-								if(listValue.get(name)==null){
-									listValue.put(expr,x.getLeftOp());
+							if (x.getRightOp().getType() instanceof ArrayType) {
+								if (listValue.get(name) == null) {
+									listValue.put(expr, x.getLeftOp());
 									listArgs.add(expr);
 								}
 
 							}
-						}else if(x.getRightOp() instanceof JLengthExpr){
-							Value arraylistName = ((JLengthExpr) x.getRightOp()).getOpBox().getValue();
+						} else if (x.getRightOp() instanceof JLengthExpr) {
+							Value arraylistName = ((JLengthExpr) x.getRightOp()).getOpBox()
+								.getValue();
 							Expr<?> lengthExpr = convertJValueToZ3Expr(x.getLeftOp());
-							if(!listLengthTable.containsKey(arraylistName)){
-								listLengthTable.put(arraylistName,lengthExpr);
+							if (!listLengthTable.containsKey(arraylistName)) {
+								listLengthTable.put(arraylistName, lengthExpr);
 								listArgs.add(lengthExpr);
 							}
-						}else if(x.getRightOp() instanceof JArrayRef){
+						} else if (x.getRightOp() instanceof JArrayRef) {
 							Value arraylistName = ((JArrayRef) x.getRightOp()).getBase();
 							Expr<?> listMemberExpr = convertJValueToZ3Expr(x.getLeftOp());
-							int num = ((IntConstant)(((JArrayRef) x.getRightOp()).getIndex())).hashCode();
-							if(listMember.containsKey(arraylistName)){
-								HashMap<Integer,Expr<?>> temp = listMember.get(arraylistName);
-								temp.put(num,listMemberExpr);
+							int num =
+								((IntConstant) (((JArrayRef) x.getRightOp()).getIndex())).hashCode();
+							if (listMember.containsKey(arraylistName)) {
+								HashMap<Integer, Expr<?>> temp = listMember.get(arraylistName);
+								temp.put(num, listMemberExpr);
 								listArgs.add(listMemberExpr);
-							}else{
-								HashMap<Integer,Expr<?>> temp = new HashMap<>();
-								temp.put(num,listMemberExpr);
-								listMember.put(arraylistName,temp);
+							} else {
+								HashMap<Integer, Expr<?>> temp = new HashMap<>();
+								temp.put(num, listMemberExpr);
+								listMember.put(arraylistName, temp);
 								listArgs.add(listMemberExpr);
 							}
 						}
@@ -202,32 +209,35 @@ public class PathArgumentsSynthesizer {
 					Expr<?> expr = convertJValueToZ3Expr(name);
 					list.add(expr);
 					values.add(name);
-					if(x.getRightOp().getType() instanceof ArrayType){
-						if(listValue.get(x.getLeftOp())==null){
-							listValue.put(expr,x.getLeftOp());
+					if (x.getRightOp().getType() instanceof ArrayType) {
+						if (listValue.get(x.getLeftOp()) == null) {
+							listValue.put(expr, x.getLeftOp());
 							listArgs.add(expr);
 						}
 
 					}
-				}else if(x.getRightOp() instanceof JLengthExpr){
-					Value arraylistName = ((JLengthExpr) x.getRightOp()).getOpBox().getValue();
+				} else if (x.getRightOp() instanceof JLengthExpr) {
+					Value arraylistName = ((JLengthExpr) x.getRightOp()).getOpBox()
+						.getValue();
 					Expr<?> lengthExpr = convertJValueToZ3Expr(x.getLeftOp());
-					if(!listLengthTable.containsKey(arraylistName)){
-						listLengthTable.put(arraylistName,lengthExpr);
+					if (!listLengthTable.containsKey(arraylistName)) {
+						listLengthTable.put(arraylistName, lengthExpr);
 						listArgs.add(lengthExpr);
 					}
-				}else if(x.getRightOp() instanceof JArrayRef){
-					Value arraylistName = ((JLengthExpr) x.getRightOp()).getOpBox().getValue();
+				} else if (x.getRightOp() instanceof JArrayRef) {
+					Value arraylistName = ((JLengthExpr) x.getRightOp()).getOpBox()
+						.getValue();
 					Expr<?> listMemberExpr = convertJValueToZ3Expr(x.getLeftOp());
-					int num = ((IntConstant)(((JArrayRef) x.getRightOp()).getIndex())).hashCode();
-					if(listMember.containsKey(arraylistName)){
-						HashMap<Integer,Expr<?>> temp = listMember.get(arraylistName);
-						temp.put(num,listMemberExpr);
+					int num =
+						((IntConstant) (((JArrayRef) x.getRightOp()).getIndex())).hashCode();
+					if (listMember.containsKey(arraylistName)) {
+						HashMap<Integer, Expr<?>> temp = listMember.get(arraylistName);
+						temp.put(num, listMemberExpr);
 						listArgs.add(listMemberExpr);
-					}else{
-						HashMap<Integer,Expr<?>> temp = new HashMap<>();
-						temp.put(num,listMemberExpr);
-						listMember.put(arraylistName,temp);
+					} else {
+						HashMap<Integer, Expr<?>> temp = new HashMap<>();
+						temp.put(num, listMemberExpr);
+						listMember.put(arraylistName, temp);
 						listArgs.add(listMemberExpr);
 					}
 				}
@@ -240,9 +250,9 @@ public class PathArgumentsSynthesizer {
 		for (int i = 0, end = path.size() - 1; i != end; ++i) {
 			Unit thisUnit = path.get(i);
 			if (thisUnit instanceof JAssignStmt) {
-				incrementTimesAssigned(((JAssignStmt) thisUnit).getLeftOp());
-
-				//TODO:添加等式条件
+				JAssignStmt u = (JAssignStmt) thisUnit;
+				incrementTimesAssigned(u.getLeftOp());
+				constraints.add(equality(u.getLeftOp(), u.getLeftOp()));
 			} else if (thisUnit instanceof JIfStmt) {
 				constraints.add(extractConstraintOf((JIfStmt) thisUnit, i, path));
 			}
@@ -253,6 +263,13 @@ public class PathArgumentsSynthesizer {
 		timesLocalsAssigned.compute(
 			(JimpleLocal) local,
 			(k, v) -> 1 + (v == null ? 0 : v)
+		);
+	}
+
+	private BoolExpr equality(Value left, Value right) {
+		return z3Context.mkEq(
+			convertJValueToZ3Expr(left),
+			convertJValueToZ3Expr(right)
 		);
 	}
 
@@ -276,11 +293,19 @@ public class PathArgumentsSynthesizer {
 				return z3Context.mkIntConst(varName);
 			} else if (jimpleLocal.getType() == DoubleType.v()) {
 				return z3Context.mkRealConst(varName);
-			} else if(jimpleLocal.getType() == ArrayType.v(IntType.v(),1)){
-			   return z3Context.mkArrayConst(varName, z3Context.mkIntSort(), z3Context.mkIntSort());
-			}else if(jimpleLocal.getType() == RefType.v("java.lang.String")){
+			} else if (jimpleLocal.getType() == ArrayType.v(IntType.v(), 1)) {
+				return z3Context.mkArrayConst(
+					varName,
+					z3Context.mkIntSort(),
+					z3Context.mkIntSort()
+				);
+			} else if (jimpleLocal.getType() == RefType.v("java.lang.String")) {
 				//TODO:字符串相关
-				return z3Context.mkArrayConst(varName, z3Context.mkIntSort(), z3Context.mkCharSort());
+				return z3Context.mkArrayConst(
+					varName,
+					z3Context.mkIntSort(),
+					z3Context.mkCharSort()
+				);
 			}
 			throw new TodoException(jimpleLocal.getType());
 		} else if (jValue instanceof IntConstant) {
@@ -311,84 +336,84 @@ public class PathArgumentsSynthesizer {
 		} else if (jValue instanceof JLeExpr) {
 			JLeExpr jGeExpr = (JLeExpr) jValue;
 			return z3Context.mkLt(
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp1()
-					),
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp2()
-					)
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1()
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2()
+				)
 			);
 		} else if (jValue instanceof JGtExpr) {
 			JGtExpr jGeExpr = (JGtExpr) jValue;
 			return z3Context.mkLt(
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp1()
-					),
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp2()
-					)
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1()
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2()
+				)
 			);
 		} else if (jValue instanceof JAndExpr) {
 			JAndExpr jGeExpr = (JAndExpr) jValue;
 			return z3Context.mkLt(
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp1()
-					),
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp2()
-					)
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1()
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2()
+				)
 			);
 		} else if (jValue instanceof JOrExpr) {
 			JOrExpr jGeExpr = (JOrExpr) jValue;
 			return z3Context.mkLt(
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp1()
-					),
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp2()
-					)
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1()
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2()
+				)
 			);
-		}else if (jValue instanceof JShlExpr) {
+		} else if (jValue instanceof JShlExpr) {
 			JShlExpr jGeExpr = (JShlExpr) jValue;
 			return z3Context.mkLt(
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp1()
-					),
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp2()
-					)
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1()
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2()
+				)
 			);
-		}else if (jValue instanceof JShrExpr) {
+		} else if (jValue instanceof JShrExpr) {
 			JShrExpr jGeExpr = (JShrExpr) jValue;
 			return z3Context.mkLt(
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp1()
-					),
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp2()
-					)
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1()
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2()
+				)
 			);
-		}else if (jValue instanceof JXorExpr) {
+		} else if (jValue instanceof JXorExpr) {
 			JXorExpr jGeExpr = (JXorExpr) jValue;
 			return z3Context.mkLt(
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp1()
-					),
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp2()
-					)
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1()
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2()
+				)
 			);
-		}else if (jValue instanceof JUshrExpr) {
+		} else if (jValue instanceof JUshrExpr) {
 			JUshrExpr jGeExpr = (JUshrExpr) jValue;
 			return z3Context.mkLt(
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp1()
-					),
-					(Expr<? extends ArithSort>) convertJValueToZ3Expr(
-							jGeExpr.getOp2()
-					)
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp1()
+				),
+				(Expr<? extends ArithSort>) convertJValueToZ3Expr(
+					jGeExpr.getOp2()
+				)
 			);
-		}else {
+		} else {
 			throw new TodoException();
 		}
 	}

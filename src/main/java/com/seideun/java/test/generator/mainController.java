@@ -16,7 +16,7 @@ public class mainController {
 		String clspath = System.getProperty("user.dir") + File.separator +
 			"target" +
 			File.separator + "test-classes";
-		String clsName = "cut.LogicStructure";
+		String clsName = ExampleCfgCases.class.getName();
 		String methodName = "arrayTest";
 
 		UnitGraph ug = SootCFG.getMethodCFG(clspath, clsName, methodName);
