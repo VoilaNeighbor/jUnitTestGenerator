@@ -1,7 +1,6 @@
 package com.seideun.java.test.generator.new_constriant_solver;
 
 import com.microsoft.z3.Status;
-import com.seideun.java.test.generator.new_constraint_solver.ConstraintSolver;
 import org.junit.jupiter.api.Test;
 import soot.IntType;
 import soot.jimple.IntConstant;

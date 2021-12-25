@@ -1,26 +1,35 @@
 package com.seideun.java.test.generator.new_constraint_solver;
 
 import com.microsoft.z3.*;
-import com.seideun.java.test.generator.constriant_solver.Rational;
 import com.seideun.java.test.generator.constriant_solver.TodoException;
+import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import soot.Unit;
 import soot.Value;
-import soot.jimple.DoubleConstant;
-import soot.jimple.FloatConstant;
-import soot.jimple.IntConstant;
-import soot.jimple.internal.*;
+import soot.jimple.internal.JIdentityStmt;
+import soot.jimple.internal.JimpleLocal;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
 
-// A conflict between z3 and beautiful code is that z3 requires you to call
-// mkXXX and remember the symbols. This forces you to introduce cache
-// collections.
+/**
+ * A Jimple symbol solver to support symbolic execution on Jimple code.
+ * <p>
+ * This class is effectively a wrapper around Z3.
+ * You can compare it as a special Z3 Solver + Model that recognizes Jimple
+ * constraints. That is, it can solve Jimple constraints and find concrete
+ * values of Jimple symbols.
+ */
 @SuppressWarnings("unchecked")
-public class ConstraintSolver extends Context {
+@AllArgsConstructor
+public class JimpleSolver {
+	// A conflict between z3 and beautiful code is that z3 requires you to call
+	// mkXXX and remember the symbols. This forces you to introduce cache
+	// collections.
+	private final JimpleAwareZ3Context z3 = new JimpleAwareZ3Context();
+
 	/**
 	 * Todo(Seideun):
 	 *   I see these 2 interfaces should reside in a higher level.
@@ -59,7 +68,7 @@ public class ConstraintSolver extends Context {
 	}
 
 	public Pair<Object, Status> findConcreteValueOf(
-		JimpleLocal symbol, AbstractBinopExpr relatedConstraints
+		JimpleLocal symbol, Value relatedConstraints
 	) {
 		return findConcreteValueOf(symbol, singletonList(relatedConstraints));
 	}
@@ -72,56 +81,28 @@ public class ConstraintSolver extends Context {
 	 * @return { concrete value or null, ... }
 	 */
 	public Pair<Object, Status> findConcreteValueOf(
-		JimpleLocal symbol, List<AbstractBinopExpr> relatedConstraints
+		JimpleLocal symbol, List<Value> relatedConstraints
 	) {
-		var solver = mkSolver();
-		var status = solver.check(translateConstraints(relatedConstraints));
-		Object result = null;
+		var solver = z3.mkSolver();
+		var status = solver.check(z3.add(relatedConstraints));
 		if (status == Status.SATISFIABLE) {
-			var z3Symbol = mkIntConst(symbol.getName());
-			result = findConcreteValue(z3Symbol, solver.getModel());
+			var value = findConcreteValueOf(z3.add(symbol), solver.getModel());
+			return Pair.of(value, status);
+		} else {
+			return Pair.of(null, status);
 		}
-		return Pair.of(result, status);
 	}
 
-	private Expr<BoolSort>[] translateConstraints(List<AbstractBinopExpr> constraints) {
-		return constraints.stream()
-			.map(this::makeZ3Expr)
-			.toList()
-			.toArray(new Expr[]{});
-	}
-
-	private Expr makeZ3Expr(Value jimpleValue) {
-		return switch (jimpleValue) {
-			case JGeExpr x -> mkGe(makeZ3Expr(x.getOp1()), makeZ3Expr(x.getOp2()));
-			case JLeExpr x -> mkLe(makeZ3Expr(x.getOp1()), makeZ3Expr(x.getOp2()));
-			case JGtExpr x -> mkGt(makeZ3Expr(x.getOp1()), makeZ3Expr(x.getOp2()));
-			case JLtExpr x -> mkLt(makeZ3Expr(x.getOp1()), makeZ3Expr(x.getOp2()));
-			case JEqExpr x -> mkEq(makeZ3Expr(x.getOp1()), makeZ3Expr(x.getOp2()));
-			// should fail: Can we make the same symbol multiple times?
-			case JimpleLocal x -> mkIntConst(x.getName());
-			case IntConstant x -> mkInt(x.value);
-			case DoubleConstant x -> mkReal(x.value);
-			case FloatConstant x -> mkReal(x.value);
-			default -> throw new TodoException(jimpleValue);
-		};
-	}
-
-	private Object findConcreteValue(Expr z3Symbol, Model model) {
-		// More on the 2nd bool parameter in `model.eval`:
+	private static Object findConcreteValueOf(Expr z3Symbol, Model z3Model) {
+		// More on the 2nd bool parameter in `z3Model.eval`:
 		// https://z3prover.github.io/api/html/group__capi.html#gadb6ff55c26f5ef5607774514ee184957
 		// Simply put, if the parameter is true, unbounded symbols will be assigned
 		// some arbitrary values too. This simplifies our logic here.
-		return switch (model.eval(z3Symbol, true)) {
+		return switch (z3Model.eval(z3Symbol, true)) {
 			case IntNum x -> x.getInt();
 			case RatNum x -> toDouble(x);
 			default -> throw new TodoException(z3Symbol);
 		};
-	}
-
-	private RealExpr mkReal(double x) {
-		Rational rational = new Rational(x);
-		return mkReal(rational.numerator, rational.denominator);
 	}
 
 	private static Object toDouble(RatNum x) {
