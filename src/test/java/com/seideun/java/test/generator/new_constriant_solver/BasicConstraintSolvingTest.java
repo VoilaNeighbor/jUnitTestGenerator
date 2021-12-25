@@ -19,23 +19,24 @@ import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findP
 import static com.seideun.java.test.generator.constriant_solver.SootAgent.exampleCfg;
 import static org.junit.jupiter.api.Assertions.*;
 
-class ConstraintSolverTest {
-	static final UnitGraph exampleGraph = exampleCfg("twoArgs");
+class BasicConstraintSolvingTest {
+	// No constraints, 2 arguments.
+	static final UnitGraph trivialExample = exampleCfg("twoArgs");
 	ConstraintSolver solver = new ConstraintSolver();
 
 	@Test
-	void findAllInputSymbols() {
-		var thePath = new ArrayList<>(findPrimePaths(exampleGraph).get(0));
+	void findInputSymbols() {
+		var thePath = new ArrayList<>(findPrimePaths(trivialExample).get(0));
 
-		var result = solver.findAllInputSymbols(thePath);
+		var result = solver.findInputSymbols(thePath);
 
-		assertEquals(fakeFindInputSymbols(exampleGraph, 2), result);
+		assertEquals(fakeFindInputSymbols(trivialExample, 2), result);
 	}
 
 	@Test
 	void makeArbitraryForUnboundedInput() {
-		var inputSymbols = fakeFindInputSymbols(exampleGraph, 2);
-		var thePath = new ArrayList<>(findPrimePaths(exampleGraph).get(0));
+		var inputSymbols = fakeFindInputSymbols(trivialExample, 2);
+		var thePath = new ArrayList<>(findPrimePaths(trivialExample).get(0));
 
 		var result = solver.solveSymbols(inputSymbols, thePath);
 

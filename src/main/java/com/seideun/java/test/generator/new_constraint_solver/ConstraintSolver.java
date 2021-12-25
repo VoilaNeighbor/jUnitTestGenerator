@@ -23,7 +23,7 @@ public class ConstraintSolver extends Context {
 	 *             orderliness.
 	 * @return Input symbols in order of encounter.
 	 */
-	public List<JimpleLocal> findAllInputSymbols(List<Unit> path) {
+	public List<JimpleLocal> findInputSymbols(List<Unit> path) {
 		// Input locals are defined by JIdentityStmt in Soot.
 		return path.stream().sequential()
 			.filter(x -> x instanceof JIdentityStmt)
