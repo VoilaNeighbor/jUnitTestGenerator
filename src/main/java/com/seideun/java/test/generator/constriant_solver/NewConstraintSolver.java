@@ -8,6 +8,7 @@ import soot.jimple.internal.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 // A conflict between z3 and beautiful code is that z3 requires you to call
 // mkXXX and remember the symbols. This forces you to introduce cache
@@ -45,7 +46,7 @@ public class NewConstraintSolver extends Context {
 		return result;
 	}
 
-	public Object solveOneConstraint(
+	public Optional<Object> solveOneConstraint(
 		JimpleLocal inputSymbol,
 		AbstractBinopExpr constraint
 	) {
@@ -53,7 +54,7 @@ public class NewConstraintSolver extends Context {
 		var solver = mkSolver();
 		solver.check(makeZ3Expr(constraint));
 		var model = solver.getModel();
-		return evaluateToObject(z3Symbol, model);
+		return Optional.ofNullable(evaluateToObject(z3Symbol, model));
 	}
 
 	private Object evaluateToObject(Expr z3Symbol, Model model) {

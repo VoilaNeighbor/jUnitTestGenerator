@@ -46,11 +46,21 @@ class NewConstraintSolverTest {
 		var symbol = new JimpleLocal("x", IntType.v());
 		var conceivedConstraint = new JGeExpr(symbol, IntConstant.v(1));
 
-		var result = (Integer)
-			solver.solveOneConstraint(symbol, conceivedConstraint);
+		var result = solver.solveOneConstraint(symbol, conceivedConstraint);
 
-		assertTrue(result >= 1);
+		assertTrue(result.isPresent());
+		assertTrue((int)result.get() >= 1);
 	}
+
+//	@Test
+//	void returnsNoneForUnsatisfiableConstraints() {
+//		var symbol = new JimpleLocal("x", IntType.v());
+//		var conceivedConstraint = new JGeExpr(symbol, IntConstant.v(1));
+//
+//		var result = solver.solveOneConstraint(symbol, conceivedConstraint);
+//
+//		assertTrue((int)result >= 1);
+//	}
 
 	/**
 	 * Jimple method body always put the input symbols at the start of a method.
