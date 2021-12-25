@@ -3,7 +3,7 @@ package com.seideun.java.test.generator;
 import com.seideun.java.test.generator.CFG_analyzer.Path;
 import com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer;
 import com.seideun.java.test.generator.CFG_generator.SootCFG;
-import com.seideun.java.test.generator.examples.ExampleCfgCases;
+import com.seideun.java.test.generator.examples.BasicExamples;
 import soot.Unit;
 import soot.toolkits.graph.UnitGraph;
 
@@ -16,7 +16,7 @@ public class mainController {
 		String clspath = System.getProperty("user.dir") + File.separator +
 			"target" +
 			File.separator + "test-classes";
-		String clsName = ExampleCfgCases.class.getName();
+		String clsName = BasicExamples.class.getName();
 		String methodName = "arrayTest";
 
 		UnitGraph ug = SootCFG.getMethodCFG(clspath, clsName, methodName);

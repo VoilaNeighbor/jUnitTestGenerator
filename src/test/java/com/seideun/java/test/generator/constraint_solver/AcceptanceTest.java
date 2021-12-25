@@ -1,7 +1,7 @@
 package com.seideun.java.test.generator.constraint_solver;
 
 import com.seideun.java.test.generator.CFG_analyzer.Path;
-import com.seideun.java.test.generator.examples.ExampleCfgCases;
+import com.seideun.java.test.generator.examples.BasicExamples;
 import com.seideun.java.test.generator.constriant_solver.PathArgumentsSynthesizer;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import org.junit.jupiter.api.Disabled;
@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 class AcceptanceTest {
-	SootAgent sootAgent = new SootAgent(ExampleCfgCases.class);
+	SootAgent sootAgent = new SootAgent(BasicExamples.class);
 
 	@Test
 	void sequential() {

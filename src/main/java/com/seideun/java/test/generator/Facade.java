@@ -6,7 +6,7 @@ import com.seideun.java.test.generator.constriant_solver.JUnitTestGenerator;
 import com.seideun.java.test.generator.constriant_solver.PathArgumentsSynthesizer;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import com.seideun.java.test.generator.constriant_solver.TestCase;
-import com.seideun.java.test.generator.examples.ExampleCfgCases;
+import com.seideun.java.test.generator.examples.BasicExamples;
 import soot.Unit;
 import soot.toolkits.graph.UnitGraph;
 
@@ -70,11 +70,11 @@ public class Facade {
 	}
 
 	public static void main(String[] args) {
-		SootAgent sootAgent = new SootAgent(ExampleCfgCases.class);
+		SootAgent sootAgent = new SootAgent(BasicExamples.class);
 		PathArgumentsSynthesizer argumentsSynthesizer =
 			new PathArgumentsSynthesizer();
 		JUnitTestGenerator jUnitTestGenerator = new JUnitTestGenerator(
-			ExampleCfgCases.class.getSimpleName().toLowerCase(Locale.ROOT),
+			BasicExamples.class.getSimpleName().toLowerCase(Locale.ROOT),
 			"arrayTest"
 		);
 		Facade facade = new Facade(
@@ -82,6 +82,6 @@ public class Facade {
 			argumentsSynthesizer,
 			jUnitTestGenerator
 		);
-		System.out.println(facade.makeTest(ExampleCfgCases.class, "arrayTest"));
+		System.out.println(facade.makeTest(BasicExamples.class, "arrayTest"));
 	}
 }

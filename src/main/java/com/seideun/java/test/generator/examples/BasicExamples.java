@@ -3,7 +3,7 @@ package com.seideun.java.test.generator.examples;
 /**
  * Example methods for tests on control-flow-graph analyzers.
  */
-public class ExampleCfgCases {
+public class BasicExamples {
 	public static int oneArg(int a) {
 		return a * 2;
 	}
