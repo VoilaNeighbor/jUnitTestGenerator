@@ -4,6 +4,7 @@ import com.seideun.java.test.generator.CFG_analyzer.Path;
 import com.seideun.java.test.generator.ExampleCfgCases;
 import com.seideun.java.test.generator.constriant_solver.PathArgumentsSynthesizer;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.Unit;
 import soot.toolkits.graph.UnitGraph;
@@ -32,6 +33,7 @@ class AcceptanceTest {
 	}
 
 	@Test
+	@Disabled("deprecated")
 	void twoBranches() {
 		UnitGraph controlFlowGraph = sootAgent.makeControlFlowGraph("twoBranches");
 

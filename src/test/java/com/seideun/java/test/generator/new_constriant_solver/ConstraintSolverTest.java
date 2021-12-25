@@ -1,10 +1,12 @@
-package com.seideun.java.test.generator.constriant_solver;
+package com.seideun.java.test.generator.new_constriant_solver;
 
+import com.seideun.java.test.generator.new_constraint_solver.ConstraintSolver;
 import org.junit.jupiter.api.Test;
 import soot.IntType;
 import soot.jimple.IntConstant;
 import soot.jimple.internal.AbstractDefinitionStmt;
 import soot.jimple.internal.JGeExpr;
+import soot.jimple.internal.JGtExpr;
 import soot.jimple.internal.JimpleLocal;
 import soot.toolkits.graph.UnitGraph;
 
@@ -17,9 +19,9 @@ import static com.seideun.java.test.generator.constriant_solver.SootAgent.exampl
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class NewConstraintSolverTest {
+class ConstraintSolverTest {
 	static final UnitGraph exampleGraph = exampleCfg("twoArgs");
-	NewConstraintSolver solver = new NewConstraintSolver();
+	ConstraintSolver solver = new ConstraintSolver();
 
 	@Test
 	void findAllInputSymbols() {
@@ -55,11 +57,11 @@ class NewConstraintSolverTest {
 //	@Test
 //	void returnsNoneForUnsatisfiableConstraints() {
 //		var symbol = new JimpleLocal("x", IntType.v());
-//		var conceivedConstraint = new JGeExpr(symbol, IntConstant.v(1));
+//		var conceivedConstraint = new JGtExpr(symbol, symbol);
 //
 //		var result = solver.solveOneConstraint(symbol, conceivedConstraint);
 //
-//		assertTrue((int)result >= 1);
+//		assertTrue(result.isEmpty());
 //	}
 
 	/**

@@ -1,6 +1,7 @@
-package com.seideun.java.test.generator.constriant_solver;
+package com.seideun.java.test.generator.new_constraint_solver;
 
 import com.microsoft.z3.*;
+import com.seideun.java.test.generator.constriant_solver.TodoException;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.IntConstant;
@@ -13,7 +14,7 @@ import java.util.Optional;
 // A conflict between z3 and beautiful code is that z3 requires you to call
 // mkXXX and remember the symbols. This forces you to introduce cache
 // collections.
-public class NewConstraintSolver extends Context {
+public class ConstraintSolver extends Context {
 	/**
 	 * @param path Starting from the method entrance. Is a list to enforce
 	 *             orderliness.
@@ -64,7 +65,7 @@ public class NewConstraintSolver extends Context {
 		// some arbitrary values too. This simplifies our logic here.
 		return switch (model.eval(z3Symbol, true)) {
 			case IntNum x -> x.getInt();
-			default -> null;
+			default -> throw new TodoException(z3Symbol);
 		};
 	}
 

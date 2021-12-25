@@ -2,6 +2,7 @@ package com.seideun.java.test.generator.constraint_solver;
 
 import com.microsoft.z3.Expr;
 import com.seideun.java.test.generator.constriant_solver.PathArgumentsSynthesizer;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.DoubleType;
 import soot.IntType;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   - Can get input suite.
  *   - Member access of class.
  */
+@Disabled
 class PathArgumentsSynthesizerTest extends PathArgumentsSynthesizer {
 	@Test
 	void collectAsIsIfConditionTrue() {
