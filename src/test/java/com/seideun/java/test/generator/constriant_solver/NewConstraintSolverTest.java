@@ -14,11 +14,11 @@ import static com.seideun.java.test.generator.constriant_solver.SootAgent.exampl
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class NewConstraintSolverTest {
+	static final UnitGraph exampleGraph = exampleCfg("twoArgs");
 	NewConstraintSolver solver = new NewConstraintSolver();
 
 	@Test
 	void findAllInputSymbols() {
-		var exampleGraph = exampleCfg("twoArgs");
 		var thePath = new ArrayList<>(findPrimePaths(exampleGraph).get(0));
 
 		var result = solver.findAllInputSymbols(thePath);
@@ -28,12 +28,8 @@ class NewConstraintSolverTest {
 
 	@Test
 	void makeArbitraryForUnboundedInput() {
-		var exampleGraph = exampleCfg("twoArgs");
+		var inputSymbols = fakeFindInputSymbols(exampleGraph, 2);
 		var thePath = new ArrayList<>(findPrimePaths(exampleGraph).get(0));
-		var inputSymbols = new ArrayList<JimpleLocal>();
-		var units = exampleGraph.getBody().getUnits().stream().toList();
-		inputSymbols.add((JimpleLocal) ((AbstractDefinitionStmt) units.get(0)).getLeftOp());
-		inputSymbols.add((JimpleLocal) ((AbstractDefinitionStmt) units.get(1)).getLeftOp());
 
 		var result = solver.solveSymbols(inputSymbols, thePath);
 
