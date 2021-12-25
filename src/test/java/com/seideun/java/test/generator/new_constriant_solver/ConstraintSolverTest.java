@@ -17,8 +17,7 @@ import java.util.stream.IntStream;
 
 import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
 import static com.seideun.java.test.generator.constriant_solver.SootAgent.exampleCfg;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ConstraintSolverTest {
 	static final UnitGraph exampleGraph = exampleCfg("twoArgs");
@@ -55,15 +54,16 @@ class ConstraintSolverTest {
 		assertTrue((int)result.getLeft() >= 1);
 	}
 
-//	@Test
-//	void returnsNoneForUnsatisfiableConstraints() {
-//		var symbol = new JimpleLocal("x", IntType.v());
-//		var conceivedConstraint = new JGtExpr(symbol, symbol);
-//
-//		var result = solver.solveOneConstraint(symbol, conceivedConstraint);
-//
-//		assertTrue(result.isEmpty());
-//	}
+	@Test
+	void reportUnsatisfiableConstraints() {
+		var symbol = new JimpleLocal("x", IntType.v());
+		var conceivedConstraint = new JGtExpr(symbol, symbol);
+
+		var result = solver.solveOneConstraint(symbol, conceivedConstraint);
+
+		assertNull(result.getLeft());
+		assertEquals(Status.UNSATISFIABLE, result.getRight());
+	}
 
 	/**
 	 * Jimple method body always put the input symbols at the start of a method.
