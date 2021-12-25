@@ -1,8 +1,6 @@
 package com.seideun.java.test.generator.constriant_solver;
 
-import com.microsoft.z3.Context;
-import com.microsoft.z3.Expr;
-import com.microsoft.z3.IntNum;
+import com.microsoft.z3.*;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.IntConstant;
@@ -47,7 +45,7 @@ public class NewConstraintSolver extends Context {
 		return result;
 	}
 
-	public Integer solveOneConstraint(
+	public Object solveOneConstraint(
 		JimpleLocal inputSymbol,
 		AbstractBinopExpr constraint
 	) {
@@ -55,19 +53,25 @@ public class NewConstraintSolver extends Context {
 		var solver = mkSolver();
 		solver.check(makeZ3Expr(constraint));
 		var model = solver.getModel();
-		// More on the 2nd bool parameter:
+		return evaluateToObject(z3Symbol, model);
+	}
+
+	private Object evaluateToObject(Expr z3Symbol, Model model) {
+		// More on the 2nd bool parameter in `model.eval`:
 		// https://z3prover.github.io/api/html/group__capi.html#gadb6ff55c26f5ef5607774514ee184957
 		// Simply put, if the parameter is true, unbounded symbols will be assigned
 		// some arbitrary values too. This simplifies our logic here.
-		var result = (IntNum) model.eval(z3Symbol, true);
-		return result.getInt();
+		return switch (model.eval(z3Symbol, true)) {
+			case IntNum x -> x.getInt();
+			default -> null;
+		};
 	}
 
 	private Expr makeZ3Expr(Value jimpleValue) {
 		return switch (jimpleValue) {
 			case JGeExpr x -> mkGe(makeZ3Expr(x.getOp1()), makeZ3Expr(x.getOp2()));
 			case JLeExpr x -> mkLe(makeZ3Expr(x.getOp1()), makeZ3Expr(x.getOp2()));
-			// should fail
+			// should fail: Can we make the same symbol multiple times?
 			case JimpleLocal x -> mkIntConst(x.getName());
 			case IntConstant x -> mkInt(x.value);
 			default -> throw new TodoException(jimpleValue);

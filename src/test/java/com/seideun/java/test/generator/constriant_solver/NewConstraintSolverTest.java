@@ -46,7 +46,7 @@ class NewConstraintSolverTest {
 		var symbol = new JimpleLocal("x", IntType.v());
 		var conceivedConstraint = new JGeExpr(symbol, IntConstant.v(1));
 
-		var result =
+		var result = (Integer)
 			solver.solveOneConstraint(symbol, conceivedConstraint);
 
 		assertTrue(result >= 1);
