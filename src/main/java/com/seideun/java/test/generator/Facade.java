@@ -6,6 +6,7 @@ import com.seideun.java.test.generator.constriant_solver.JUnitTestGenerator;
 import com.seideun.java.test.generator.constriant_solver.PathArgumentsSynthesizer;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import com.seideun.java.test.generator.constriant_solver.TestCase;
+import com.seideun.java.test.generator.examples.ExampleCfgCases;
 import soot.Unit;
 import soot.toolkits.graph.UnitGraph;
 

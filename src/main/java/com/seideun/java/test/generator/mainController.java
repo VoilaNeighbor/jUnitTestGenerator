@@ -3,11 +3,11 @@ package com.seideun.java.test.generator;
 import com.seideun.java.test.generator.CFG_analyzer.Path;
 import com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer;
 import com.seideun.java.test.generator.CFG_generator.SootCFG;
+import com.seideun.java.test.generator.examples.ExampleCfgCases;
 import soot.Unit;
 import soot.toolkits.graph.UnitGraph;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 public class mainController {

@@ -1,4 +1,4 @@
-package com.seideun.java.test.generator;
+package com.seideun.java.test.generator.examples;
 
 /**
  * Example methods for tests on control-flow-graph analyzers.

@@ -1,6 +1,6 @@
 package com.seideun.java.test.generator.constriant_solver;
 
-import com.seideun.java.test.generator.ExampleCfgCases;
+import com.seideun.java.test.generator.examples.ExampleCfgCases;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;

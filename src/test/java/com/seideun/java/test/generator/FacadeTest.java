@@ -3,6 +3,7 @@ package com.seideun.java.test.generator;
 import com.seideun.java.test.generator.constriant_solver.JUnitTestGenerator;
 import com.seideun.java.test.generator.constriant_solver.PathArgumentsSynthesizer;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
+import com.seideun.java.test.generator.examples.ExampleCfgCases;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

@@ -5,10 +5,7 @@ import com.seideun.java.test.generator.new_constraint_solver.ConstraintSolver;
 import org.junit.jupiter.api.Test;
 import soot.IntType;
 import soot.jimple.IntConstant;
-import soot.jimple.internal.AbstractDefinitionStmt;
-import soot.jimple.internal.JGeExpr;
-import soot.jimple.internal.JGtExpr;
-import soot.jimple.internal.JimpleLocal;
+import soot.jimple.internal.*;
 import soot.toolkits.graph.UnitGraph;
 
 import java.util.ArrayList;
@@ -19,10 +16,9 @@ import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findP
 import static com.seideun.java.test.generator.constriant_solver.SootAgent.exampleCfg;
 import static org.junit.jupiter.api.Assertions.*;
 
-class BasicConstraintSolvingTest {
+class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 	// No constraints, 2 arguments.
 	static final UnitGraph trivialExample = exampleCfg("twoArgs");
-	ConstraintSolver solver = new ConstraintSolver();
 
 	@Test
 	void findInputSymbols() {
@@ -49,10 +45,23 @@ class BasicConstraintSolvingTest {
 		var symbol = new JimpleLocal("x", IntType.v());
 		var conceivedConstraint = new JGeExpr(symbol, IntConstant.v(1));
 
-		var result = solver.solveOneConstraint(symbol, conceivedConstraint);
+		var result = solver.findConcreteValueOf(symbol, conceivedConstraint);
 
 		assertEquals(Status.SATISFIABLE, result.getRight());
-		assertTrue((int)result.getLeft() >= 1);
+		assertTrue((int) result.getLeft() >= 1);
+	}
+
+	@Test
+	void solveTwoConstraints() {
+		var symbol = new JimpleLocal("x", IntType.v());
+		var constraint1 = new JGeExpr(symbol, IntConstant.v(-10));
+		var constraint2 = new JLtExpr(symbol, IntConstant.v(-5));
+
+		var result = solver.findConcreteValueOf(symbol, List.of(constraint1, constraint2));
+
+		assertEquals(Status.SATISFIABLE, result.getRight());
+		assertTrue((int) result.getLeft() >= -10);
+		assertTrue((int) result.getLeft() < -5);
 	}
 
 	@Test
@@ -60,7 +69,7 @@ class BasicConstraintSolvingTest {
 		var symbol = new JimpleLocal("x", IntType.v());
 		var conceivedConstraint = new JGtExpr(symbol, symbol);
 
-		var result = solver.solveOneConstraint(symbol, conceivedConstraint);
+		var result = solver.findConcreteValueOf(symbol, conceivedConstraint);
 
 		assertNull(result.getLeft());
 		assertEquals(Status.UNSATISFIABLE, result.getRight());

@@ -14,26 +14,33 @@ import soot.jimple.internal.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Collections.singletonList;
+
 // A conflict between z3 and beautiful code is that z3 requires you to call
 // mkXXX and remember the symbols. This forces you to introduce cache
 // collections.
+@SuppressWarnings("unchecked")
 public class ConstraintSolver extends Context {
 	/**
+	 * Todo(Seideun):
+	 *   I see these 2 interfaces should reside in a higher level.
+	 *   Extract them to another class.
+	 *
 	 * @param path Starting from the method entrance. Is a list to enforce
 	 *             orderliness.
 	 * @return Input symbols in order of encounter.
 	 */
 	public List<JimpleLocal> findInputSymbols(List<Unit> path) {
 		// Input locals are defined by JIdentityStmt in Soot.
-		return path.stream().sequential()
+		return path.stream()
+			.sequential()
 			.filter(x -> x instanceof JIdentityStmt)
 			.map(x -> ((JimpleLocal) ((JIdentityStmt) x).getLeftOp()))
 			.toList();
 	}
 
 	public List<Object> solveSymbols(
-		List<JimpleLocal> inputSymbols,
-		List<Unit> path
+		List<JimpleLocal> inputSymbols, List<Unit> path
 	) {
 		// Todo(Seideun): Finish here
 		// Sometimes, the symbol solver is unable to soundly solve a set of
@@ -51,18 +58,37 @@ public class ConstraintSolver extends Context {
 		return result;
 	}
 
-	public Pair<Object, Status> solveOneConstraint(
-		JimpleLocal inputSymbol,
-		AbstractBinopExpr constraint
+	public Pair<Object, Status> findConcreteValueOf(
+		JimpleLocal symbol, AbstractBinopExpr relatedConstraints
 	) {
-		var z3Symbol = mkIntConst(inputSymbol.getName());
+		return findConcreteValueOf(symbol, singletonList(relatedConstraints));
+	}
+
+	/**
+	 * Solve the constraints and find a valid concrete value for the input symbol.
+	 *
+	 * @param symbol             An input symbol with name and type.
+	 * @param relatedConstraints Constraints related to that symbol.
+	 * @return { concrete value or null, ... }
+	 */
+	public Pair<Object, Status> findConcreteValueOf(
+		JimpleLocal symbol, List<AbstractBinopExpr> relatedConstraints
+	) {
 		var solver = mkSolver();
-		var status = solver.check(makeZ3Expr(constraint));
-		if (status != Status.SATISFIABLE) {
-			return Pair.of(null, status);
+		var status = solver.check(translateConstraints(relatedConstraints));
+		Object result = null;
+		if (status == Status.SATISFIABLE) {
+			var z3Symbol = mkIntConst(symbol.getName());
+			result = findConcreteValue(z3Symbol, solver.getModel());
 		}
-		var model = solver.getModel();
-		return Pair.of(evaluateToObject(z3Symbol, model), status);
+		return Pair.of(result, status);
+	}
+
+	private Expr<BoolSort>[] translateConstraints(List<AbstractBinopExpr> constraints) {
+		return constraints.stream()
+			.map(this::makeZ3Expr)
+			.toList()
+			.toArray(new Expr[]{});
 	}
 
 	private Expr makeZ3Expr(Value jimpleValue) {
@@ -81,13 +107,14 @@ public class ConstraintSolver extends Context {
 		};
 	}
 
-	private Object evaluateToObject(Expr z3Symbol, Model model) {
+	private Object findConcreteValue(Expr z3Symbol, Model model) {
 		// More on the 2nd bool parameter in `model.eval`:
 		// https://z3prover.github.io/api/html/group__capi.html#gadb6ff55c26f5ef5607774514ee184957
 		// Simply put, if the parameter is true, unbounded symbols will be assigned
 		// some arbitrary values too. This simplifies our logic here.
 		return switch (model.eval(z3Symbol, true)) {
 			case IntNum x -> x.getInt();
+			case RatNum x -> toDouble(x);
 			default -> throw new TodoException(z3Symbol);
 		};
 	}
@@ -95,5 +122,10 @@ public class ConstraintSolver extends Context {
 	private RealExpr mkReal(double x) {
 		Rational rational = new Rational(x);
 		return mkReal(rational.numerator, rational.denominator);
+	}
+
+	private static Object toDouble(RatNum x) {
+		return (double) x.getNumerator().getInt() /
+			(double) x.getDenominator().getInt();
 	}
 }
