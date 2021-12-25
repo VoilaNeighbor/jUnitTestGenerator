@@ -29,7 +29,7 @@ public class JimpleAwareZ3Context extends Context {
 
 	public Expr add(Switchable jimpleValue) {
 		if (jimpleValue instanceof JInvertCondition x) {
-			return add(x.base);
+			return mkNot(add(x.base));
 		}
 		return switch (jimpleValue) {
 			case JGeExpr x -> mkGe(add(x.getOp1()), add(x.getOp2()));

@@ -1,12 +1,14 @@
 package com.seideun.java.test.generator.new_constriant_solver;
 
 import com.microsoft.z3.Status;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import soot.IntType;
 import soot.Unit;
 import soot.jimple.IntConstant;
 import soot.jimple.internal.*;
 import soot.toolkits.graph.UnitGraph;
+import soot.util.Switchable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,20 +83,6 @@ class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 		);
 	}
 
-	@Test
-	void solveCompleteCase() {
-		var ug = exampleCfg("equalComparison");
-		var paths = findPrimePaths(ug);
-		for (List<Unit> path: paths) {
-			var inputs = solver.findInputSymbols(path);
-			var constraints = solver.findConstraints(path);
-			var result = solver.findConcreteValueOf(inputs, constraints);
-			System.out.printf("<path>%s<path>\n", path);
-			System.out.printf("<inputSymbols>%s<inputSymbols>\n", inputs);
-			System.out.printf("<constraints>%s<constraints>\n", constraints);
-			System.out.printf("<result>%s<result>\n", result);
-		}
-	}
 
 	//	@Test
 	//	void solveTwoSymbols() {

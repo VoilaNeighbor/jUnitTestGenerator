@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import static com.seideun.java.test.generator.constriant_solver.SootAgent.exampleCfg;
 
 @Disabled("Manual")
-class SeeJimple {
+class ManualSeeJimple {
 	@Test
 	void see( ){
 		var ug = exampleCfg("boolNegate");
