@@ -1,23 +1,20 @@
 package com.seideun.java.test.generator.constriant_solver;
 
 import com.microsoft.z3.Context;
+import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntNum;
 import soot.Unit;
+import soot.Value;
 import soot.jimple.IntConstant;
-import soot.jimple.internal.AbstractBinopExpr;
-import soot.jimple.internal.JGeExpr;
-import soot.jimple.internal.JIdentityStmt;
-import soot.jimple.internal.JimpleLocal;
+import soot.jimple.internal.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class NewConstraintSolver {
-	// A conflict between z3 and beautiful code is that z3 requires you to call
-	// mkXXX and remember the symbols. This forces you to introduce cache
-	// collections.
-	private Context z3Context = new Context();
-
+// A conflict between z3 and beautiful code is that z3 requires you to call
+// mkXXX and remember the symbols. This forces you to introduce cache
+// collections.
+public class NewConstraintSolver extends Context {
 	/**
 	 * @param path Starting from the method entrance. Is a list to enforce
 	 *             orderliness.
@@ -50,15 +47,13 @@ public class NewConstraintSolver {
 		return result;
 	}
 
-	public Object solveOneConstraint(
+	public Integer solveOneConstraint(
 		JimpleLocal inputSymbol,
 		AbstractBinopExpr constraint
 	) {
-		var z3Symbol = z3Context.mkIntConst(inputSymbol.getName());
-		var right = ((IntConstant) constraint.getOp2());
-		var ge = z3Context.mkGe(z3Symbol, z3Context.mkInt(right.value));
-		var solver = z3Context.mkSolver();
-		solver.check(ge);
+		var z3Symbol = mkIntConst(inputSymbol.getName());
+		var solver = mkSolver();
+		solver.check(makeZ3Expr(constraint));
 		var model = solver.getModel();
 		// More on the 2nd bool parameter:
 		// https://z3prover.github.io/api/html/group__capi.html#gadb6ff55c26f5ef5607774514ee184957
@@ -66,5 +61,16 @@ public class NewConstraintSolver {
 		// some arbitrary values too. This simplifies our logic here.
 		var result = (IntNum) model.eval(z3Symbol, true);
 		return result.getInt();
+	}
+
+	private Expr makeZ3Expr(Value jimpleValue) {
+		return switch (jimpleValue) {
+			case JGeExpr x -> mkGe(makeZ3Expr(x.getOp1()), makeZ3Expr(x.getOp2()));
+			case JLeExpr x -> mkLe(makeZ3Expr(x.getOp1()), makeZ3Expr(x.getOp2()));
+			// should fail
+			case JimpleLocal x -> mkIntConst(x.getName());
+			case IntConstant x -> mkInt(x.value);
+			default -> throw new TodoException(jimpleValue);
+		};
 	}
 }

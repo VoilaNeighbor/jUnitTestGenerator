@@ -47,7 +47,7 @@ class NewConstraintSolverTest {
 		var conceivedConstraint = new JGeExpr(symbol, IntConstant.v(1));
 
 		var result =
-			(Integer) solver.solveOneConstraint(symbol, conceivedConstraint);
+			solver.solveOneConstraint(symbol, conceivedConstraint);
 
 		assertTrue(result >= 1);
 	}
