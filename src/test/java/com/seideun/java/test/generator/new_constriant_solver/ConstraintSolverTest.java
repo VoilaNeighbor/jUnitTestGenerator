@@ -1,5 +1,6 @@
 package com.seideun.java.test.generator.new_constriant_solver;
 
+import com.microsoft.z3.Status;
 import com.seideun.java.test.generator.new_constraint_solver.ConstraintSolver;
 import org.junit.jupiter.api.Test;
 import soot.IntType;
@@ -50,8 +51,8 @@ class ConstraintSolverTest {
 
 		var result = solver.solveOneConstraint(symbol, conceivedConstraint);
 
-		assertTrue(result.isPresent());
-		assertTrue((int)result.get() >= 1);
+		assertEquals(Status.SATISFIABLE, result.getRight());
+		assertTrue((int)result.getLeft() >= 1);
 	}
 
 //	@Test

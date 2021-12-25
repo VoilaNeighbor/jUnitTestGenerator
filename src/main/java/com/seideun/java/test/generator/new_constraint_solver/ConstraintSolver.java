@@ -2,6 +2,7 @@ package com.seideun.java.test.generator.new_constraint_solver;
 
 import com.microsoft.z3.*;
 import com.seideun.java.test.generator.constriant_solver.TodoException;
+import org.apache.commons.lang3.tuple.Pair;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.IntConstant;
@@ -47,15 +48,18 @@ public class ConstraintSolver extends Context {
 		return result;
 	}
 
-	public Optional<Object> solveOneConstraint(
+	public Pair<Object, Status> solveOneConstraint(
 		JimpleLocal inputSymbol,
 		AbstractBinopExpr constraint
 	) {
 		var z3Symbol = mkIntConst(inputSymbol.getName());
 		var solver = mkSolver();
-		solver.check(makeZ3Expr(constraint));
+		var status = solver.check(makeZ3Expr(constraint));
+		if (status != Status.SATISFIABLE) {
+			return Pair.of(null, status);
+		}
 		var model = solver.getModel();
-		return Optional.ofNullable(evaluateToObject(z3Symbol, model));
+		return Pair.of(evaluateToObject(z3Symbol, model), status);
 	}
 
 	private Object evaluateToObject(Expr z3Symbol, Model model) {
