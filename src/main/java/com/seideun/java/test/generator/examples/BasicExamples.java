@@ -58,13 +58,18 @@ public class BasicExamples {
 		}
 	}
 
-	public static int array(int[] a){
-		if(a.length > 4){
+	@Deprecated(since =
+		"Use the corresponding method in class CompositeTypeExamples")
+	public static int array(int[] a) {
+		if (a.length > 4) {
 			return a[0];
 		}
 		return 1;
 	}
-	public static String StringTest(String a){
+
+	@Deprecated(since =
+		"Use the corresponding method in class CompositeTypeExamples")
+	public static String StringTest(String a) {
 		return a;
 	}
 }
