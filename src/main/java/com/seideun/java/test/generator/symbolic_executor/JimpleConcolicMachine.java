@@ -2,6 +2,7 @@ package com.seideun.java.test.generator.symbolic_executor;
 
 import com.microsoft.z3.*;
 import com.seideun.java.test.generator.constriant_solver.TodoException;
+import polyglot.ast.JL;
 import soot.IntType;
 import soot.Local;
 import soot.RefType;
@@ -26,9 +27,14 @@ import java.util.*;
  */
 @SuppressWarnings("rawtypes")
 public class JimpleConcolicMachine {
-	// public for test now.
 	private final Context z3 = new Context();
 	private final Solver solver = z3.mkSolver();
+	// Total map: jVars -> current-symbolic-values. Their symbolic values can be
+	// updated as the execution goes.
+	private final Map<JimpleLocal, Expr> symbolTable = new HashMap<>();
+	// The current jimple program we are analyzing. Cached as a field for
+	// referencing. Soot does a nice job in that it stores out-of-the-box
+	// information for us to check.
 	private UnitGraph jProgram;
 
 	/**
@@ -38,20 +44,19 @@ public class JimpleConcolicMachine {
 		this.jProgram = jProgram;
 		// By marking all symbols at the start, we save quite a lot of
 		// online-checking burdens.
-		var allJVars = markAllJVars();
-		return walkGraph(allJVars);
+		constructSymbolTable();
+		return walkGraph(symbolTable);
 	}
 
-	private Map<JimpleLocal, Expr> markAllJVars() {
-		var result = new HashMap<JimpleLocal, Expr>();
+	private void constructSymbolTable() {
+		symbolTable.clear();
 		for (var jVar: jProgram.getBody().getLocals()) {
-			result.put((JimpleLocal) jVar, switch (jVar.getType()) {
+			symbolTable.put((JimpleLocal) jVar, switch (jVar.getType()) {
 				case IntType x -> z3.mkIntConst(jVar.getName());
 				case RefType x -> mkRefConst(jVar, x);
 				default -> throw new TodoException(jVar);
 			});
 		}
-		return result;
 	}
 
 	private Expr mkRefConst(Local jVar, RefType x) {
@@ -95,6 +100,10 @@ public class JimpleConcolicMachine {
 		}
 	}
 
+	/**
+	 * Find concrete values of parameter jVars by interpreting the corresponding
+	 * symbols.
+ 	 */
 	private Map<JimpleLocal, Object> solve(
 		Map<JimpleLocal, Expr> symbolTable
 	) {
