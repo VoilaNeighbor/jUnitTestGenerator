@@ -27,8 +27,12 @@ import java.util.*;
  */
 @SuppressWarnings("rawtypes")
 public class JimpleSymbolicMachine {
-	private final Context z3 = new Context();
+	// public for test now.
+	public final Context z3 = new Context();
 
+	/**
+	 * @return Symbol table of all paths run.
+	 */
 	public List<Map<JimpleLocal, Expr>> run(UnitGraph jProgram) {
 		// By marking all symbols at the start, we save quite a lot of
 		// online-checking burdens.

@@ -1,14 +1,16 @@
 package com.seideun.java.test.generator.symbolic_executor;
 
 import com.microsoft.z3.Expr;
+import com.microsoft.z3.IntNum;
+import com.microsoft.z3.Status;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
+import com.seideun.java.test.generator.constriant_solver.TodoException;
 import org.junit.jupiter.api.Test;
+import soot.Local;
 import soot.jimple.internal.JimpleLocal;
 import soot.toolkits.graph.UnitGraph;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 		sequential program
 		if-else
 		loop:
+			symbol-renaming
 			dynamic execution
 	Con-colic fuzz running:
 		???
@@ -80,7 +83,31 @@ class JimpleSymbolicMachineTest {
 
 	@Test
 	void solveUnboundedInt() {
+		var graph = makeGraph("intSequential");
 
+		var symbolTable = jsm.run(graph).get(0);
+
+		var solver = jsm.z3.mkSolver();
+		var status = solver.check();
+		assertEquals(Status.SATISFIABLE, status);
+		var model = solver.getModel();
+
+		var parameters = graph.getBody().getParameterLocals();
+		var concreteValues = new HashMap<Local, Object>();
+		for (Local parameter: parameters) {
+			var symbolicValue = symbolTable.get(parameter);
+			var interpretation = model.eval(symbolicValue, true);
+			if (interpretation instanceof IntNum x) {
+				concreteValues.put(parameter, x.getInt());
+			} else {
+				throw new TodoException(interpretation);
+			}
+		}
+
+		assertEquals(2, concreteValues.size());
+		for (Object x: concreteValues.values()) {
+			assertEquals(Integer.class, x.getClass());
+		}
 	}
 
 	private static UnitGraph makeGraph(String name) {
