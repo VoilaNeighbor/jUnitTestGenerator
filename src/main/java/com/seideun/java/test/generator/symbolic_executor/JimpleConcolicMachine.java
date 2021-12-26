@@ -3,6 +3,7 @@ package com.seideun.java.test.generator.symbolic_executor;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.*;
 import com.seideun.java.test.generator.constriant_solver.Rational;
+import com.seideun.java.test.generator.constriant_solver.TodoException;
 import soot.*;
 import soot.jimple.DoubleConstant;
 import soot.jimple.FloatConstant;
@@ -12,6 +13,8 @@ import soot.jimple.internal.*;
 import soot.toolkits.graph.UnitGraph;
 
 import java.util.*;
+
+import static java.lang.Thread.currentThread;
 
 /**
  * This class runs Jimple method body with Z3 expressions as
@@ -226,11 +229,11 @@ public class JimpleConcolicMachine {
 	}
 
 	private static <T> T todo(Object ignored) {
-		System.err.printf(
-			"<Todo class=\"%s\">%s</Todo>\n",
-			ignored.getClass(),
-			ignored
-		);
+		try {
+			throw new TodoException(ignored);
+		} catch (TodoException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 }
