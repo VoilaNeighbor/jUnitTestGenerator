@@ -9,9 +9,10 @@ import soot.Unit;
 import soot.jimple.internal.JimpleLocal;
 import soot.toolkits.graph.UnitGraph;
 
-import java.util.*;
-
-import static java.lang.String.format;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class runs Jimple method body with Z3 expressions as
@@ -73,7 +74,8 @@ public class JimpleConcolicMachine {
 	/**
 	 * Walk all rationally-feasible paths, and construct a concrete value table
 	 * for each path solvable.
-	 * @return
+	 *
+	 * @return A list of sets of arguments, each corresponding to a unique path.
 	 */
 	private List<Map<JimpleLocal, Object>> walkGraph() {
 		var allConcreteValues = new ArrayList<Map<JimpleLocal, Object>>();
@@ -85,19 +87,16 @@ public class JimpleConcolicMachine {
 		return allConcreteValues;
 	}
 
-	private void walkPath(
-		Unit thisUnit,
-		List<Map<JimpleLocal, Object>> allConcreteValues
-	) {
+	private void walkPath(Unit thisUnit, List<Map<JimpleLocal, Object>> result) {
 		var successors = jProgram.getSuccsOf(thisUnit);
 		if (successors.isEmpty()) {
-			allConcreteValues.add(solveCurrentConstraints());
+			result.add(solveCurrentConstraints());
 		} else if (successors.size() == 1) {
-			walkPath(successors.get(0), allConcreteValues);
+			walkPath(successors.get(0), result);
 		} else {
 			for (Unit successor: successors) {
 				solver.push();
-				walkPath(successor, allConcreteValues);
+				walkPath(successor, result);
 				solver.pop();
 			}
 		}
@@ -106,7 +105,7 @@ public class JimpleConcolicMachine {
 	/**
 	 * Find concrete values of parameter jVars by interpreting the corresponding
 	 * symbols.
- 	 */
+	 */
 	private Map<JimpleLocal, Object> solveCurrentConstraints() {
 		var status = solver.check();
 		if (status != Status.SATISFIABLE) {
@@ -122,7 +121,7 @@ public class JimpleConcolicMachine {
 			var interpretation = model.eval(symbolicValue, true);
 			if (interpretation instanceof IntNum x) {
 				concreteValues.put(parameter, x.getInt());
-			} else if (interpretation instanceof SeqExpr<?> x){
+			} else if (interpretation instanceof SeqExpr<?> x) {
 				concreteValues.put(parameter, x.getString());
 			} else {
 				throw new TodoException(interpretation);
