@@ -89,16 +89,11 @@ public class JimpleAwareZ3Context extends Context {
 	}
 
 	private Expr<Sort> getOrMakeSymbol(JimpleLocal x) {
-		var existed = symbolMap.get(x);
-		if (existed != null) {
-			return existed;
+		var result = symbolMap.get(x);
+		if (result == null) {
+			result = mkConst(x.getName(), toSort(x.getType()));
+			symbolMap.put(x, result);
 		}
-		return makeSymbol(x);
-	}
-
-	private Expr<Sort> makeSymbol(JimpleLocal x) {
-		var result = mkConst(x.getName(), toSort(x.getType()));
-		symbolMap.put(x, result);
 		return result;
 	}
 

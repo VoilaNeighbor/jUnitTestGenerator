@@ -25,4 +25,9 @@ class JimpleAwareZ3ContextTest {
 		assertNotNull(lenMap.get(array));
 		assertEquals(lenMap.get(array), symbols.get(len));
 	}
+
+	@Test
+	void boundaryChecksInArrayIndexing() {
+
+	}
 }
