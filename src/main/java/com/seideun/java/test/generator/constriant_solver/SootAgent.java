@@ -1,6 +1,7 @@
 package com.seideun.java.test.generator.constriant_solver;
 
 import com.seideun.java.test.generator.examples.BasicExamples;
+import com.seideun.java.test.generator.examples.CompositeTypeExamples;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
@@ -8,37 +9,35 @@ import soot.options.Options;
 import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 
+import static java.lang.System.getProperty;
+
 /**
  * I'm an agent that configures and talks with Soot!
  */
 public class SootAgent {
+	public static final SootAgent basicExamples;
+	public static final SootAgent compositeExamples;
 	private static final Scene sootScene;
+	private final SootClass sootClass;
 
 	static {
-		final String rootClasspath =
-			System.getProperty("user.dir") + "/target/classes";
-		Options sootConfigs = Options.v();
+		final var rootClasspath = getProperty("user.dir") + "/target/classes";
+		var sootConfigs = Options.v();
 		sootConfigs.set_prepend_classpath(true);
 		sootConfigs.set_soot_classpath(rootClasspath);
 		sootScene = Scene.v();
-	}
-
-	private final SootClass classUnderAnalyses;
-
-	public SootAgent(Class<?> theClass) {
-		classUnderAnalyses = sootScene.loadClassAndSupport(theClass.getName());
-		classUnderAnalyses.setApplicationClass();
+		basicExamples = new SootAgent(BasicExamples.class);
+		compositeExamples = new SootAgent(CompositeTypeExamples.class);
 		sootScene.loadNecessaryClasses();
 	}
 
-	public UnitGraph makeControlFlowGraph(String methodName) {
-		SootMethod method = classUnderAnalyses.getMethodByName(methodName);
-		return new ExceptionalUnitGraph(method.retrieveActiveBody());
+	private SootAgent(Class<?> theClass) {
+		sootClass = sootScene.loadClassAndSupport(theClass.getName());
+		sootClass.setApplicationClass();
 	}
 
-	private static final SootAgent exampleCfgInstance =
-		new SootAgent(BasicExamples.class);
-	public static UnitGraph exampleCfg(String methodName) {
-		return exampleCfgInstance.makeControlFlowGraph(methodName);
+	public UnitGraph makeGraph(String methodName) {
+		SootMethod method = sootClass.getMethodByName(methodName);
+		return new ExceptionalUnitGraph(method.retrieveActiveBody());
 	}
 }

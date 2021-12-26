@@ -1,26 +1,25 @@
 package com.seideun.java.test.generator.new_constriant_solver;
 
 import com.microsoft.z3.Status;
-import org.apache.commons.lang3.tuple.Pair;
+import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import org.junit.jupiter.api.Test;
 import soot.IntType;
-import soot.Unit;
 import soot.jimple.IntConstant;
 import soot.jimple.internal.*;
 import soot.toolkits.graph.UnitGraph;
-import soot.util.Switchable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
 import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
-import static com.seideun.java.test.generator.constriant_solver.SootAgent.exampleCfg;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 	// No constraints, 2 arguments.
-	static final UnitGraph trivialExample = exampleCfg("twoArgs");
+	static final UnitGraph trivialExample =
+		SootAgent.basicExamples.makeGraph(
+		"twoArgs");
 
 	@Test
 	void findInputSymbols() {
@@ -74,7 +73,7 @@ class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 		// I'm being lazy here. Logic included:
 		// 1. JIfStmt extract conditions, and negate if do not jump.
 		// 2. JAssignStmt reserved.
-		var ug = exampleCfg("twoBranches");
+		var ug = SootAgent.basicExamples.makeGraph("twoBranches");
 		var paths = findPrimePaths(ug);
 		var constraints = paths.stream().map(solver::findConstraints).toList();
 		assertEquals(

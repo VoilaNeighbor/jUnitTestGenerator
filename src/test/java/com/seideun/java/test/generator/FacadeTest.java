@@ -15,7 +15,7 @@ import static org.mockito.Mockito.*;
 @Disabled
 class FacadeTest {
 	static final String ARBITRARY_METHOD_NAME = "twoBranjumpBackToLoopEntranceches";
-	final SootAgent sootAgent = spy(new SootAgent(BasicExamples.class));
+	final SootAgent sootAgent = spy(SootAgent.basicExamples);
 	final PathArgumentsSynthesizer argumentsSynthesizer =
 		mock(PathArgumentsSynthesizer.class);
 	final JUnitTestGenerator jUnitTestGenerator =
@@ -29,7 +29,7 @@ class FacadeTest {
 	void canGenerateJUnitTestGivenPathToCompiledMethod() {
 		Facade facade = new Facade(sootAgent, argumentsSynthesizer, jUnitTestGenerator);
 		facade.makeTest(BasicExamples.class, ARBITRARY_METHOD_NAME);
-		verify(sootAgent, atLeastOnce()).makeControlFlowGraph(any());
+		verify(sootAgent, atLeastOnce()).makeGraph(any());
 		verify(argumentsSynthesizer, atLeastOnce()).synthesizeArguments();
 		verify(jUnitTestGenerator, atLeastOnce()).generateAssertForEachCase(any());
 	}

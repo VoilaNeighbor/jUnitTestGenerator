@@ -18,11 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 class AcceptanceTest {
-	SootAgent sootAgent = new SootAgent(BasicExamples.class);
+	SootAgent sootAgent = SootAgent.basicExamples;
 
 	@Test
 	void sequential() {
-		UnitGraph controlFlowGraph = sootAgent.makeControlFlowGraph("sequential");
+		UnitGraph controlFlowGraph = sootAgent.makeGraph("sequential");
 		PathArgumentsSynthesizer solver = new PathArgumentsSynthesizer();
 		solver.store(findPrimePaths(controlFlowGraph).get(0));
 
@@ -35,7 +35,7 @@ class AcceptanceTest {
 	@Test
 	@Disabled("deprecated")
 	void twoBranches() {
-		UnitGraph controlFlowGraph = sootAgent.makeControlFlowGraph("twoBranches");
+		UnitGraph controlFlowGraph = sootAgent.makeGraph("twoBranches");
 
 		boolean branch1 = false;
 		boolean branch2 = false;
@@ -59,7 +59,7 @@ class AcceptanceTest {
 	@Test
 	void jumpBackToLoopEntrance() {
 		UnitGraph controlFlowGraph =
-			sootAgent.makeControlFlowGraph("jumpBackToLoopEntrance");
+			sootAgent.makeGraph("jumpBackToLoopEntrance");
 		List<List<Unit>> completePaths = findPrimePaths(controlFlowGraph).stream()
 			.map(p -> new Path(controlFlowGraph, p).oneCompletePath)
 			.collect(Collectors.toList());

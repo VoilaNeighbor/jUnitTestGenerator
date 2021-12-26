@@ -40,7 +40,7 @@ public class Facade {
 		try {
 			List<TestCase> testCases = new ArrayList<>();
 			//生产控制流图
-			UnitGraph controlFlowGraph = sootAgent.makeControlFlowGraph(methodName);
+			UnitGraph controlFlowGraph = sootAgent.makeGraph(methodName);
 			List<List<Unit>>  primePath = findPrimePaths(controlFlowGraph);
 			List<Path> completePath = SootCFGAnalyzer.findCompleteTest(primePath,controlFlowGraph);
 			for (Path path: completePath) {
@@ -70,7 +70,7 @@ public class Facade {
 	}
 
 	public static void main(String[] args) {
-		SootAgent sootAgent = new SootAgent(BasicExamples.class);
+		var sootAgent = SootAgent.basicExamples;
 		PathArgumentsSynthesizer argumentsSynthesizer =
 			new PathArgumentsSynthesizer();
 		JUnitTestGenerator jUnitTestGenerator = new JUnitTestGenerator(
