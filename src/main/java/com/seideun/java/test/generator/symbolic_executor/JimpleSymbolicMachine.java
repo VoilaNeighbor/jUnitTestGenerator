@@ -5,6 +5,7 @@ import com.microsoft.z3.Expr;
 import com.seideun.java.test.generator.constriant_solver.TodoException;
 import soot.IntType;
 import soot.RefType;
+import soot.Unit;
 import soot.jimple.internal.JimpleLocal;
 import soot.toolkits.graph.UnitGraph;
 
@@ -23,15 +24,17 @@ import java.util.*;
  *   <li>XYMap: A table from X to Y.</li>
  * </ul>
  */
+@SuppressWarnings("rawtypes")
 public class JimpleSymbolicMachine {
 	private final Context z3 = new Context();
-	private final Map<JimpleLocal, Expr> symbolTable = new HashMap<>();
+	private final Map<JimpleLocal, Expr> allJVarsSymbolTable = new HashMap<>();
+	private final List<Map<JimpleLocal, Expr>> paths = new ArrayList<>();
 
 	/**
 	 * @return A symbol table for each path executed.
 	 */
 	public List<Map<JimpleLocal, Expr>> resultPaths() {
-		return Collections.singletonList(symbolTable);
+		return paths;
 	}
 
 	public void run(UnitGraph jProgram) {
@@ -39,10 +42,13 @@ public class JimpleSymbolicMachine {
 		for (var jVar: body.getLocals()) {
 			addSymbol((JimpleLocal) jVar);
 		}
+		for (Unit head: jProgram.getHeads()) {
+			walkPath(head, new HashMap<>(allJVarsSymbolTable), jProgram, paths);
+		}
 	}
 
 	private void addSymbol(JimpleLocal jVar) {
-		symbolTable.put(jVar, switch (jVar.getType()) {
+		allJVarsSymbolTable.put(jVar, switch (jVar.getType()) {
 			case IntType x -> z3.mkIntConst(jVar.getName());
 			case RefType x -> mkRefConst(jVar, x);
 			default -> throw new TodoException(jVar);
@@ -55,6 +61,22 @@ public class JimpleSymbolicMachine {
 			return z3.mkConst(jVar.getName(), z3.mkStringSort());
 		} else {
 			throw new TodoException(x);
+		}
+	}
+
+	private static void walkPath(
+		Unit thisUnit,
+		Map<JimpleLocal, Expr> symbolTable,
+		UnitGraph jProgram,
+		List<Map<JimpleLocal, Expr>> completedPaths
+	) {
+		var successors = jProgram.getSuccsOf(thisUnit);
+		if (successors.isEmpty()) {
+			completedPaths.add(symbolTable);
+			return;
+		}
+		for (Unit successor: successors) {
+			walkPath(successor, new HashMap<>(symbolTable), jProgram, completedPaths);
 		}
 	}
 }
