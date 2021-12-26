@@ -23,17 +23,22 @@ public final class JcmExamples {
 		}
 	}
 
-	public static double doubleType(double a, double b) {
-		if (a < b) {
-			return a + b;
-		} else if (a + b > 3.9) {
-			return a - b;
-		} else {
-			return a * b;
+	public static int whileLoop(int a){
+		while (a > 10) {
+			a -= 2;
 		}
+		return a;
 	}
 
 	public static String stringType(String a) {
 		return "Hello " + a;
+	}
+
+	public static String stringEquals(String a, String b) {
+		if (a.equals(b)) {
+			return a + b;
+		} else {
+			return a;
+		}
 	}
 }

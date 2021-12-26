@@ -1,14 +1,12 @@
 package com.seideun.java.test.generator.symbolic_executor;
 
 import com.microsoft.z3.Context;
+import com.microsoft.z3.Expr;
 import com.microsoft.z3.*;
 import com.seideun.java.test.generator.constriant_solver.Rational;
 import com.seideun.java.test.generator.constriant_solver.TodoException;
 import soot.*;
-import soot.jimple.DoubleConstant;
-import soot.jimple.FloatConstant;
-import soot.jimple.IntConstant;
-import soot.jimple.NumericConstant;
+import soot.jimple.*;
 import soot.jimple.internal.*;
 import soot.toolkits.graph.UnitGraph;
 
@@ -69,6 +67,14 @@ public class JimpleConcolicMachine {
 		for (var jVar: jVars) {
 			mapping.put(jVar, switch (jVar.getType()) {
 				case IntType x -> z3.mkIntConst(jVar.getName());
+				case ByteType x -> {
+					var result = z3.mkIntConst(jVar.getName());
+					solver.add(z3.mkLe(z3.mkInt(-128), result));
+					solver.add(z3.mkLe(result, z3.mkInt(127)));
+					yield result;
+				}
+				case BooleanType x -> z3.mkBoolConst(jVar.getName());
+				case DoubleType x -> z3.mkRealConst(jVar.getName());
 				case RefType x -> mkRefConst(jVar, x);
 				default -> todo(jVar);
 			});
@@ -138,9 +144,32 @@ public class JimpleConcolicMachine {
 	 */
 	private Expr map(Value jValue) {
 		return switch (jValue) {
-			case NumericConstant c -> mapConst(jValue, c);
 			case Local jVar -> symbolTable.get(jVar);
+			case Constant c -> mapConst(jValue, c);
 			case AbstractBinopExpr abe -> mapBinary(abe);
+//			case JVirtualInvokeExpr vie -> {
+//				var base = vie.getBase();
+//				var method = vie.getMethodRef();
+//				if ("equals".equals(method.getName())) {
+//					yield z3.mkEq(map(base), map(vie.getArg(0)));
+//				}
+//				todo(vie);
+//				yield null;
+//			}
+			// Todo(Seideun): I don't know how to handle cast in Z3.
+			// I don't know why the concat fails, either.
+//			case JDynamicInvokeExpr x -> {
+//				var method = x.getMethodRef();
+//				if ("makeConcatWithConstants".equals(method.getName())) {
+//					if (method.getParameterType(0) instanceof RefType t) {
+//						if (t.getClassName().equals(String.class.getName())) {
+//							yield z3.mkConcat(map(x.getArg(0)), map(x.getBootstrapArg(0)));
+//						}
+//					}
+//				}
+//				todo(x);
+//				yield null;
+//			}
 			default -> todo(jValue);
 		};
 	}
@@ -173,8 +202,10 @@ public class JimpleConcolicMachine {
 		};
 	}
 
-	private Expr mapConst(Value jValue, NumericConstant c) {
+	private Expr mapConst(Value jValue, Constant c) {
 		return switch (c) {
+			// A lot yet to do. E.g. NullConstant.
+			case StringConstant x -> z3.mkString(x.value);
 			case IntConstant x -> z3.mkInt(x.value);
 			case DoubleConstant x -> mkReal(x.value);
 			case FloatConstant x -> mkReal(x.value);
@@ -214,7 +245,7 @@ public class JimpleConcolicMachine {
 	private Expr mkRefConst(Local jVar, RefType x) {
 		var className = x.getClassName();
 		if (className.equals(String.class.getName())) {
-			return z3.mkConst(jVar.getName(), z3.mkStringSort());
+			return z3.mkConst(z3.mkSymbol(jVar.getName()), z3.mkStringSort());
 		} else {
 			return todo(x);
 		}

@@ -8,6 +8,6 @@ public class TodoException extends RuntimeException {
 	}
 
 	public TodoException(Object todo) {
-		super(format("<Todo class=\"%s\">%s</Todo>", todo.getClass(), todo));
+		super(format("<Todo class=\"%s\">\n%s\n</Todo>\n", todo.getClass(), todo));
 	}
 }

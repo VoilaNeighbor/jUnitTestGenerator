@@ -1,6 +1,7 @@
 package com.seideun.java.test.generator.symbolic_executor;
 
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.Local;
 import soot.toolkits.graph.UnitGraph;
@@ -64,19 +65,6 @@ class JimpleConcolicMachineTest {
 
 		var concreteValues = paths.get(0).keySet();
 		assertTrue(setEqual(allParameters, concreteValues));
-	}
-
-	@Test
-	void collectDoubleSymbol() {
-		var graph = makeGraph("doubleType");
-
-		var paths = jcm.run(graph);
-
-		for (Map<Local, Object> path: paths) {
-			for (var concreteValue: path.values()) {
-				assertTrue(concreteValue instanceof Double);
-			}
-		}
 	}
 
 	@Test
@@ -155,9 +143,34 @@ class JimpleConcolicMachineTest {
 		assertTrue(path3);
 	}
 
+
 	@Test
+	@Disabled
 	void solveDoubleType() {
 
+	}
+
+	@Test
+	void solveStringEquals() {
+		var graph = makeGraph("stringEquals");
+
+		var results = jcm.run(graph);
+
+		assertEquals(2, results.size());
+		var path1 = false;
+		var path2 = false;
+		var jParameters = graph.getBody().getParameterLocals();
+		for (Map<Local, Object> concreteValues: results) {
+			var a = (String) concreteValues.get(jParameters.get(0));
+			var b = (String) concreteValues.get(jParameters.get(1));
+			if (a.equals(b)) {
+				path1 = true;
+			} else {
+				path2 = true;
+			}
+		}
+		assertTrue(path1);
+		assertTrue(path2);
 	}
 
 	private static UnitGraph makeGraph(String name) {
