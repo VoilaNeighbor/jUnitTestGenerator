@@ -13,6 +13,7 @@ import soot.jimple.IntConstant;
 import soot.jimple.internal.*;
 import soot.util.Switchable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,18 +23,20 @@ import java.util.Map;
  */
 @SuppressWarnings("unchecked")
 public class JimpleAwareZ3Context extends Context {
-	// Array -> Array length: IntConstant
-	private final Map<String, Expr> lenVarTable = new HashMap<>();
-
-	public Expr lenOf(String arrayName) {
-		return lenVarTable.get(arrayName);
-	}
+	// JimpleLocal -> Current symbolic value
+	private final Map<JimpleLocal, Expr> valueMap = new HashMap<>();
 
 	public Expr[] add(List<Switchable> jConstraints) {
-		return jConstraints.stream()
-			.map(this::addSimple)
-			.toList()
-			.toArray(new Expr[]{});
+		var result = new ArrayList<Expr>();
+		for (var i: jConstraints) {
+			var expr = addSimple(i);
+			if (expr == null) {
+				addComplex(i, result);
+			} else {
+				result.add(expr);
+			}
+		}
+		return result.toArray(new Expr[0]);
 	}
 
 	public Expr addSimple(Switchable jimpleValue) {
@@ -52,33 +55,26 @@ public class JimpleAwareZ3Context extends Context {
 			case JMulExpr x -> mkMul(addSimple(x.getOp1()), addSimple(x.getOp2()));
 			case JDivExpr x -> mkDiv(addSimple(x.getOp1()), addSimple(x.getOp2()));
 			case JRemExpr x -> mkRem(addSimple(x.getOp1()), addSimple(x.getOp2()));
-			case JAssignStmt x ->{
-				// Array-length assignments are special, in that Z3 does not have
-				// fixed-length arrays.
-				yield mkEq(addSimple(x.getLeftOp()), addSimple(x.getRightOp()));
-			}
-			case JLengthExpr x ->{
-				var base = (JimpleLocal) x.getOp();
-				addSimple(base);
-				yield lenVarTable.get(base.getName() + "$len");
-			}
-			case JimpleLocal x ->{
-				if (x.getType() instanceof ArrayType) {
-					lenVarTable.put(x.getName(), mkIntConst(x.getName() + "$len"));
-				}
-				yield mkConst(x.getName(), toSort(x.getType()));
-			}
+			case JAssignStmt x -> mkEq(addSimple(x.getLeftOp()), addSimple(x.getRightOp()));
+			case JimpleLocal x -> mkConst(x.getName(), toSort(x.getType()));
 			case IntConstant x -> mkInt(x.value);
 			case DoubleConstant x -> mkReal(x.value);
 			case FloatConstant x -> mkReal(x.value);
-			default -> throw new TodoException(jimpleValue);
+			default -> null;
 		};
 	}
 
 	public void addComplex(Switchable jConstraint, List<Expr> out) {
 		switch (jConstraint) {
 		case JimpleLocal x -> {
-
+			var y = valueMap.get(x);
+			if (y != null) {
+				out.add(y);
+			} else {
+				var symbolicValue = mkConst(x.getName(), toSort(x.getType()));
+				valueMap.put(x, symbolicValue);
+				// Todo(Seideun): Rename. This is required in path for loops.
+			}
 		}
 		default -> throw new TodoException(jConstraint);
 		}
