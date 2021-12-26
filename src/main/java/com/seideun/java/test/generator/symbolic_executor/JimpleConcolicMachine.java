@@ -1,7 +1,6 @@
 package com.seideun.java.test.generator.symbolic_executor;
 
 import com.microsoft.z3.*;
-import com.seideun.java.test.generator.constriant_solver.TodoException;
 import soot.IntType;
 import soot.Local;
 import soot.RefType;
@@ -45,7 +44,7 @@ public class JimpleConcolicMachine {
 	public List<Map<JimpleLocal, Object>> run(UnitGraph jProgram) {
 		this.jProgram = jProgram;
 		constructSymbolTable();
-		return walkGraph();
+		return runAllPaths();
 	}
 
 	// By marking all symbols at the start, we save quite a lot of
@@ -77,26 +76,26 @@ public class JimpleConcolicMachine {
 	 *
 	 * @return A list of sets of arguments, each corresponding to a unique path.
 	 */
-	private List<Map<JimpleLocal, Object>> walkGraph() {
+	private List<Map<JimpleLocal, Object>> runAllPaths() {
 		var allConcreteValues = new ArrayList<Map<JimpleLocal, Object>>();
 		for (Unit head: jProgram.getHeads()) {
 			solver.push();
-			walkPath(head, allConcreteValues);
+			runAlong(head, allConcreteValues);
 			solver.pop();
 		}
 		return allConcreteValues;
 	}
 
-	private void walkPath(Unit thisUnit, List<Map<JimpleLocal, Object>> result) {
+	private void runAlong(Unit thisUnit, List<Map<JimpleLocal, Object>> result) {
 		var successors = jProgram.getSuccsOf(thisUnit);
 		if (successors.isEmpty()) {
 			result.add(solveCurrentConstraints());
 		} else if (successors.size() == 1) {
-			walkPath(successors.get(0), result);
+			runAlong(successors.get(0), result);
 		} else {
 			for (Unit successor: successors) {
 				solver.push();
-				walkPath(successor, result);
+				runAlong(successor, result);
 				solver.pop();
 			}
 		}
@@ -114,21 +113,21 @@ public class JimpleConcolicMachine {
 		var model = solver.getModel();
 
 		var parameters = jProgram.getBody().getParameterLocals();
-		var concreteValues = new HashMap<JimpleLocal, Object>();
+		var result = new HashMap<JimpleLocal, Object>();
 		for (Local i: parameters) {
 			var parameter = (JimpleLocal) i;
 			var symbolicValue = symbolTable.get(parameter);
 			var interpretation = model.eval(symbolicValue, true);
 			if (interpretation instanceof IntNum x) {
-				concreteValues.put(parameter, x.getInt());
+				result.put(parameter, x.getInt());
 			} else if (interpretation instanceof SeqExpr<?> x) {
-				concreteValues.put(parameter, x.getString());
+				result.put(parameter, x.getString());
 			} else {
-				throw new TodoException(interpretation);
+				todo(interpretation);
 			}
 		}
 
-		return concreteValues;
+		return result;
 	}
 
 	private static <T> T todo(Object ignored) {
