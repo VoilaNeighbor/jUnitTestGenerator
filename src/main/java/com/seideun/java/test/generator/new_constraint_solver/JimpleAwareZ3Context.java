@@ -25,21 +25,21 @@ import java.util.Map;
 public class JimpleAwareZ3Context extends Context {
 	// JimpleLocal -> Current symbolic value
 	private final Map<JimpleLocal, Expr> valueMap = new HashMap<>();
+	private final Map<String, Expr> arrNameToLenMap = new HashMap<>();
+
+	public Expr getSymbol(JimpleLocal jimple) {
+		return valueMap.get(jimple);
+	}
 
 	public Expr[] add(List<Switchable> jConstraints) {
 		var result = new ArrayList<Expr>();
 		for (var i: jConstraints) {
-			var expr = addSimple(i);
-			if (expr == null) {
-				addComplex(i, result);
-			} else {
-				result.add(expr);
-			}
+			result.add(addSimple(i));
 		}
 		return result.toArray(new Expr[0]);
 	}
 
-	public Expr addSimple(Switchable jimpleValue) {
+	private Expr addSimple(Switchable jimpleValue) {
 		if (jimpleValue instanceof JInvertCondition x) {
 			return mkNot(addSimple(x.base));
 		}
@@ -56,28 +56,23 @@ public class JimpleAwareZ3Context extends Context {
 			case JDivExpr x -> mkDiv(addSimple(x.getOp1()), addSimple(x.getOp2()));
 			case JRemExpr x -> mkRem(addSimple(x.getOp1()), addSimple(x.getOp2()));
 			case JAssignStmt x -> mkEq(addSimple(x.getLeftOp()), addSimple(x.getRightOp()));
-			case JimpleLocal x -> mkConst(x.getName(), toSort(x.getType()));
+			case JimpleLocal x -> {
+				var existed = valueMap.get(x);
+				Expr result;
+				if (existed == null) {
+					result =mkConst(x.getName(), toSort(x.getType()));
+					valueMap.put(x, result);
+				} else {
+					// Todo(Seideun): Rename. This is required in path for loops.
+					result = mkConst(x.getName(), toSort(x.getType()));
+				}
+				yield result;
+			}
 			case IntConstant x -> mkInt(x.value);
 			case DoubleConstant x -> mkReal(x.value);
 			case FloatConstant x -> mkReal(x.value);
-			default -> null;
+			default -> throw new TodoException(jimpleValue);
 		};
-	}
-
-	public void addComplex(Switchable jConstraint, List<Expr> out) {
-		switch (jConstraint) {
-		case JimpleLocal x -> {
-			var y = valueMap.get(x);
-			if (y != null) {
-				out.add(y);
-			} else {
-				var symbolicValue = mkConst(x.getName(), toSort(x.getType()));
-				valueMap.put(x, symbolicValue);
-				// Todo(Seideun): Rename. This is required in path for loops.
-			}
-		}
-		default -> throw new TodoException(jConstraint);
-		}
 	}
 
 	private Sort toSort(Type sootType) {

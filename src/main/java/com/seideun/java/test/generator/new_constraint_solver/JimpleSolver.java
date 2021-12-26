@@ -109,7 +109,7 @@ public class JimpleSolver {
 		if (status == Status.SATISFIABLE) {
 			var concreteValues = symbols.stream()
 				.sequential()
-				.map(s -> findConcreteValueOf(z3.addSimple(s), solver.getModel()))
+				.map(s -> findConcreteValueOf(z3.getSymbol(s), solver.getModel()))
 				.toList();
 			return Pair.of(concreteValues, status);
 		} else {
