@@ -25,6 +25,6 @@ public class ConstraintSolverTestBase {
 		System.out.printf("<path>%s<path>\n", path);
 		System.out.printf("<inputSymbols>%s<inputSymbols>\n", inputs);
 		System.out.printf("<constraints>%s<constraints>\n", constraints);
-		System.out.printf("<result>%s<result>\n", result);
+		System.out.printf("<result>%s<result>\n\n", result);
 	}
 }

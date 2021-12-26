@@ -13,11 +13,17 @@ import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findP
 @Disabled
 class ManualSolverTest extends ConstraintSolverTestBase {
 	UnitGraph basic = SootAgent.basicExamples.makeGraph("equalComparison");
+	UnitGraph loop = SootAgent.basicExamples.makeGraph("loop");
 	UnitGraph array = SootAgent.compositeExamples.makeGraph("array");
 
 	@Test
 	void solveCompleteCase() {
 		inspect(basic);
+	}
+
+	@Test
+	void solveLoop() {
+		inspect(loop);
 	}
 
 	@Test

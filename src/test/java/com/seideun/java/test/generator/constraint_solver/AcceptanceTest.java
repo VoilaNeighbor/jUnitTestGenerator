@@ -57,9 +57,9 @@ class AcceptanceTest {
 	}
 
 	@Test
-	void jumpBackToLoopEntrance() {
+	void loop() {
 		UnitGraph controlFlowGraph =
-			sootAgent.makeGraph("jumpBackToLoopEntrance");
+			sootAgent.makeGraph("loop");
 		List<List<Unit>> completePaths = findPrimePaths(controlFlowGraph).stream()
 			.map(p -> new Path(controlFlowGraph, p).oneCompletePath)
 			.collect(Collectors.toList());

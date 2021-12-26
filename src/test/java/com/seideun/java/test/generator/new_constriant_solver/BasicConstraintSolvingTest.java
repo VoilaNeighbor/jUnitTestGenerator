@@ -82,28 +82,6 @@ class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 		);
 	}
 
-
-	//	@Test
-	//	void solveTwoSymbols() {
-	//		var x = new JimpleLocal("x", DoubleType.v());
-	//		var y = new JimpleLocal("y", DoubleType.v());
-	//		var z = new JimpleLocal("z", DoubleType.v());
-	//		var constraint1 = new JGeExpr(x, DoubleConstant.v(2.2));
-	//		var constraint2 = new JLtExpr(x, DoubleConstant.v(-1.3));
-	//		var constraint3 = new JAssignStmt(z, new JAddExpr(y, DoubleConstant.v(9
-	//		.1)));
-	//		var constraint4 = new JEqExpr(x, z);
-	//
-	//		var result = solver.findConcreteValueOf(List.of(x, y), List.of
-	//		(constraint1, constraint2, constraint3));
-	//		var xValue = (double) result.getLeft().get(0);
-	//		var yValue = (double) result.getLeft().get(1);
-	//
-	//		assertTrue(xValue >= 2.2);
-	//		assertTrue(yValue <= -1.3);
-	//		assertEquals(xValue, yValue + 9.1, 0.00001);
-	//	}
-
 	@Test
 	void reportUnsatisfiableConstraints() {
 		var symbol = new JimpleLocal("x", IntType.v());

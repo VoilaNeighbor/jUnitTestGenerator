@@ -35,7 +35,7 @@ public class BasicExamples {
 		return a == 1 ? (b * 2.2) : (b - 3.3);
 	}
 
-	public static int jumpBackToLoopEntrance(int a) {
+	public static int loop(int a) {
 		while (a < 20) {
 			a *= 2;
 		}

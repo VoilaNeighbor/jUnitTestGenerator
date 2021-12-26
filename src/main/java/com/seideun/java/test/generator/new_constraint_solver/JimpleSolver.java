@@ -6,7 +6,10 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import soot.Unit;
 import soot.Value;
-import soot.jimple.internal.*;
+import soot.jimple.internal.JAssignStmt;
+import soot.jimple.internal.JIdentityStmt;
+import soot.jimple.internal.JIfStmt;
+import soot.jimple.internal.JimpleLocal;
 import soot.util.Switchable;
 
 import java.util.ArrayList;
@@ -105,19 +108,15 @@ public class JimpleSolver {
 	 * @return { concrete value or null, ... }
 	 */
 	public Pair<Object, Status> findConcreteValueOf(
-		JimpleLocal symbol, List<Value> relatedConstraints
+		JimpleLocal symbol, List<Switchable> relatedConstraints
 	) {
-		var solver = z3.mkSolver();
-		var status = solver.check(z3.add((List)relatedConstraints));
-		if (status == Status.SATISFIABLE) {
-			var value = findConcreteValueOf(z3.addSimple(symbol), solver.getModel());
-			return Pair.of(value, status);
-		} else {
-			return Pair.of(null, status);
-		}
+		var result = findConcreteValueOf(singletonList(symbol), relatedConstraints);
+		var symbolList = result.getLeft();
+		var status = result.getRight();
+		return Pair.of(symbolList == null ? null : symbolList.get(0), status);
 	}
 
-	// Todo(Seideun): Untested, duplicated
+	// manually tested
 	public Pair<List<Object>, Status> findConcreteValueOf(
 		List<JimpleLocal> symbols, List<Switchable> relatedConstraints
 	) {
