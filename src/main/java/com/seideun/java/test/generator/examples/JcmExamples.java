@@ -13,6 +13,16 @@ public final class JcmExamples {
 		return a < 2 ? a : 1;
 	}
 
+	public static int manyIfs(int a, int b) {
+		if (a < b) {
+			return a + b;
+		} else if (a == b + 2) {
+			return a - b;
+		} else {
+			return a * b;
+		}
+	}
+
 	public static String stringType(String a) {
 		return "Hello " + a;
 	}

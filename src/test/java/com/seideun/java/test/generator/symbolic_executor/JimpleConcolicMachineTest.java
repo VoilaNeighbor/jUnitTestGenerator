@@ -115,6 +115,33 @@ class JimpleConcolicMachineTest {
 		assertTrue(path2);
 	}
 
+	@Test
+	void solveManyIf() {
+		var graph = makeGraph("manyIfs");
+
+		var results = jcm.run(graph);
+
+		assertEquals(3, results.size());
+		var path1 = false;
+		var path2 = false;
+		var path3 = false;
+		var jParameters = graph.getBody().getParameterLocals();
+		for (Map<JimpleLocal, Object> concreteValues: results) {
+			var a = (int) concreteValues.get(jParameters.get(0));
+			var b = (int) concreteValues.get(jParameters.get(1));
+			if (a < b) {
+				path1 = true;
+			} else if (a == b + 2) {
+				path2 = true;
+			} else {
+				path3 = true;
+			}
+		}
+		assertTrue(path1);
+		assertTrue(path2);
+		assertTrue(path3);
+	}
+
 	private static UnitGraph makeGraph(String name) {
 		return SootAgent.jcmExamples.makeGraph(name);
 	}
