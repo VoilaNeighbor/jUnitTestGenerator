@@ -14,8 +14,6 @@ import soot.toolkits.graph.UnitGraph;
 
 import java.util.*;
 
-import static java.lang.Thread.currentThread;
-
 /**
  * This class runs Jimple method body with Z3 expressions as
  * values. That is, it outputs a symbol table for each
@@ -35,18 +33,18 @@ public class JimpleConcolicMachine {
 	private final Solver solver = z3.mkSolver();
 	// Total map: jVars -> current-symbolic-values. Their symbolic values can be
 	// updated as the execution goes.
-	private final Map<JimpleLocal, Expr> symbolTable = new HashMap<>();
+	private final Map<Local, Expr> symbolTable = new HashMap<>();
 	// The current jimple program we are analyzing. Cached as a field for
 	// referencing. Soot does a nice job in that it stores out-of-the-box
 	// information for us to check.
 	private UnitGraph jProgram;
 	// Remember what we were to solve.
-	private Map<JimpleLocal, Expr> inputSymbolTable;
+	private Map<Local, Expr> inputSymbolTable;
 
 	/**
 	 * @return Concrete values, one table for each possible path.
 	 */
-	public List<Map<JimpleLocal, Object>> run(UnitGraph jProgram) {
+	public List<Map<Local, Object>> run(UnitGraph jProgram) {
 		this.jProgram = jProgram;
 		rememberInputJVars();
 		loadAllJVars();
@@ -57,25 +55,24 @@ public class JimpleConcolicMachine {
 	// online-checking burdens.
 	private void loadAllJVars() {
 		symbolTable.clear();
-		for (var jVar: jProgram.getBody().getLocals()) {
-			symbolTable.put((JimpleLocal) jVar, switch (jVar.getType()) {
-				case IntType x -> z3.mkIntConst(jVar.getName());
-				case RefType x -> mkRefConst(jVar, x);
-				default -> todo(jVar);
-			});
-		}
+		buildMapping(symbolTable, jProgram.getBody().getLocals());
 	}
 
 	private void rememberInputJVars() {
-		var inputSymbols = new HashMap<JimpleLocal, Expr>();
-		for (var jVar: jProgram.getBody().getParameterLocals()) {
-			inputSymbols.put((JimpleLocal) jVar, switch (jVar.getType()) {
+		var inputSymbols = new HashMap<Local, Expr>();
+		var jVars = jProgram.getBody().getParameterLocals();
+		buildMapping(inputSymbols, jVars);
+		inputSymbolTable = Collections.unmodifiableMap(inputSymbols);
+	}
+
+	private void buildMapping(Map<Local, Expr> mapping, Iterable<Local> jVars) {
+		for (var jVar: jVars) {
+			mapping.put(jVar, switch (jVar.getType()) {
 				case IntType x -> z3.mkIntConst(jVar.getName());
 				case RefType x -> mkRefConst(jVar, x);
 				default -> todo(jVar);
 			});
 		}
-		inputSymbolTable = Collections.unmodifiableMap(inputSymbols);
 	}
 
 	/**
@@ -84,8 +81,8 @@ public class JimpleConcolicMachine {
 	 *
 	 * @return A list of sets of arguments, each corresponding to a unique path.
 	 */
-	private List<Map<JimpleLocal, Object>> run() {
-		var allConcreteValues = new ArrayList<Map<JimpleLocal, Object>>();
+	private List<Map<Local, Object>> run() {
+		var allConcreteValues = new ArrayList<Map<Local, Object>>();
 		for (Unit head: jProgram.getHeads()) {
 			solver.push();
 			runJStmt(head, allConcreteValues);
@@ -94,14 +91,14 @@ public class JimpleConcolicMachine {
 		return allConcreteValues;
 	}
 
-	private void runJStmt(Unit thisUnit, List<Map<JimpleLocal, Object>> result) {
+	private void runJStmt(Unit thisUnit, List<Map<Local, Object>> result) {
 		switch (thisUnit) {
 		case JAssignStmt assignStmt -> {
 			var lhs = assignStmt.getLeftOp();
 			var rhs = assignStmt.getRightOp();
-			var oldSymbol = symbolTable.put((JimpleLocal) lhs, map(rhs));
+			var oldSymbol = symbolTable.put((Local) lhs, map(rhs));
 			runNext(thisUnit, result);
-			symbolTable.put((JimpleLocal) lhs, oldSymbol);
+			symbolTable.put((Local) lhs, oldSymbol);
 		}
 		case JIfStmt ifStmt -> {
 			assert jProgram.getSuccsOf(ifStmt).size() == 2;
@@ -120,7 +117,7 @@ public class JimpleConcolicMachine {
 		}
 	}
 
-	private void runNext(Unit thisUnit, List<Map<JimpleLocal, Object>> result) {
+	private void runNext(Unit thisUnit, List<Map<Local, Object>> result) {
 		final var successors = jProgram.getSuccsOf(thisUnit);
 		assert successors.size() <= 1;
 		if (successors.isEmpty()) {
@@ -142,7 +139,7 @@ public class JimpleConcolicMachine {
 	private Expr map(Value jValue) {
 		return switch (jValue) {
 			case NumericConstant c -> mapConst(jValue, c);
-			case JimpleLocal jVar -> symbolTable.get(jVar);
+			case Local jVar -> symbolTable.get(jVar);
 			case AbstractBinopExpr abe -> mapBinary(abe);
 			default -> todo(jValue);
 		};
@@ -189,14 +186,14 @@ public class JimpleConcolicMachine {
 	 * Find concrete values of parameter jVars by interpreting the corresponding
 	 * symbols.
 	 */
-	private Map<JimpleLocal, Object> solveCurrentConstraints() {
+	private Map<Local, Object> solveCurrentConstraints() {
 		var status = solver.check();
 		if (status != Status.SATISFIABLE) {
 			return todo(status);
 		}
 		var model = solver.getModel();
 
-		var result = new HashMap<JimpleLocal, Object>();
+		var result = new HashMap<Local, Object>();
 		for (var kv: inputSymbolTable.entrySet()) {
 			var jArgument = kv.getKey();
 			var symbolicValue = kv.getValue();

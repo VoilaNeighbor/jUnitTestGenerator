@@ -2,7 +2,7 @@ package com.seideun.java.test.generator.symbolic_executor;
 
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import org.junit.jupiter.api.Test;
-import soot.jimple.internal.JimpleLocal;
+import soot.Local;
 import soot.toolkits.graph.UnitGraph;
 
 import java.util.Collection;
@@ -72,7 +72,7 @@ class JimpleConcolicMachineTest {
 
 		var paths = jcm.run(graph);
 
-		for (Map<JimpleLocal, Object> path: paths) {
+		for (Map<Local, Object> path: paths) {
 			for (var concreteValue: path.values()) {
 				assertTrue(concreteValue instanceof Double);
 			}
@@ -115,8 +115,8 @@ class JimpleConcolicMachineTest {
 		assertEquals(2, results.size());
 		var path1 = false;
 		var path2 = false;
-		var jParameter = (JimpleLocal) graph.getBody().getParameterLocal(0);
-		for (Map<JimpleLocal, Object> concreteValues: results) {
+		var jParameter = (Local) graph.getBody().getParameterLocal(0);
+		for (Map<Local, Object> concreteValues: results) {
 			var value = (int) concreteValues.get(jParameter);
 			if (value < 2) {
 				path1 = true;
@@ -139,7 +139,7 @@ class JimpleConcolicMachineTest {
 		var path2 = false;
 		var path3 = false;
 		var jParameters = graph.getBody().getParameterLocals();
-		for (Map<JimpleLocal, Object> concreteValues: results) {
+		for (Map<Local, Object> concreteValues: results) {
 			var a = (int) concreteValues.get(jParameters.get(0));
 			var b = (int) concreteValues.get(jParameters.get(1));
 			if (a < b) {
