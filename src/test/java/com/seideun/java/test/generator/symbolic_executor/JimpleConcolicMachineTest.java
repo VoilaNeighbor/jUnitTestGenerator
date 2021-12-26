@@ -1,15 +1,10 @@
 package com.seideun.java.test.generator.symbolic_executor;
 
-import com.microsoft.z3.IntNum;
-import com.microsoft.z3.Status;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
-import com.seideun.java.test.generator.constriant_solver.TodoException;
 import org.junit.jupiter.api.Test;
-import soot.Local;
 import soot.toolkits.graph.UnitGraph;
 
 import java.util.Collection;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -59,14 +54,14 @@ class JimpleConcolicMachineTest {
 	}
 
 	@Test
-	void collectAllSymbols() {
+	void collectAllInputSymbols() {
 		var graph = makeGraph("intSequential");
-		var allJVars = graph.getBody().getLocals();
+		var allParameters = graph.getBody().getParameterLocals();
 
 		var paths = jcm.run(graph);
 
-		var jVarsFound = paths.get(0).keySet();
-		assertTrue(setEqual(allJVars, jVarsFound));
+		var concreteValues = paths.get(0).keySet();
+		assertTrue(setEqual(allParameters, concreteValues));
 	}
 
 	@Test
@@ -75,8 +70,8 @@ class JimpleConcolicMachineTest {
 
 		var paths = jcm.run(graph);
 
-		for (var symbol: paths.get(0).values()) {
-			assertEquals("String", symbol.getSort().toString());
+		for (var concreteValue: paths.get(0).values()) {
+			assertTrue(concreteValue instanceof String);
 		}
 	}
 
@@ -86,24 +81,7 @@ class JimpleConcolicMachineTest {
 	void solveUnboundedInt() {
 		var graph = makeGraph("intSequential");
 
-		var symbolTable = jcm.run(graph).get(0);
-
-		var solver = jcm.z3.mkSolver();
-		var status = solver.check();
-		assertEquals(Status.SATISFIABLE, status);
-		var model = solver.getModel();
-
-		var parameters = graph.getBody().getParameterLocals();
-		var concreteValues = new HashMap<Local, Object>();
-		for (Local parameter: parameters) {
-			var symbolicValue = symbolTable.get(parameter);
-			var interpretation = model.eval(symbolicValue, true);
-			if (interpretation instanceof IntNum x) {
-				concreteValues.put(parameter, x.getInt());
-			} else {
-				throw new TodoException(interpretation);
-			}
-		}
+		var concreteValues = jcm.run(graph).get(0);
 
 		assertEquals(2, concreteValues.size());
 		for (Object x: concreteValues.values()) {
@@ -115,6 +93,7 @@ class JimpleConcolicMachineTest {
 	void solveBoundedInt() {
 		var graph = makeGraph("twoBranches");
 
+		var paths = jcm.run(graph);
 	}
 
 	private static UnitGraph makeGraph(String name) {

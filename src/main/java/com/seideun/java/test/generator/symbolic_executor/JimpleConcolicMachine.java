@@ -1,7 +1,6 @@
 package com.seideun.java.test.generator.symbolic_executor;
 
-import com.microsoft.z3.Context;
-import com.microsoft.z3.Expr;
+import com.microsoft.z3.*;
 import com.seideun.java.test.generator.constriant_solver.TodoException;
 import soot.IntType;
 import soot.Local;
@@ -29,11 +28,12 @@ import java.util.*;
 public class JimpleConcolicMachine {
 	// public for test now.
 	public final Context z3 = new Context();
+	private final Solver solver = z3.mkSolver();
 
 	/**
-	 * @return Symbol table of all paths run.
+	 * @return Concrete values, one table for each possible path.
 	 */
-	public List<Map<JimpleLocal, Expr>> run(UnitGraph jProgram) {
+	public List<Map<JimpleLocal, Object>> run(UnitGraph jProgram) {
 		// By marking all symbols at the start, we save quite a lot of
 		// online-checking burdens.
 		var allJVars = markAllJVars(jProgram);
@@ -61,29 +61,59 @@ public class JimpleConcolicMachine {
 		}
 	}
 
-	private static List<Map<JimpleLocal, Expr>> walkGraph(UnitGraph jProgram, Map<JimpleLocal, Expr> allJVars) {
+	private List<Map<JimpleLocal, Object>> walkGraph(UnitGraph jProgram, Map<JimpleLocal, Expr> allJVars) {
 		var allPaths = new ArrayList<Map<JimpleLocal, Expr>>();
+		var allConcreteValues = new ArrayList<Map<JimpleLocal, Object>>();
 		for (Unit head: jProgram.getHeads()) {
-			walkPath(head, new HashMap<>(allJVars), jProgram, allPaths);
+			solver.push();
+			walkPath(head, new HashMap<>(allJVars), allPaths, allConcreteValues, jProgram, solver);
+			solver.pop();
 		}
-		return allPaths;
+		return allConcreteValues;
 	}
 
 	private static void walkPath(
 		Unit thisUnit,
 		Map<JimpleLocal, Expr> symbolTable,
+		// Let's replace this
+		List<Map<JimpleLocal, Expr>> completedPaths,
+		List<Map<JimpleLocal, Object>> allConcreteValues,
+		// By this: List<Map<JimpleLocal, Object>>
 		UnitGraph jProgram,
-		List<Map<JimpleLocal, Expr>> completedPaths
+		Solver solver
 	) {
 		var successors = jProgram.getSuccsOf(thisUnit);
 		if (successors.isEmpty()) {
+			var status = solver.check();
+			if (status != Status.SATISFIABLE) {
+				throw new TodoException(status);
+			}
+			var model = solver.getModel();
+
+			var parameters = jProgram.getBody().getParameterLocals();
+			var concreteValues = new HashMap<JimpleLocal, Object>();
+			for (Local i: parameters) {
+				var parameter = (JimpleLocal) i;
+				var symbolicValue = symbolTable.get(parameter);
+				var interpretation = model.eval(symbolicValue, true);
+				if (interpretation instanceof IntNum x) {
+					concreteValues.put(parameter, x.getInt());
+				} else if (interpretation instanceof SeqExpr<?> x){
+					concreteValues.put(parameter, x.getString());
+				} else {
+					throw new TodoException(interpretation);
+				}
+			}
+			allConcreteValues.add(concreteValues);
+
 			// Solve constraints and get concrete values?
 			completedPaths.add(symbolTable);
-			return;
-		}
-		// Check for 1-node case?
-		for (Unit successor: successors) {
-			walkPath(successor, new HashMap<>(symbolTable), jProgram, completedPaths);
+		} else if (successors.size() == 1) {
+			walkPath(successors.get(0), symbolTable, completedPaths, allConcreteValues, jProgram, solver);
+		} else {
+			for (Unit successor: successors) {
+				walkPath(successor, new HashMap<>(symbolTable), completedPaths, allConcreteValues, jProgram, solver);
+			}
 		}
 	}
 }
