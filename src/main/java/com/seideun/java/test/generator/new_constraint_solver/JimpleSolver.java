@@ -106,10 +106,11 @@ public class JimpleSolver {
 	) {
 		var solver = z3.mkSolver();
 		var status = solver.check(z3.addConstraints(relatedConstraints));
+		var model = solver.getModel();
 		if (status == Status.SATISFIABLE) {
 			var concreteValues = symbols.stream()
 				.sequential()
-				.map(s -> findConcreteValueOf(z3.toSymbol(s), solver.getModel()))
+				.map(s -> findConcreteValueOf(s, model))
 				.toList();
 			return Pair.of(concreteValues, status);
 		} else {
@@ -117,11 +118,12 @@ public class JimpleSolver {
 		}
 	}
 
-	private Object findConcreteValueOf(Expr z3Symbol, Model z3Model) {
+	private Object findConcreteValueOf(JimpleLocal jVar, Model z3Model) {
 		// More on the 2nd bool parameter in `z3Model.eval`:
 		// https://z3prover.github.io/api/html/group__capi.html#gadb6ff55c26f5ef5607774514ee184957
 		// Simply put, if the parameter is true, unbounded symbols will be assigned
 		// some arbitrary values too. This simplifies our logic here.
+		var z3Symbol = z3.toSymbol(jVar);
 		return switch (z3Model.eval(z3Symbol, true)) {
 			case IntNum x -> x.getInt();
 			case RatNum x -> toDouble(x);

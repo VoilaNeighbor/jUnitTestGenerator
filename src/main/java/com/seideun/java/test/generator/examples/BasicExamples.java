@@ -58,6 +58,14 @@ public class BasicExamples {
 		}
 	}
 
+	public static double doubles(double a, double b) {
+		if (a > 2.3) {
+			return b * 1.2;
+		} else {
+			return a - 1.1;
+		}
+	}
+
 	@Deprecated(since =
 		"Use the corresponding method in class CompositeTypeExamples")
 	public static int array(int[] a) {

@@ -14,12 +14,13 @@ import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findP
 class ManualSolverTest extends ConstraintSolverTestBase {
 	UnitGraph basic = SootAgent.basicExamples.makeGraph("equalComparison");
 	UnitGraph loop = SootAgent.basicExamples.makeGraph("loop");
+	UnitGraph doubles = SootAgent.basicExamples.makeGraph("doubles");
 	UnitGraph array = SootAgent.compositeExamples.makeGraph("array");
 	UnitGraph store = SootAgent.compositeExamples.makeGraph("arrayStore");
 
 	@Test
 	void solveCompleteCase() {
-		inspect(store);
+		inspect(doubles);
 	}
 
 	private void inspect(UnitGraph graph) {
