@@ -26,7 +26,7 @@ import java.util.*;
  * </ul>
  */
 @SuppressWarnings("rawtypes")
-public class JimpleSymbolicMachine {
+public class JimpleConcolicMachine {
 	// public for test now.
 	public final Context z3 = new Context();
 
@@ -77,9 +77,11 @@ public class JimpleSymbolicMachine {
 	) {
 		var successors = jProgram.getSuccsOf(thisUnit);
 		if (successors.isEmpty()) {
+			// Solve constraints and get concrete values?
 			completedPaths.add(symbolTable);
 			return;
 		}
+		// Check for 1-node case?
 		for (Unit successor: successors) {
 			walkPath(successor, new HashMap<>(symbolTable), jProgram, completedPaths);
 		}
