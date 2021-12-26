@@ -4,6 +4,7 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.seideun.java.test.generator.constriant_solver.TodoException;
 import soot.IntType;
+import soot.Local;
 import soot.RefType;
 import soot.Unit;
 import soot.jimple.internal.JimpleLocal;
@@ -38,24 +39,29 @@ public class JimpleSymbolicMachine {
 	}
 
 	public void run(UnitGraph jProgram) {
-		var body = jProgram.getBody();
-		for (var jVar: body.getLocals()) {
-			addSymbol((JimpleLocal) jVar);
+		// By marking all symbols at the start, we save quite a lot of
+		// online-checking burdens.
+		markAllSymbols(jProgram);
+		walkGraph(jProgram);
+	}
+
+	private void markAllSymbols(UnitGraph jProgram) {
+		for (var jVar: jProgram.getBody().getLocals()) {
+			allJVarsSymbolTable.put((JimpleLocal) jVar, switch (jVar.getType()) {
+				case IntType x -> z3.mkIntConst(jVar.getName());
+				case RefType x -> mkRefConst(jVar, x);
+				default -> throw new TodoException(jVar);
+			});
 		}
+	}
+
+	private void walkGraph(UnitGraph jProgram) {
 		for (Unit head: jProgram.getHeads()) {
 			walkPath(head, new HashMap<>(allJVarsSymbolTable), jProgram, paths);
 		}
 	}
 
-	private void addSymbol(JimpleLocal jVar) {
-		allJVarsSymbolTable.put(jVar, switch (jVar.getType()) {
-			case IntType x -> z3.mkIntConst(jVar.getName());
-			case RefType x -> mkRefConst(jVar, x);
-			default -> throw new TodoException(jVar);
-		});
-	}
-
-	private Expr mkRefConst(JimpleLocal jVar, RefType x) {
+	private Expr mkRefConst(Local jVar, RefType x) {
 		var className = x.getClassName();
 		if (className.equals(String.class.getName())) {
 			return z3.mkConst(jVar.getName(), z3.mkStringSort());
