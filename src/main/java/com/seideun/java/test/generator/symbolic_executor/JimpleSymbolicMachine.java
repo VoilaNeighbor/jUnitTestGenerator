@@ -28,37 +28,24 @@ import java.util.*;
 @SuppressWarnings("rawtypes")
 public class JimpleSymbolicMachine {
 	private final Context z3 = new Context();
-	private final Map<JimpleLocal, Expr> allJVarsSymbolTable = new HashMap<>();
-	private final List<Map<JimpleLocal, Expr>> paths = new ArrayList<>();
 
-	/**
-	 * @return A symbol table for each path executed.
-	 */
-	public List<Map<JimpleLocal, Expr>> resultPaths() {
-		return paths;
-	}
-
-	public void run(UnitGraph jProgram) {
+	public List<Map<JimpleLocal, Expr>> run(UnitGraph jProgram) {
 		// By marking all symbols at the start, we save quite a lot of
 		// online-checking burdens.
-		markAllSymbols(jProgram);
-		walkGraph(jProgram);
+		var allJVars = markAllJVars(jProgram);
+		return walkGraph(jProgram, allJVars);
 	}
 
-	private void markAllSymbols(UnitGraph jProgram) {
+	private Map<JimpleLocal, Expr> markAllJVars(UnitGraph jProgram) {
+		var result = new HashMap<JimpleLocal, Expr>();
 		for (var jVar: jProgram.getBody().getLocals()) {
-			allJVarsSymbolTable.put((JimpleLocal) jVar, switch (jVar.getType()) {
+			result.put((JimpleLocal) jVar, switch (jVar.getType()) {
 				case IntType x -> z3.mkIntConst(jVar.getName());
 				case RefType x -> mkRefConst(jVar, x);
 				default -> throw new TodoException(jVar);
 			});
 		}
-	}
-
-	private void walkGraph(UnitGraph jProgram) {
-		for (Unit head: jProgram.getHeads()) {
-			walkPath(head, new HashMap<>(allJVarsSymbolTable), jProgram, paths);
-		}
+		return result;
 	}
 
 	private Expr mkRefConst(Local jVar, RefType x) {
@@ -68,6 +55,14 @@ public class JimpleSymbolicMachine {
 		} else {
 			throw new TodoException(x);
 		}
+	}
+
+	private static List<Map<JimpleLocal, Expr>> walkGraph(UnitGraph jProgram, Map<JimpleLocal, Expr> allJVars) {
+		var allPaths = new ArrayList<Map<JimpleLocal, Expr>>();
+		for (Unit head: jProgram.getHeads()) {
+			walkPath(head, new HashMap<>(allJVars), jProgram, allPaths);
+		}
+		return allPaths;
 	}
 
 	private static void walkPath(
