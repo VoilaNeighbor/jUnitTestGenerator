@@ -52,7 +52,8 @@ public class JimpleSolver {
 	}
 
 	/**
-	 * Traverse the path and extract constraints.
+	 * Traverse the path and extract constraints. Some new units might be added,
+	 * so you might not be able to find them in the original path.
 	 * <p>
 	 * This is put here temporarily. I don't think the solver should take the
 	 * responsibility of finding constraints.
