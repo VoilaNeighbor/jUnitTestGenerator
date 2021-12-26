@@ -10,7 +10,7 @@ public final class JcmExamples {
 	}
 
 	public static int twoBranches(int a) {
-		return a < -2 ? a - 1 : a + 1;
+		return a < 2 ? a : 1;
 	}
 
 	public static String stringType(String a) {
