@@ -34,24 +34,25 @@ class JimpleSymbolicMachineTest {
 	JimpleSymbolicMachine jsm = new JimpleSymbolicMachine();
 
 	@Test
-	void emptyJProgramReturnsEmptySymbolTable() {
+	void emptyJProgramReturnsEmptyPath() {
 		var graph = makeGraph("empty");
 
 		jsm.run(graph);
 
-		var symbols = jsm.resultPaths().get(0);
-		assertTrue(symbols.isEmpty());
+		var paths = jsm.resultPaths();
+		assertEquals(1, paths.size());
+		assertTrue(paths.get(0).isEmpty());
 	}
 
 	@Test
 	void collectAllSymbols() {
 		var graph = makeGraph("intSequential");
-		var allLocals = graph.getBody().getLocals();
+		var allJVars = graph.getBody().getLocals();
 
 		jsm.run(graph);
 
-		var symbols = jsm.resultPaths().get(0).keySet();
-		assertTrue(setEqual(allLocals, symbols));
+		var jVarsFound = jsm.resultPaths().get(0).keySet();
+		assertTrue(setEqual(allJVars, jVarsFound));
 	}
 
 	@Test
@@ -60,8 +61,8 @@ class JimpleSymbolicMachineTest {
 
 		jsm.run(graph);
 
-		var symbols = jsm.resultPaths().get(0);
-		for (var symbol: symbols.values()) {
+		var path = jsm.resultPaths().get(0);
+		for (var symbol: path.values()) {
 			assertEquals("String", symbol.getSort().toString());
 		}
 	}
