@@ -65,7 +65,12 @@ class JimpleSymbolicMachineTest {
 
 	@Test
 	void solveString() {
+		var graph = makeGraph("stringType");
 
+		jsm.run(graph);
+
+		var symbols = jsm.state().symbolTable();
+		System.out.println(symbols);
 	}
 
 	private static UnitGraph makeGraph(String name) {
