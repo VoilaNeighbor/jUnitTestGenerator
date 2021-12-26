@@ -49,4 +49,14 @@ class JimpleSymbolicMachineTest {
 		var result = jsm.state().symbolTable().keySet();
 		assertTrue(result.containsAll(expected));
 	}
+
+	@Test
+	void solveBoundedInt() {
+
+	}
+
+	@Test
+	void solveUnboundedInt() {
+
+	}
 }

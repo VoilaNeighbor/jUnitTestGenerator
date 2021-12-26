@@ -4,6 +4,7 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.seideun.java.test.generator.constriant_solver.TodoException;
 import soot.IntType;
+import soot.Local;
 import soot.jimple.internal.JimpleLocal;
 import soot.toolkits.graph.UnitGraph;
 
@@ -34,10 +35,14 @@ public class JimpleSymbolicMachine {
 	public void run(UnitGraph jProgram) {
 		var body = jProgram.getBody();
 		for (var jVar: body.getLocals()) {
-			symbolTable.put((JimpleLocal) jVar, switch (jVar.getType()) {
-				case IntType x -> z3.mkIntConst(jVar.getName());
-				default -> throw new TodoException(jVar);
-			});
+			addSymbol((JimpleLocal) jVar);
 		}
+	}
+
+	private void addSymbol(JimpleLocal jVar) {
+		symbolTable.put(jVar, switch (jVar.getType()) {
+			case IntType x -> z3.mkIntConst(jVar.getName());
+			default -> throw new TodoException(jVar);
+		});
 	}
 }
