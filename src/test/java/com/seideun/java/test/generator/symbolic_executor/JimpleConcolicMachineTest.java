@@ -67,6 +67,19 @@ class JimpleConcolicMachineTest {
 	}
 
 	@Test
+	void collectDoubleSymbol() {
+		var graph = makeGraph("doubleType");
+
+		var paths = jcm.run(graph);
+
+		for (Map<JimpleLocal, Object> path: paths) {
+			for (var concreteValue: path.values()) {
+				assertTrue(concreteValue instanceof Double);
+			}
+		}
+	}
+
+	@Test
 	void collectStringSymbols() {
 		var graph = makeGraph("stringType");
 
@@ -140,6 +153,11 @@ class JimpleConcolicMachineTest {
 		assertTrue(path1);
 		assertTrue(path2);
 		assertTrue(path3);
+	}
+
+	@Test
+	void solveDoubleType() {
+
 	}
 
 	private static UnitGraph makeGraph(String name) {

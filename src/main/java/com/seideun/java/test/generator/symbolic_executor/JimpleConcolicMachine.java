@@ -149,12 +149,6 @@ public class JimpleConcolicMachine {
 		var lhs = abe.getOp1();
 		var rhs = abe.getOp2();
 		return switch (abe) {
-			case JGeExpr x -> z3.mkGe(map(lhs), map(rhs));
-			case JLeExpr x -> z3.mkLe(map(lhs), map(rhs));
-			case JGtExpr x -> z3.mkGt(map(lhs), map(rhs));
-			case JLtExpr x -> z3.mkLt(map(lhs), map(rhs));
-			case JEqExpr x -> z3.mkEq(map(lhs), map(rhs));
-			case JNeExpr x -> z3.mkNot(z3.mkEq(map(lhs), map(rhs)));
 			case JAndExpr x -> z3.mkAnd(map(lhs), map(rhs));
 			case JOrExpr x -> z3.mkOr(map(lhs), map(rhs));
 			case JXorExpr x -> z3.mkXor(map(lhs), map(rhs));
@@ -163,6 +157,18 @@ public class JimpleConcolicMachine {
 			case JMulExpr x -> z3.mkMul(map(lhs), map(rhs));
 			case JDivExpr x -> z3.mkDiv(map(lhs), map(rhs));
 			case JRemExpr x -> z3.mkRem(map(lhs), map(rhs));
+			case JCmpExpr x -> z3.mkSub(map(lhs), map(rhs));
+			case JCmplExpr x -> z3.mkSub(map(lhs), map(rhs));
+			case JCmpgExpr x -> z3.mkSub(map(lhs), map(rhs));
+			// These expressions appear exclusively in If Statements. CmpXXX ones
+			// are more general.
+			// Ref: http://www.sable.mcgill.ca/listarchives/soot-list/msg01032.html
+			case JGeExpr x -> z3.mkGe(map(lhs), map(rhs));
+			case JLeExpr x -> z3.mkLe(map(lhs), map(rhs));
+			case JGtExpr x -> z3.mkGt(map(lhs), map(rhs));
+			case JLtExpr x -> z3.mkLt(map(lhs), map(rhs));
+			case JEqExpr x -> z3.mkEq(map(lhs), map(rhs));
+			case JNeExpr x -> z3.mkNot(z3.mkEq(map(lhs), map(rhs)));
 			default -> todo(abe);
 		};
 	}
@@ -220,7 +226,11 @@ public class JimpleConcolicMachine {
 	}
 
 	private static <T> T todo(Object ignored) {
-		System.err.printf("<Todo>Ignoring unknown object: %s</Todo>\n", ignored);
+		System.err.printf(
+			"<Todo class=\"%s\">%s</Todo>\n",
+			ignored.getClass(),
+			ignored
+		);
 		return null;
 	}
 }
