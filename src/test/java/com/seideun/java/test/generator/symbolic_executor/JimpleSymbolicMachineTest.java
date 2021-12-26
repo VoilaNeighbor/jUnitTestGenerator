@@ -2,6 +2,7 @@ package com.seideun.java.test.generator.symbolic_executor;
 
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import org.junit.jupiter.api.Test;
+import soot.toolkits.graph.UnitGraph;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,7 +32,7 @@ class JimpleSymbolicMachineTest {
 
 	@Test
 	void emptyJProgramReturnsEmptySymbolTable() {
-		var empty = SootAgent.jsmExamples.makeGraph("empty");
+		var empty = makeGraph("empty");
 
 		jsm.run(empty);
 
@@ -41,7 +42,7 @@ class JimpleSymbolicMachineTest {
 
 	@Test
 	void collectAllSymbols() {
-		var graph = SootAgent.jsmExamples.makeGraph("intSequential");
+		var graph = makeGraph("intSequential");
 		var expected = graph.getBody().getLocals();
 
 		jsm.run(graph);
@@ -59,4 +60,14 @@ class JimpleSymbolicMachineTest {
 	void solveUnboundedInt() {
 
 	}
+
+	@Test
+	void solveString() {
+
+	}
+
+	private static UnitGraph makeGraph(String name) {
+		return SootAgent.jsmExamples.makeGraph(name);
+	}
+
 }

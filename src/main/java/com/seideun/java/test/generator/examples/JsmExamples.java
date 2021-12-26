@@ -8,4 +8,8 @@ public final class JsmExamples {
 	public static int intSequential(int a, int b) {
 		return a + b;
 	}
+
+	public static String stringType(String a) {
+		return "Hello " + a;
+	}
 }
