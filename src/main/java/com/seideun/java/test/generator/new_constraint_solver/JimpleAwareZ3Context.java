@@ -31,48 +31,53 @@ public class JimpleAwareZ3Context extends Context {
 		return valueMap.get(jimple);
 	}
 
+	public Map<JimpleLocal, Expr> symbols() {
+		return valueMap;
+	}
+
 	public Expr[] add(List<Switchable> jConstraints) {
 		var result = new ArrayList<Expr>();
 		for (var i: jConstraints) {
-			result.add(addSimple(i));
+			result.add(add(i));
 		}
 		return result.toArray(new Expr[0]);
 	}
 
-	private Expr addSimple(Switchable jimpleValue) {
+	public Expr add(Switchable jimpleValue) {
 		if (jimpleValue instanceof JInvertCondition x) {
-			return mkNot(addSimple(x.base));
+			return mkNot(add(x.base));
 		}
 		return switch (jimpleValue) {
-			case JGeExpr x -> mkGe(addSimple(x.getOp1()), addSimple(x.getOp2()));
-			case JLeExpr x -> mkLe(addSimple(x.getOp1()), addSimple(x.getOp2()));
-			case JGtExpr x -> mkGt(addSimple(x.getOp1()), addSimple(x.getOp2()));
-			case JLtExpr x -> mkLt(addSimple(x.getOp1()), addSimple(x.getOp2()));
-			case JEqExpr x -> mkEq(addSimple(x.getOp1()), addSimple(x.getOp2()));
-			case JNeExpr x -> mkNot(mkEq(addSimple(x.getOp1()), addSimple(x.getOp2())));
-			case JAddExpr x -> mkAdd(addSimple(x.getOp1()), addSimple(x.getOp2()));
-			case JSubExpr x -> mkSub(addSimple(x.getOp1()), addSimple(x.getOp2()));
-			case JMulExpr x -> mkMul(addSimple(x.getOp1()), addSimple(x.getOp2()));
-			case JDivExpr x -> mkDiv(addSimple(x.getOp1()), addSimple(x.getOp2()));
-			case JRemExpr x -> mkRem(addSimple(x.getOp1()), addSimple(x.getOp2()));
-			case JAssignStmt x -> mkEq(addSimple(x.getLeftOp()), addSimple(x.getRightOp()));
+			case JGeExpr x -> mkGe(add(x.getOp1()), add(x.getOp2()));
+			case JLeExpr x -> mkLe(add(x.getOp1()), add(x.getOp2()));
+			case JGtExpr x -> mkGt(add(x.getOp1()), add(x.getOp2()));
+			case JLtExpr x -> mkLt(add(x.getOp1()), add(x.getOp2()));
+			case JEqExpr x -> mkEq(add(x.getOp1()), add(x.getOp2()));
+			case JNeExpr x -> mkNot(mkEq(add(x.getOp1()), add(x.getOp2())));
+			case JAddExpr x -> mkAdd(add(x.getOp1()), add(x.getOp2()));
+			case JSubExpr x -> mkSub(add(x.getOp1()), add(x.getOp2()));
+			case JMulExpr x -> mkMul(add(x.getOp1()), add(x.getOp2()));
+			case JDivExpr x -> mkDiv(add(x.getOp1()), add(x.getOp2()));
+			case JRemExpr x -> mkRem(add(x.getOp1()), add(x.getOp2()));
+			case JAssignStmt x -> mkEq(add(x.getLeftOp()), add(x.getRightOp()));
 			case JimpleLocal x -> {
 				var existed = valueMap.get(x);
-				Expr result;
-				if (existed == null) {
-					result =mkConst(x.getName(), toSort(x.getType()));
-					valueMap.put(x, result);
-				} else {
-					// Todo(Seideun): Rename. This is required in path for loops.
-					result = mkConst(x.getName(), toSort(x.getType()));
+				if (existed != null) {
+					yield existed;
 				}
-				yield result;
+				yield makeSymbol(x);
 			}
 			case IntConstant x -> mkInt(x.value);
 			case DoubleConstant x -> mkReal(x.value);
 			case FloatConstant x -> mkReal(x.value);
 			default -> throw new TodoException(jimpleValue);
 		};
+	}
+
+	private Expr<Sort> makeSymbol(JimpleLocal x) {
+		var result = mkConst(x.getName(), toSort(x.getType()));
+		valueMap.put(x, result);
+		return result;
 	}
 
 	private Sort toSort(Type sootType) {

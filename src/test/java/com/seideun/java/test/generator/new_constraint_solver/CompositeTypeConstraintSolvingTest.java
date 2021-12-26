@@ -1,7 +1,6 @@
-package com.seideun.java.test.generator.new_constriant_solver;
+package com.seideun.java.test.generator.new_constraint_solver;
 
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
-import org.junit.jupiter.api.Test;
 import soot.toolkits.graph.UnitGraph;
 
 class CompositeTypeConstraintSolvingTest extends ConstraintSolverTestBase {
