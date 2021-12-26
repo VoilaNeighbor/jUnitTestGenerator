@@ -1,17 +1,17 @@
 package com.seideun.java.test.generator.symbolic_executor;
 
+import com.microsoft.z3.Context;
 import com.microsoft.z3.*;
-import soot.IntType;
-import soot.Local;
-import soot.RefType;
-import soot.Unit;
-import soot.jimple.internal.JimpleLocal;
+import com.seideun.java.test.generator.constriant_solver.Rational;
+import soot.*;
+import soot.jimple.DoubleConstant;
+import soot.jimple.FloatConstant;
+import soot.jimple.IntConstant;
+import soot.jimple.NumericConstant;
+import soot.jimple.internal.*;
 import soot.toolkits.graph.UnitGraph;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class runs Jimple method body with Z3 expressions as
@@ -37,19 +37,22 @@ public class JimpleConcolicMachine {
 	// referencing. Soot does a nice job in that it stores out-of-the-box
 	// information for us to check.
 	private UnitGraph jProgram;
+	// Remember what we were to solve.
+	private Map<JimpleLocal, Expr> inputSymbolTable;
 
 	/**
 	 * @return Concrete values, one table for each possible path.
 	 */
 	public List<Map<JimpleLocal, Object>> run(UnitGraph jProgram) {
 		this.jProgram = jProgram;
-		constructSymbolTable();
+		rememberInputJVars();
+		loadAllJVars();
 		return runAllPaths();
 	}
 
 	// By marking all symbols at the start, we save quite a lot of
 	// online-checking burdens.
-	private void constructSymbolTable() {
+	private void loadAllJVars() {
 		symbolTable.clear();
 		for (var jVar: jProgram.getBody().getLocals()) {
 			symbolTable.put((JimpleLocal) jVar, switch (jVar.getType()) {
@@ -58,6 +61,18 @@ public class JimpleConcolicMachine {
 				default -> todo(jVar);
 			});
 		}
+	}
+
+	private void rememberInputJVars() {
+		var inputSymbols = new HashMap<JimpleLocal, Expr>();
+		for (var jVar: jProgram.getBody().getParameterLocals()) {
+			inputSymbols.put((JimpleLocal) jVar, switch (jVar.getType()) {
+				case IntType x -> z3.mkIntConst(jVar.getName());
+				case RefType x -> mkRefConst(jVar, x);
+				default -> todo(jVar);
+			});
+		}
+		inputSymbolTable = Collections.unmodifiableMap(inputSymbols);
 	}
 
 	// Maybe refactor this into a new class?
@@ -80,25 +95,97 @@ public class JimpleConcolicMachine {
 		var allConcreteValues = new ArrayList<Map<JimpleLocal, Object>>();
 		for (Unit head: jProgram.getHeads()) {
 			solver.push();
-			runAlong(head, allConcreteValues);
+			runJStmt(head, allConcreteValues);
 			solver.pop();
 		}
 		return allConcreteValues;
 	}
 
-	private void runAlong(Unit thisUnit, List<Map<JimpleLocal, Object>> result) {
-		var successors = jProgram.getSuccsOf(thisUnit);
-		if (successors.isEmpty()) {
-			result.add(solveCurrentConstraints());
-		} else if (successors.size() == 1) {
-			runAlong(successors.get(0), result);
-		} else {
-			for (Unit successor: successors) {
+	private void runJStmt(Unit thisUnit, List<Map<JimpleLocal, Object>> result) {
+		if (thisUnit == null) {
+			return;
+		}
+		switch (thisUnit) {
+		case JAssignStmt assignStmt -> {
+			var lhs = assignStmt.getLeftOp();
+			var rhs = assignStmt.getRightOp();
+			var oldSymbol = symbolTable.put((JimpleLocal) lhs, map(rhs));
+			final var successors = jProgram.getSuccsOf(thisUnit);
+			assert successors.size() <= 1;
+			if (successors.isEmpty()) {
+				result.add(solveCurrentConstraints());
+			} else {
+				runJStmt(successors.get(0), result);
+			}
+			symbolTable.put((JimpleLocal) lhs, oldSymbol);
+		}
+		case JIfStmt ifStmt -> {
+			var constraint = map(ifStmt.getCondition());
+			assert jProgram.getSuccsOf(ifStmt).size() == 2;
+			for (Unit next: jProgram.getSuccsOf(ifStmt)) {
 				solver.push();
-				runAlong(successor, result);
+				if (next == ifStmt.getTarget()) {
+					solver.add(constraint);
+				} else {
+					solver.add(z3.mkNot(constraint));
+				}
+				runJStmt(next, result);
 				solver.pop();
 			}
 		}
+		default -> {
+			final var successors = jProgram.getSuccsOf(thisUnit);
+			assert successors.size() <= 1;
+			if (successors.isEmpty()) {
+				result.add(solveCurrentConstraints());
+			} else {
+				runJStmt(successors.get(0), result);
+			}
+		}
+		}
+	}
+
+	/**
+	 * Maps jValue to Z3 expression. There are 3 cases:
+	 * 1. The jValue is a constant. In this case, we make a trivial constant.
+	 * 2. The jValue is a local. Since we have recorded all locals in our symbol
+	 * table, we simply look it up for the corresponding Z3 Symbol(expression).
+	 * 3. The jValue is a composite expression. In this case, we translate it
+	 * recursively into a z3 expression tree.
+	 * Todo(Seideun): Maybe a better name?
+	 */
+	private Expr map(Value jValue) {
+		return switch (jValue) {
+			case NumericConstant c -> switch (c) {
+				case IntConstant x -> z3.mkInt(x.value);
+				case DoubleConstant x -> mkReal(x.value);
+				case FloatConstant x -> mkReal(x.value);
+				default -> todo(jValue);
+			};
+			case JimpleLocal jVar -> symbolTable.get(jVar);
+			case AbstractBinopExpr abe -> {
+				var lhs = abe.getOp1();
+				var rhs = abe.getOp2();
+				yield switch (abe) {
+					case JGeExpr x -> z3.mkGe(map(lhs), map(rhs));
+					case JLeExpr x -> z3.mkLe(map(lhs), map(rhs));
+					case JGtExpr x -> z3.mkGt(map(lhs), map(rhs));
+					case JLtExpr x -> z3.mkLt(map(lhs), map(rhs));
+					case JEqExpr x -> z3.mkEq(map(lhs), map(rhs));
+					case JNeExpr x -> z3.mkNot(z3.mkEq(map(lhs), map(rhs)));
+					case JAndExpr x -> z3.mkAnd(map(lhs), map(rhs));
+					case JOrExpr x -> z3.mkOr(map(lhs), map(rhs));
+					case JXorExpr x -> z3.mkXor(map(lhs), map(rhs));
+					case JAddExpr x -> z3.mkAdd(map(lhs), map(rhs));
+					case JSubExpr x -> z3.mkSub(map(lhs), map(rhs));
+					case JMulExpr x -> z3.mkMul(map(lhs), map(rhs));
+					case JDivExpr x -> z3.mkDiv(map(lhs), map(rhs));
+					case JRemExpr x -> z3.mkRem(map(lhs), map(rhs));
+					default -> todo(abe);
+				};
+			}
+			default -> todo(jValue);
+		};
 	}
 
 	/**
@@ -112,22 +199,27 @@ public class JimpleConcolicMachine {
 		}
 		var model = solver.getModel();
 
-		var parameters = jProgram.getBody().getParameterLocals();
 		var result = new HashMap<JimpleLocal, Object>();
-		for (Local i: parameters) {
-			var parameter = (JimpleLocal) i;
-			var symbolicValue = symbolTable.get(parameter);
+		for (var kv: inputSymbolTable.entrySet()) {
+			var jArgument = kv.getKey();
+			var symbolicValue = kv.getValue();
 			var interpretation = model.eval(symbolicValue, true);
 			if (interpretation instanceof IntNum x) {
-				result.put(parameter, x.getInt());
+				result.put(jArgument, x.getInt());
 			} else if (interpretation instanceof SeqExpr<?> x) {
-				result.put(parameter, x.getString());
+				result.put(jArgument, x.getString());
 			} else {
 				todo(interpretation);
 			}
 		}
-
 		return result;
+	}
+
+	/* ****************** Utilities ****************** */
+
+	private RealExpr mkReal(double x) {
+		Rational rational = new Rational(x);
+		return z3.mkReal(rational.numerator, rational.denominator);
 	}
 
 	private static <T> T todo(Object ignored) {

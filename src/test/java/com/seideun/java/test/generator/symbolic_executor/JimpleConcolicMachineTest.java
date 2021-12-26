@@ -2,9 +2,11 @@ package com.seideun.java.test.generator.symbolic_executor;
 
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import org.junit.jupiter.api.Test;
+import soot.jimple.internal.JimpleLocal;
 import soot.toolkits.graph.UnitGraph;
 
 import java.util.Collection;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -81,10 +83,10 @@ class JimpleConcolicMachineTest {
 	void solveUnboundedInt() {
 		var graph = makeGraph("intSequential");
 
-		var concreteValues = jcm.run(graph).get(0);
+		var arguments = jcm.run(graph).get(0);
 
-		assertEquals(2, concreteValues.size());
-		for (Object x: concreteValues.values()) {
+		assertEquals(2, arguments.size());
+		for (Object x: arguments.values()) {
 			assertEquals(Integer.class, x.getClass());
 		}
 	}
@@ -93,7 +95,22 @@ class JimpleConcolicMachineTest {
 	void solveBoundedInt() {
 		var graph = makeGraph("twoBranches");
 
-		var paths = jcm.run(graph);
+		var results = jcm.run(graph);
+
+		assertEquals(2, results.size());
+		var path1 = false;
+		var path2 = false;
+		var jParameter = (JimpleLocal)graph.getBody().getParameterLocal(0);
+		for (Map<JimpleLocal, Object> concreteValues: results) {
+			var value = (int) concreteValues.get(jParameter);
+			if (value < 2) {
+				path1 = true;
+			} else {
+				path2 = true;
+			}
+		}
+		assertTrue(path1);
+		assertTrue(path2);
 	}
 
 	private static UnitGraph makeGraph(String name) {
