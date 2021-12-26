@@ -3,9 +3,13 @@ package com.seideun.java.test.generator.symbolic_executor;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /*
+	It is hard to mock Jimple or Z3. Since these two friends are the de-facto
+	standards in their fields for Java, we have no need to wrap them around
+	anyway.
+
 	Data types:
 		Primitive:
 			Int
@@ -36,7 +40,13 @@ class JimpleSymbolicMachineTest {
 	}
 
 	@Test
-	void intSequentialProgram() {
+	void collectAllSymbols() {
+		var graph = SootAgent.jsmExamples.makeGraph("intSequential");
+		var expected = graph.getBody().getLocals();
 
+		jsm.run(graph);
+
+		var result = jsm.state().symbolTable().keySet();
+		assertTrue(result.containsAll(expected));
 	}
 }
