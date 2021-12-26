@@ -68,37 +68,50 @@ public class JimpleAwareZ3Context extends Context {
 	}
 
 	/**
-	 * Add both the jVariables and constraints.
+	 * Converts JConstraints to Z3 constraints.
+	 * If a JVar is never met before, it will be added too by the way.
+	 * If a JAssignStmt is found, the symbol will be updated, too.
 	 *
-	 * @return added symbol. True if none.
-	 * <p>
-	 * Fixme: it mingles symbols and constraints!
+	 * @return added constraints. True if none. Note that the added symbols are
+	 * not returned!
 	 */
 	public Expr addConstraint(Switchable jConstraint) {
-		if (jConstraint instanceof JInvertCondition x) {
-			return mkNot(addConstraint(x.base));
-		}
+		return switch (jConstraint) {
+			case JInvertCondition x -> mkNot(addConstraint(x.base));
+			case AbstractBinopExpr x -> addBinaryConstraint(x);
+			default -> addSpecialConstraints(jConstraint);
+		};
+	}
+
+	private Expr addSpecialConstraints(Switchable jConstraint) {
 		return switch (jConstraint) {
 			case JNegExpr x -> mkMul(toSymbol(x.getOp()), mkInt(-1));
-			case JGeExpr x -> mkGe(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JLeExpr x -> mkLe(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JGtExpr x -> mkGt(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JLtExpr x -> mkLt(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JEqExpr x -> mkEq(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JNeExpr x -> mkNot(mkEq(toSymbol(x.getOp1()), toSymbol(x.getOp2())));
-			case JAndExpr x -> mkAnd(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JOrExpr x -> mkOr(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JXorExpr x -> mkXor(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JAddExpr x -> mkAdd(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JSubExpr x -> mkSub(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JMulExpr x -> mkMul(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JDivExpr x -> mkDiv(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JRemExpr x -> mkRem(toSymbol(x.getOp1()), toSymbol(x.getOp2()));
-			case JimpleLocal x -> getOrMkSymbol(x);
 			case JAssignStmt x -> extractConstraint(x);
 			case JArrayRef x -> mkBoundaryCheck(x);
 			// JLengthExpr can only appear in a JAssignStmt.
 			default -> throw new TodoException(jConstraint);
+		};
+	}
+
+	private Expr addBinaryConstraint(AbstractBinopExpr abe) {
+		var lhs = abe.getOp1();
+		var rhs = abe.getOp2();
+		return switch (abe) {
+			case JGeExpr x -> mkGe(toSymbol(lhs), toSymbol(rhs));
+			case JLeExpr x -> mkLe(toSymbol(lhs), toSymbol(rhs));
+			case JGtExpr x -> mkGt(toSymbol(lhs), toSymbol(rhs));
+			case JLtExpr x -> mkLt(toSymbol(lhs), toSymbol(rhs));
+			case JEqExpr x -> mkEq(toSymbol(lhs), toSymbol(rhs));
+			case JNeExpr x -> mkNot(mkEq(toSymbol(lhs), toSymbol(rhs)));
+			case JAndExpr x -> mkAnd(toSymbol(lhs), toSymbol(rhs));
+			case JOrExpr x -> mkOr(toSymbol(lhs), toSymbol(rhs));
+			case JXorExpr x -> mkXor(toSymbol(lhs), toSymbol(rhs));
+			case JAddExpr x -> mkAdd(toSymbol(lhs), toSymbol(rhs));
+			case JSubExpr x -> mkSub(toSymbol(lhs), toSymbol(rhs));
+			case JMulExpr x -> mkMul(toSymbol(lhs), toSymbol(rhs));
+			case JDivExpr x -> mkDiv(toSymbol(lhs), toSymbol(rhs));
+			case JRemExpr x -> mkRem(toSymbol(lhs), toSymbol(rhs));
+			default -> throw new TodoException(abe);
 		};
 	}
 
@@ -111,12 +124,9 @@ public class JimpleAwareZ3Context extends Context {
 
 	private BoolExpr extractConstraint(JAssignStmt x) {
 		if (x.getRightOp() instanceof JLengthExpr y) {
-			// The constraint of array lengths is not maintained in Z3.
-			// Instead, we keep a map from JArrays to Length Symbols.
-			jArrToLenSymbolMap.put(
-				((JimpleLocal) y.getOp()),
-				addConstraint(x.getLeftOp())
-			);
+			var jArr = ((JimpleLocal) y.getOp());
+			var jLen = ((JimpleLocal) x.getLeftOp());
+			jArrToLenSymbolMap.put(jArr, getOrMkSymbol(jLen));
 			return mkTrue();
 		} else {
 			return mkEq(addConstraint(x.getLeftOp()), addConstraint(x.getRightOp()));
