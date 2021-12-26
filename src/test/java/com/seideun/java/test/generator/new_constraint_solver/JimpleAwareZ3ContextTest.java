@@ -1,6 +1,5 @@
 package com.seideun.java.test.generator.new_constraint_solver;
 
-import com.microsoft.z3.Expr;
 import org.junit.jupiter.api.Test;
 import soot.ArrayType;
 import soot.IntType;
@@ -21,7 +20,7 @@ class JimpleAwareZ3ContextTest {
 		var len = new JimpleLocal("len", IntType.v());
 		var assign = new JAssignStmt(len, new JLengthExpr(array));
 
-		context.add(assign);
+		context.addConstraint(assign);
 
 		var symbols = context.symbolMap();
 		var lenMap = context.lengthMap();
@@ -34,10 +33,10 @@ class JimpleAwareZ3ContextTest {
 		var array = new JimpleLocal("arr", ArrayType.v(IntType.v(), 1));
 		var len = new JimpleLocal("len", IntType.v());
 		var ref = new JArrayRef(array, IntConstant.v(1));
-		context.add(new JAssignStmt(len, new JLengthExpr(array)));
+		context.addConstraint(new JAssignStmt(len, new JLengthExpr(array)));
 		var assignElem = new JAssignStmt(ref, IntConstant.v(2) );
 
-		var constraint = context.add(assignElem);
+		var constraint = context.addConstraint(assignElem);
 
 		System.out.println(constraint);
 	}

@@ -105,11 +105,11 @@ public class JimpleSolver {
 		List<JimpleLocal> symbols, List<Switchable> relatedConstraints
 	) {
 		var solver = z3.mkSolver();
-		var status = solver.check(z3.add(relatedConstraints));
+		var status = solver.check(z3.addConstraints(relatedConstraints));
 		if (status == Status.SATISFIABLE) {
 			var concreteValues = symbols.stream()
 				.sequential()
-				.map(s -> findConcreteValueOf(z3.getSymbol(s), solver.getModel()))
+				.map(s -> findConcreteValueOf(z3.toSymbol(s), solver.getModel()))
 				.toList();
 			return Pair.of(concreteValues, status);
 		} else {
