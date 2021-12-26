@@ -4,6 +4,8 @@ import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import org.junit.jupiter.api.Test;
 import soot.toolkits.graph.UnitGraph;
 
+import java.util.Collection;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /*
@@ -32,9 +34,9 @@ class JimpleSymbolicMachineTest {
 
 	@Test
 	void emptyJProgramReturnsEmptySymbolTable() {
-		var empty = makeGraph("empty");
+		var graph = makeGraph("empty");
 
-		jsm.run(empty);
+		jsm.run(graph);
 
 		var state = jsm.state();
 		assertTrue(state.symbolTable().isEmpty());
@@ -43,12 +45,12 @@ class JimpleSymbolicMachineTest {
 	@Test
 	void collectAllSymbols() {
 		var graph = makeGraph("intSequential");
-		var expected = graph.getBody().getLocals();
+		var allLocals = graph.getBody().getLocals();
 
 		jsm.run(graph);
 
-		var result = jsm.state().symbolTable().keySet();
-		assertTrue(result.containsAll(expected));
+		var symbols = jsm.state().symbolTable().keySet();
+		assertTrue(setEqual(allLocals, symbols));
 	}
 
 	@Test
@@ -70,4 +72,11 @@ class JimpleSymbolicMachineTest {
 		return SootAgent.jsmExamples.makeGraph(name);
 	}
 
+	private static <T> boolean setEqual(
+		Collection<? extends T> lhs,
+		Collection<? extends T> rhs
+	) {
+		//noinspection SuspiciousMethodCalls
+		return lhs.size() == rhs.size() && lhs.containsAll(rhs);
+	}
 }
