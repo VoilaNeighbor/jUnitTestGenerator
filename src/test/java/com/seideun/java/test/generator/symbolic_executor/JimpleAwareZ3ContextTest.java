@@ -1,5 +1,6 @@
-package com.seideun.java.test.generator.new_constraint_solver;
+package com.seideun.java.test.generator.symbolic_executor;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.ArrayType;
 import soot.IntType;
@@ -11,6 +12,7 @@ import soot.jimple.internal.JimpleLocal;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled
 class JimpleAwareZ3ContextTest {
 	JimpleAwareZ3Context context = new JimpleAwareZ3Context();
 

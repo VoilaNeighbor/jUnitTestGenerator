@@ -16,6 +16,7 @@ import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findP
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 class AcceptanceTest {
 	SootAgent sootAgent = SootAgent.basicExamples;

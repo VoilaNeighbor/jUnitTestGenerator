@@ -1,4 +1,4 @@
-package com.seideun.java.test.generator.new_constraint_solver;
+package com.seideun.java.test.generator.symbolic_executor;
 
 import com.microsoft.z3.Context;
 import com.microsoft.z3.*;

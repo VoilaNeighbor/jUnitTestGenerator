@@ -1,7 +1,6 @@
-package com.seideun.java.test.generator.new_constraint_solver;
+package com.seideun.java.test.generator.symbolic_executor;
 
 import com.microsoft.z3.Status;
-import com.seideun.java.test.generator.new_constraint_solver.JimpleSolver;
 import org.apache.commons.lang3.tuple.Pair;
 import soot.Unit;
 import soot.jimple.internal.JimpleLocal;

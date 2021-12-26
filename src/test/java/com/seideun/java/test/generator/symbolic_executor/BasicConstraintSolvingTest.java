@@ -1,7 +1,8 @@
-package com.seideun.java.test.generator.new_constraint_solver;
+package com.seideun.java.test.generator.symbolic_executor;
 
 import com.microsoft.z3.Status;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.IntType;
 import soot.jimple.IntConstant;
@@ -15,6 +16,7 @@ import java.util.stream.IntStream;
 import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled
 class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 	// No constraints, 2 arguments.
 	static final UnitGraph trivialExample =
