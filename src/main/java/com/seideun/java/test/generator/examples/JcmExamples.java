@@ -30,6 +30,17 @@ public final class JcmExamples {
 		return a;
 	}
 
+	public static int twoWhileLoops(int a) {
+		while (a > 11) {
+			a -= 13;
+		}
+		a += 1;
+		while (a < 7) {
+			a += 3;
+		}
+		return a;
+	}
+
 	public static String stringType(String a) {
 		return "Hello " + a;
 	}

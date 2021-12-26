@@ -38,6 +38,9 @@ public class JimpleConcolicMachine {
 	private UnitGraph jProgram;
 	// Remember what we were to solve.
 	private Map<Local, Expr> inputSymbolTable;
+	// If a node that is being visited is found again, that means we have
+	// found a loop.
+	private Set<Unit> visiting = new HashSet<>();
 
 	/**
 	 * @return Concrete values, one table for each possible path.
@@ -98,6 +101,11 @@ public class JimpleConcolicMachine {
 	}
 
 	private void runJStmt(Unit thisUnit, List<Map<Local, Object>> result) {
+		if (visiting.contains(thisUnit)) {
+			result.add(solveCurrentConstraints());
+			return;
+		}
+		visiting.add(thisUnit);
 		switch (thisUnit) {
 		case JAssignStmt assignStmt -> {
 			var lhs = assignStmt.getLeftOp();
@@ -121,6 +129,7 @@ public class JimpleConcolicMachine {
 		// Statements that do not affect symbol values are ignored.
 		default -> runNext(thisUnit, result);
 		}
+		visiting.remove(thisUnit);
 	}
 
 	private void runNext(Unit thisUnit, List<Map<Local, Object>> result) {
@@ -156,8 +165,6 @@ public class JimpleConcolicMachine {
 //				todo(vie);
 //				yield null;
 //			}
-			// Todo(Seideun): I don't know how to handle cast in Z3.
-			// I don't know why the concat fails, either.
 //			case JDynamicInvokeExpr x -> {
 //				var method = x.getMethodRef();
 //				if ("makeConcatWithConstants".equals(method.getName())) {
@@ -170,6 +177,9 @@ public class JimpleConcolicMachine {
 //				todo(x);
 //				yield null;
 //			}
+			// Todo(Seideun): I don't know how to handle cast in Z3.
+			// I don't know why the concat fails, either.
+			case JCastExpr x -> map(x.getOp());
 			default -> todo(jValue);
 		};
 	}

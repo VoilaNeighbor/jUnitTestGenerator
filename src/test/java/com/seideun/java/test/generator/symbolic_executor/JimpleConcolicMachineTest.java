@@ -4,11 +4,14 @@ import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import soot.Local;
+import soot.Unit;
 import soot.toolkits.graph.UnitGraph;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
+import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -171,6 +174,41 @@ class JimpleConcolicMachineTest {
 		}
 		assertTrue(path1);
 		assertTrue(path2);
+	}
+
+	@Test
+	void solveLoop(){
+		var graph = makeGraph("whileLoop");
+
+		var results = jcm.run(graph);
+
+		assertEquals(2, results.size());
+		var path1 = false;
+		var path2 = false;
+		var jParameters = graph.getBody().getParameterLocals();
+		for (Map<Local, Object> concreteValues: results) {
+			var a = (int) concreteValues.get(jParameters.get(0));
+			if (a > 10) {
+				path1 = true;
+			} else {
+				path2 = true;
+			}
+		}
+		assertTrue(path1);
+		assertTrue(path2);
+	}
+
+	@Test
+	@Disabled
+	void solveDependentLoops() {
+		var graph = makeGraph("twoWhileLoops");
+
+		var primePaths = findPrimePaths(graph);
+		System.out.println(primePaths);
+
+		var results = jcm.run(graph);
+
+		System.out.println(results);
 	}
 
 	private static UnitGraph makeGraph(String name) {
