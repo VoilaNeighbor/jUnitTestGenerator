@@ -43,15 +43,17 @@ public class JimpleSymbolicMachine {
 	private void addSymbol(JimpleLocal jVar) {
 		symbolTable.put(jVar, switch (jVar.getType()) {
 			case IntType x -> z3.mkIntConst(jVar.getName());
-			case RefType x -> {
-				var className = x.getClassName();
-				if (className.equals(String.class.getName())) {
-					yield z3.mkString(jVar.getName());
-				} else {
-					throw new TodoException(x);
-				}
-			}
+			case RefType x -> mkRefConst(jVar, x);
 			default -> throw new TodoException(jVar);
 		});
+	}
+
+	private Expr mkRefConst(JimpleLocal jVar, RefType x) {
+		var className = x.getClassName();
+		if (className.equals(String.class.getName())) {
+			return z3.mkString(jVar.getName());
+		} else {
+			throw new TodoException(x);
+		}
 	}
 }
