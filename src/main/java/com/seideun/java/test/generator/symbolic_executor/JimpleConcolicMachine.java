@@ -2,7 +2,6 @@ package com.seideun.java.test.generator.symbolic_executor;
 
 import com.microsoft.z3.*;
 import com.seideun.java.test.generator.constriant_solver.TodoException;
-import polyglot.ast.JL;
 import soot.IntType;
 import soot.Local;
 import soot.RefType;
@@ -42,12 +41,12 @@ public class JimpleConcolicMachine {
 	 */
 	public List<Map<JimpleLocal, Object>> run(UnitGraph jProgram) {
 		this.jProgram = jProgram;
-		// By marking all symbols at the start, we save quite a lot of
-		// online-checking burdens.
 		constructSymbolTable();
-		return walkGraph(symbolTable);
+		return walkGraph();
 	}
 
+	// By marking all symbols at the start, we save quite a lot of
+	// online-checking burdens.
 	private void constructSymbolTable() {
 		symbolTable.clear();
 		for (var jVar: jProgram.getBody().getLocals()) {
@@ -59,6 +58,7 @@ public class JimpleConcolicMachine {
 		}
 	}
 
+	// Maybe refactor this into a new class?
 	private Expr mkRefConst(Local jVar, RefType x) {
 		var className = x.getClassName();
 		if (className.equals(String.class.getName())) {
@@ -68,12 +68,16 @@ public class JimpleConcolicMachine {
 		}
 	}
 
-	private List<Map<JimpleLocal, Object>> walkGraph(Map<JimpleLocal, Expr> allJVars) {
-		var allPaths = new ArrayList<Map<JimpleLocal, Expr>>();
+	/**
+	 * Walk all rationally-feasible paths, and construct a concrete value table
+	 * for each path solvable.
+	 * @return
+	 */
+	private List<Map<JimpleLocal, Object>> walkGraph() {
 		var allConcreteValues = new ArrayList<Map<JimpleLocal, Object>>();
 		for (Unit head: jProgram.getHeads()) {
 			solver.push();
-			walkPath(head, new HashMap<>(allJVars), allPaths, allConcreteValues);
+			walkPath(head, allConcreteValues);
 			solver.pop();
 		}
 		return allConcreteValues;
@@ -81,21 +85,18 @@ public class JimpleConcolicMachine {
 
 	private void walkPath(
 		Unit thisUnit,
-		Map<JimpleLocal, Expr> symbolTable,
-		// Let's replace this
-		List<Map<JimpleLocal, Expr>> completedPaths,
 		List<Map<JimpleLocal, Object>> allConcreteValues
-		// By this: List<Map<JimpleLocal, Object>>
 	) {
 		var successors = jProgram.getSuccsOf(thisUnit);
 		if (successors.isEmpty()) {
-			allConcreteValues.add(solve(symbolTable));
-			completedPaths.add(symbolTable);
+			allConcreteValues.add(solveCurrentConstraints());
 		} else if (successors.size() == 1) {
-			walkPath(successors.get(0), symbolTable, completedPaths, allConcreteValues);
+			walkPath(successors.get(0), allConcreteValues);
 		} else {
 			for (Unit successor: successors) {
-				walkPath(successor, new HashMap<>(symbolTable), completedPaths, allConcreteValues);
+				solver.push();
+				walkPath(successor, allConcreteValues);
+				solver.pop();
 			}
 		}
 	}
@@ -104,9 +105,7 @@ public class JimpleConcolicMachine {
 	 * Find concrete values of parameter jVars by interpreting the corresponding
 	 * symbols.
  	 */
-	private Map<JimpleLocal, Object> solve(
-		Map<JimpleLocal, Expr> symbolTable
-	) {
+	private Map<JimpleLocal, Object> solveCurrentConstraints() {
 		var status = solver.check();
 		if (status != Status.SATISFIABLE) {
 			throw new TodoException(status);
