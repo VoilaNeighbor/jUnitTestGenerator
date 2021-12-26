@@ -2,6 +2,7 @@ package com.seideun.java.test.generator.constriant_solver;
 
 import com.seideun.java.test.generator.examples.BasicExamples;
 import com.seideun.java.test.generator.examples.CompositeTypeExamples;
+import com.seideun.java.test.generator.examples.JsmExamples;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
@@ -15,6 +16,7 @@ import static java.lang.System.getProperty;
  * I'm an agent that configures and talks with Soot!
  */
 public class SootAgent {
+	public static final SootAgent jsmExamples;
 	public static final SootAgent basicExamples;
 	public static final SootAgent compositeExamples;
 	private static final Scene sootScene;
@@ -26,6 +28,7 @@ public class SootAgent {
 		sootConfigs.set_prepend_classpath(true);
 		sootConfigs.set_soot_classpath(rootClasspath);
 		sootScene = Scene.v();
+		jsmExamples = new SootAgent(JsmExamples.class);
 		basicExamples = new SootAgent(BasicExamples.class);
 		compositeExamples = new SootAgent(CompositeTypeExamples.class);
 		sootScene.loadNecessaryClasses();
