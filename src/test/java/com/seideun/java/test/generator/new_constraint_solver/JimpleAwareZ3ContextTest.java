@@ -15,7 +15,20 @@ class JimpleAwareZ3ContextTest {
 	JimpleAwareZ3Context context = new JimpleAwareZ3Context();
 
 	@Test
-	void assignStmtBuildsIndexFromArrayToLength() {
+	void assignLengthStoresBothArrSymbolAndLenSymbol() {
+		var array = new JimpleLocal("arr", ArrayType.v(IntType.v(), 1));
+		var len = new JimpleLocal("len", IntType.v());
+		var assign = new JAssignStmt(len, new JLengthExpr(array));
+
+		context.addConstraint(assign);
+
+		var symbols = context.symbolMap();
+		assertNotNull(symbols.get(array));
+		assertNotNull(symbols.get(len));
+	}
+
+	@Test
+	void assignLengthMapsJArrToLenSymbol() {
 		var array = new JimpleLocal("arr", ArrayType.v(IntType.v(), 1));
 		var len = new JimpleLocal("len", IntType.v());
 		var assign = new JAssignStmt(len, new JLengthExpr(array));
@@ -24,7 +37,6 @@ class JimpleAwareZ3ContextTest {
 
 		var symbols = context.symbolMap();
 		var lenMap = context.lengthMap();
-		assertNotNull(lenMap.get(array));
 		assertEquals(lenMap.get(array), symbols.get(len));
 	}
 
@@ -34,7 +46,7 @@ class JimpleAwareZ3ContextTest {
 		var len = new JimpleLocal("len", IntType.v());
 		var ref = new JArrayRef(array, IntConstant.v(1));
 		context.addConstraint(new JAssignStmt(len, new JLengthExpr(array)));
-		var assignElem = new JAssignStmt(ref, IntConstant.v(2) );
+		var assignElem = new JAssignStmt(ref, IntConstant.v(2));
 
 		var constraint = context.addConstraint(assignElem);
 
