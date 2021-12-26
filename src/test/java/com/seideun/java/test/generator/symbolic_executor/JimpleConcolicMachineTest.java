@@ -97,10 +97,12 @@ class JimpleConcolicMachineTest {
 
 		var results = jcm.run(graph);
 
+		// Todo(Seideun): Use some better coverage-checking tools.
+
 		assertEquals(2, results.size());
 		var path1 = false;
 		var path2 = false;
-		var jParameter = (JimpleLocal)graph.getBody().getParameterLocal(0);
+		var jParameter = (JimpleLocal) graph.getBody().getParameterLocal(0);
 		for (Map<JimpleLocal, Object> concreteValues: results) {
 			var value = (int) concreteValues.get(jParameter);
 			if (value < 2) {

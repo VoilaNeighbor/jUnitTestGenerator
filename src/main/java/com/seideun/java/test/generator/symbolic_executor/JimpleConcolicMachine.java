@@ -47,7 +47,7 @@ public class JimpleConcolicMachine {
 		this.jProgram = jProgram;
 		rememberInputJVars();
 		loadAllJVars();
-		return runAllPaths();
+		return run();
 	}
 
 	// By marking all symbols at the start, we save quite a lot of
@@ -75,23 +75,13 @@ public class JimpleConcolicMachine {
 		inputSymbolTable = Collections.unmodifiableMap(inputSymbols);
 	}
 
-	// Maybe refactor this into a new class?
-	private Expr mkRefConst(Local jVar, RefType x) {
-		var className = x.getClassName();
-		if (className.equals(String.class.getName())) {
-			return z3.mkConst(jVar.getName(), z3.mkStringSort());
-		} else {
-			return todo(x);
-		}
-	}
-
 	/**
 	 * Walk all rationally-feasible paths, and construct a concrete value table
 	 * for each path solvable.
 	 *
 	 * @return A list of sets of arguments, each corresponding to a unique path.
 	 */
-	private List<Map<JimpleLocal, Object>> runAllPaths() {
+	private List<Map<JimpleLocal, Object>> run() {
 		var allConcreteValues = new ArrayList<Map<JimpleLocal, Object>>();
 		for (Unit head: jProgram.getHeads()) {
 			solver.push();
@@ -102,46 +92,38 @@ public class JimpleConcolicMachine {
 	}
 
 	private void runJStmt(Unit thisUnit, List<Map<JimpleLocal, Object>> result) {
-		if (thisUnit == null) {
-			return;
-		}
 		switch (thisUnit) {
 		case JAssignStmt assignStmt -> {
 			var lhs = assignStmt.getLeftOp();
 			var rhs = assignStmt.getRightOp();
 			var oldSymbol = symbolTable.put((JimpleLocal) lhs, map(rhs));
-			final var successors = jProgram.getSuccsOf(thisUnit);
-			assert successors.size() <= 1;
-			if (successors.isEmpty()) {
-				result.add(solveCurrentConstraints());
-			} else {
-				runJStmt(successors.get(0), result);
-			}
+			runNext(thisUnit, result);
 			symbolTable.put((JimpleLocal) lhs, oldSymbol);
 		}
 		case JIfStmt ifStmt -> {
-			var constraint = map(ifStmt.getCondition());
 			assert jProgram.getSuccsOf(ifStmt).size() == 2;
 			for (Unit next: jProgram.getSuccsOf(ifStmt)) {
+				var constraint = next == ifStmt.getTarget()
+					? map(ifStmt.getCondition())
+					: z3.mkNot(map(ifStmt.getCondition()));
 				solver.push();
-				if (next == ifStmt.getTarget()) {
-					solver.add(constraint);
-				} else {
-					solver.add(z3.mkNot(constraint));
-				}
+				solver.add(constraint);
 				runJStmt(next, result);
 				solver.pop();
 			}
 		}
-		default -> {
-			final var successors = jProgram.getSuccsOf(thisUnit);
-			assert successors.size() <= 1;
-			if (successors.isEmpty()) {
-				result.add(solveCurrentConstraints());
-			} else {
-				runJStmt(successors.get(0), result);
-			}
+		// Statements that do not affect symbol values are ignored.
+		default -> runNext(thisUnit, result);
 		}
+	}
+
+	private void runNext(Unit thisUnit, List<Map<JimpleLocal, Object>> result) {
+		final var successors = jProgram.getSuccsOf(thisUnit);
+		assert successors.size() <= 1;
+		if (successors.isEmpty()) {
+			result.add(solveCurrentConstraints());
+		} else {
+			runJStmt(successors.get(0), result);
 		}
 	}
 
@@ -156,34 +138,40 @@ public class JimpleConcolicMachine {
 	 */
 	private Expr map(Value jValue) {
 		return switch (jValue) {
-			case NumericConstant c -> switch (c) {
-				case IntConstant x -> z3.mkInt(x.value);
-				case DoubleConstant x -> mkReal(x.value);
-				case FloatConstant x -> mkReal(x.value);
-				default -> todo(jValue);
-			};
+			case NumericConstant c -> mapConst(jValue, c);
 			case JimpleLocal jVar -> symbolTable.get(jVar);
-			case AbstractBinopExpr abe -> {
-				var lhs = abe.getOp1();
-				var rhs = abe.getOp2();
-				yield switch (abe) {
-					case JGeExpr x -> z3.mkGe(map(lhs), map(rhs));
-					case JLeExpr x -> z3.mkLe(map(lhs), map(rhs));
-					case JGtExpr x -> z3.mkGt(map(lhs), map(rhs));
-					case JLtExpr x -> z3.mkLt(map(lhs), map(rhs));
-					case JEqExpr x -> z3.mkEq(map(lhs), map(rhs));
-					case JNeExpr x -> z3.mkNot(z3.mkEq(map(lhs), map(rhs)));
-					case JAndExpr x -> z3.mkAnd(map(lhs), map(rhs));
-					case JOrExpr x -> z3.mkOr(map(lhs), map(rhs));
-					case JXorExpr x -> z3.mkXor(map(lhs), map(rhs));
-					case JAddExpr x -> z3.mkAdd(map(lhs), map(rhs));
-					case JSubExpr x -> z3.mkSub(map(lhs), map(rhs));
-					case JMulExpr x -> z3.mkMul(map(lhs), map(rhs));
-					case JDivExpr x -> z3.mkDiv(map(lhs), map(rhs));
-					case JRemExpr x -> z3.mkRem(map(lhs), map(rhs));
-					default -> todo(abe);
-				};
-			}
+			case AbstractBinopExpr abe -> mapBinary(abe);
+			default -> todo(jValue);
+		};
+	}
+
+	private Expr mapBinary(AbstractBinopExpr abe) {
+		var lhs = abe.getOp1();
+		var rhs = abe.getOp2();
+		return switch (abe) {
+			case JGeExpr x -> z3.mkGe(map(lhs), map(rhs));
+			case JLeExpr x -> z3.mkLe(map(lhs), map(rhs));
+			case JGtExpr x -> z3.mkGt(map(lhs), map(rhs));
+			case JLtExpr x -> z3.mkLt(map(lhs), map(rhs));
+			case JEqExpr x -> z3.mkEq(map(lhs), map(rhs));
+			case JNeExpr x -> z3.mkNot(z3.mkEq(map(lhs), map(rhs)));
+			case JAndExpr x -> z3.mkAnd(map(lhs), map(rhs));
+			case JOrExpr x -> z3.mkOr(map(lhs), map(rhs));
+			case JXorExpr x -> z3.mkXor(map(lhs), map(rhs));
+			case JAddExpr x -> z3.mkAdd(map(lhs), map(rhs));
+			case JSubExpr x -> z3.mkSub(map(lhs), map(rhs));
+			case JMulExpr x -> z3.mkMul(map(lhs), map(rhs));
+			case JDivExpr x -> z3.mkDiv(map(lhs), map(rhs));
+			case JRemExpr x -> z3.mkRem(map(lhs), map(rhs));
+			default -> todo(abe);
+		};
+	}
+
+	private Expr mapConst(Value jValue, NumericConstant c) {
+		return switch (c) {
+			case IntConstant x -> z3.mkInt(x.value);
+			case DoubleConstant x -> mkReal(x.value);
+			case FloatConstant x -> mkReal(x.value);
 			default -> todo(jValue);
 		};
 	}
@@ -216,6 +204,15 @@ public class JimpleConcolicMachine {
 	}
 
 	/* ****************** Utilities ****************** */
+
+	private Expr mkRefConst(Local jVar, RefType x) {
+		var className = x.getClassName();
+		if (className.equals(String.class.getName())) {
+			return z3.mkConst(jVar.getName(), z3.mkStringSort());
+		} else {
+			return todo(x);
+		}
+	}
 
 	private RealExpr mkReal(double x) {
 		Rational rational = new Rational(x);
