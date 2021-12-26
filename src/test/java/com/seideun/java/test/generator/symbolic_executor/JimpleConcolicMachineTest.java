@@ -111,8 +111,14 @@ class JimpleConcolicMachineTest {
 		}
 	}
 
+	@Test
+	void solveBoundedInt() {
+		var graph = makeGraph("twoBranches");
+
+	}
+
 	private static UnitGraph makeGraph(String name) {
-		return SootAgent.jsmExamples.makeGraph(name);
+		return SootAgent.jcmExamples.makeGraph(name);
 	}
 
 	private static <T> boolean setEqual(

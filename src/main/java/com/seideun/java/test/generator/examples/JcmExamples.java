@@ -1,7 +1,7 @@
 package com.seideun.java.test.generator.examples;
 
-public final class JsmExamples {
-	private JsmExamples() { }
+public final class JcmExamples {
+	private JcmExamples() { }
 
 	public static void empty() { }
 
