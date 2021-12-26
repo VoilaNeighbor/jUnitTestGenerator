@@ -6,6 +6,7 @@ import soot.toolkits.graph.UnitGraph;
 
 import java.util.Collection;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /*
@@ -38,8 +39,8 @@ class JimpleSymbolicMachineTest {
 
 		jsm.run(graph);
 
-		var state = jsm.state();
-		assertTrue(state.symbolTable().isEmpty());
+		var symbols = jsm.resultPaths().get(0);
+		assertTrue(symbols.isEmpty());
 	}
 
 	@Test
@@ -49,28 +50,32 @@ class JimpleSymbolicMachineTest {
 
 		jsm.run(graph);
 
-		var symbols = jsm.state().symbolTable().keySet();
+		var symbols = jsm.resultPaths().get(0).keySet();
 		assertTrue(setEqual(allLocals, symbols));
 	}
 
 	@Test
-	void solveBoundedInt() {
+	void collectStringSymbols() {
+		var graph = makeGraph("stringType");
 
+		jsm.run(graph);
+
+		var symbols = jsm.resultPaths().get(0);
+		for (var symbol: symbols.values()) {
+			assertEquals("String", symbol.getSort().toString());
+		}
+	}
+
+	@Test
+	void solveBoundedInt() {
+//		var graph = makeGraph("twoBranches");
+//
+//		jsm.run(graph);
 	}
 
 	@Test
 	void solveUnboundedInt() {
 
-	}
-
-	@Test
-	void solveString() {
-		var graph = makeGraph("stringType");
-
-		jsm.run(graph);
-
-		var symbols = jsm.state().symbolTable();
-		System.out.println(symbols);
 	}
 
 	private static UnitGraph makeGraph(String name) {

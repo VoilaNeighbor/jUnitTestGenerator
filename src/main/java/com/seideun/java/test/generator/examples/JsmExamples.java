@@ -9,6 +9,10 @@ public final class JsmExamples {
 		return a + b;
 	}
 
+	public static int twoBranches(int a) {
+		return a < -2 ? a - 1 : a + 1;
+	}
+
 	public static String stringType(String a) {
 		return "Hello " + a;
 	}

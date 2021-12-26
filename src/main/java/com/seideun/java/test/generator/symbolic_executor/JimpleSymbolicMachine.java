@@ -4,18 +4,16 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.seideun.java.test.generator.constriant_solver.TodoException;
 import soot.IntType;
-import soot.Local;
 import soot.RefType;
 import soot.jimple.internal.JimpleLocal;
 import soot.toolkits.graph.UnitGraph;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
- * This class is capable of running Jimple method body with Z3 expressions as
- * values (instead of concrete values). It outputs a Z3 Context and a symbol
- * table (jVar -> Z3-expr) as the result.
+ * This class runs Jimple method body with Z3 expressions as
+ * values. That is, it outputs a symbol table for each
+ * path as the execution result, instead of concrete values.
  *
  * <h2>Terminology</h2>
  * <ul>
@@ -29,8 +27,11 @@ public class JimpleSymbolicMachine {
 	private final Context z3 = new Context();
 	private final Map<JimpleLocal, Expr> symbolTable = new HashMap<>();
 
-	public JsmState state() {
-		return new JsmState(z3, symbolTable);
+	/**
+	 * @return A symbol table for each path executed.
+	 */
+	public List<Map<JimpleLocal, Expr>> resultPaths() {
+		return Collections.singletonList(symbolTable);
 	}
 
 	public void run(UnitGraph jProgram) {
@@ -51,7 +52,7 @@ public class JimpleSymbolicMachine {
 	private Expr mkRefConst(JimpleLocal jVar, RefType x) {
 		var className = x.getClassName();
 		if (className.equals(String.class.getName())) {
-			return z3.mkString(jVar.getName());
+			return z3.mkConst(jVar.getName(), z3.mkStringSort());
 		} else {
 			throw new TodoException(x);
 		}
