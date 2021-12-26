@@ -23,16 +23,25 @@ import java.util.Map;
  */
 @SuppressWarnings("unchecked")
 public class JimpleAwareZ3Context extends Context {
-	// JimpleLocal -> Current symbolic value
-	private final Map<JimpleLocal, Expr> valueMap = new HashMap<>();
-	private final Map<String, Expr> arrNameToLenMap = new HashMap<>();
+	private final Map<JimpleLocal, Expr<Sort>> symbolMap = new HashMap<>();
+	private final Map<JimpleLocal, Expr<Sort>> arrNameToLenMap = new HashMap<>();
 
-	public Expr getSymbol(JimpleLocal jimple) {
-		return valueMap.get(jimple);
+	public Expr<Sort> getSymbol(JimpleLocal jimple) {
+		return symbolMap.get(jimple);
 	}
 
-	public Map<JimpleLocal, Expr> symbols() {
-		return valueMap;
+	/**
+	 * JimpleLocal -> Current symbol in Z3.
+	 */
+	public Map<JimpleLocal, Expr<Sort>> symbolMap() {
+		return symbolMap;
+	}
+
+	/**
+	 * JimpleLocal -> Current len symbol in Z3
+	 */
+	public Map<JimpleLocal, Expr<Sort>> lengthMap() {
+		return arrNameToLenMap;
 	}
 
 	public Expr[] add(List<Switchable> jConstraints) {
@@ -59,24 +68,37 @@ public class JimpleAwareZ3Context extends Context {
 			case JMulExpr x -> mkMul(add(x.getOp1()), add(x.getOp2()));
 			case JDivExpr x -> mkDiv(add(x.getOp1()), add(x.getOp2()));
 			case JRemExpr x -> mkRem(add(x.getOp1()), add(x.getOp2()));
-			case JAssignStmt x -> mkEq(add(x.getLeftOp()), add(x.getRightOp()));
-			case JimpleLocal x -> {
-				var existed = valueMap.get(x);
-				if (existed != null) {
-					yield existed;
-				}
-				yield makeSymbol(x);
-			}
 			case IntConstant x -> mkInt(x.value);
 			case DoubleConstant x -> mkReal(x.value);
 			case FloatConstant x -> mkReal(x.value);
+			case JimpleLocal x -> getOrMakeSymbol(x);
+			case JAssignStmt x -> {
+				if (x.getRightOp() instanceof JLengthExpr y) {
+					var jArray = ((JimpleLocal) y.getOp());
+					var lenSymbol = add(x.getLeftOp());
+					arrNameToLenMap.put(jArray, lenSymbol);
+					// The constraint of array lengths is not maintained in Z3.
+					yield mkTrue();
+				} else {
+					yield mkEq(add(x.getLeftOp()), add(x.getRightOp()));
+				}
+			}
+			// JLengthExpr can only appear in a JAssignStmt.
 			default -> throw new TodoException(jimpleValue);
 		};
 	}
 
+	private Expr<Sort> getOrMakeSymbol(JimpleLocal x) {
+		var existed = symbolMap.get(x);
+		if (existed != null) {
+			return existed;
+		}
+		return makeSymbol(x);
+	}
+
 	private Expr<Sort> makeSymbol(JimpleLocal x) {
 		var result = mkConst(x.getName(), toSort(x.getType()));
-		valueMap.put(x, result);
+		symbolMap.put(x, result);
 		return result;
 	}
 
