@@ -15,20 +15,11 @@ class ManualSolverTest extends ConstraintSolverTestBase {
 	UnitGraph basic = SootAgent.basicExamples.makeGraph("equalComparison");
 	UnitGraph loop = SootAgent.basicExamples.makeGraph("loop");
 	UnitGraph array = SootAgent.compositeExamples.makeGraph("array");
+	UnitGraph store = SootAgent.compositeExamples.makeGraph("arrayStore");
 
 	@Test
 	void solveCompleteCase() {
-		inspect(basic);
-	}
-
-	@Test
-	void solveLoop() {
-		inspect(loop);
-	}
-
-	@Test
-	void solveArray() {
-		inspect(array);
+		inspect(store);
 	}
 
 	private void inspect(UnitGraph graph) {

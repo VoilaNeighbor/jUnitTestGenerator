@@ -1,7 +1,7 @@
 package com.seideun.java.test.generator.new_constraint_solver;
 
-import com.microsoft.z3.*;
 import com.microsoft.z3.Context;
+import com.microsoft.z3.*;
 import com.seideun.java.test.generator.constriant_solver.Rational;
 import com.seideun.java.test.generator.constriant_solver.TodoException;
 import soot.*;
@@ -29,24 +29,24 @@ import java.util.Map;
  */
 @SuppressWarnings("unchecked")
 public class JimpleAwareZ3Context extends Context {
-	private final Map<JimpleLocal, Expr<Sort>> symbolMap = new HashMap<>();
-	private final Map<JimpleLocal, Expr<Sort>> jArrToLenSymbolMap = new HashMap<>();
+	private final Map<JimpleLocal, Expr> symbolMap = new HashMap<>();
+	private final Map<JimpleLocal, Expr> jArrToLenSymbolMap = new HashMap<>();
 
-	public Expr<Sort> getSymbol(JimpleLocal jimple) {
-		return symbolMap.get(jimple);
+	public Expr getSymbol(Value jVar) {
+		return symbolMap.get(((JimpleLocal) jVar));
 	}
 
 	/**
 	 * JimpleLocal -> Current symbol in Z3.
 	 */
-	public Map<JimpleLocal, Expr<Sort>> symbolMap() {
+	public Map<JimpleLocal, Expr> symbolMap() {
 		return symbolMap;
 	}
 
 	/**
 	 * JimpleLocal -> Current len symbol in Z3
 	 */
-	public Map<JimpleLocal, Expr<Sort>> lengthMap() {
+	public Map<JimpleLocal, Expr> lengthMap() {
 		return jArrToLenSymbolMap;
 	}
 
@@ -58,6 +58,13 @@ public class JimpleAwareZ3Context extends Context {
 		return result.toArray(new Expr[0]);
 	}
 
+	/**
+	 * Add both the jVariables and constraints.
+	 *
+	 * @return added symbol. True if none.
+	 * <p>
+	 * Fixme: it mingles symbols and constraints!
+	 */
 	public Expr add(Switchable jimpleValue) {
 		if (jimpleValue instanceof JInvertCondition x) {
 			return mkNot(add(x.base));
@@ -83,9 +90,17 @@ public class JimpleAwareZ3Context extends Context {
 			case FloatConstant x -> mkReal(x.value);
 			case JimpleLocal x -> getOrMakeSymbol(x);
 			case JAssignStmt x -> extractConstraint(x);
+			case JArrayRef x -> mkBoundaryCheck(x);
 			// JLengthExpr can only appear in a JAssignStmt.
 			default -> throw new TodoException(jimpleValue);
 		};
+	}
+
+	private BoolExpr mkBoundaryCheck(JArrayRef x) {
+		var jArray = ((JimpleLocal) x.getBase());
+		int idx = ((IntConstant) x.getIndex()).value;
+		var lenSymbol = jArrToLenSymbolMap.get(jArray);
+		return mkLt(mkInt(idx), lenSymbol);
 	}
 
 	private BoolExpr extractConstraint(JAssignStmt x) {
