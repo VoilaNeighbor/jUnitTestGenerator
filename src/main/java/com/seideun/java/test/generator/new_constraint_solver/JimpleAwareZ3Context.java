@@ -57,12 +57,16 @@ public class JimpleAwareZ3Context extends Context {
 			return mkNot(add(x.base));
 		}
 		return switch (jimpleValue) {
+			case JNegExpr x -> mkMul(add(x.getOp()), mkInt(-1));
 			case JGeExpr x -> mkGe(add(x.getOp1()), add(x.getOp2()));
 			case JLeExpr x -> mkLe(add(x.getOp1()), add(x.getOp2()));
 			case JGtExpr x -> mkGt(add(x.getOp1()), add(x.getOp2()));
 			case JLtExpr x -> mkLt(add(x.getOp1()), add(x.getOp2()));
 			case JEqExpr x -> mkEq(add(x.getOp1()), add(x.getOp2()));
 			case JNeExpr x -> mkNot(mkEq(add(x.getOp1()), add(x.getOp2())));
+			case JAndExpr x -> mkAnd(add(x.getOp1()), add(x.getOp2()));
+			case JOrExpr x -> mkOr(add(x.getOp1()), add(x.getOp2()));
+			case JXorExpr x -> mkXor(add(x.getOp1()), add(x.getOp2()));
 			case JAddExpr x -> mkAdd(add(x.getOp1()), add(x.getOp2()));
 			case JSubExpr x -> mkSub(add(x.getOp1()), add(x.getOp2()));
 			case JMulExpr x -> mkMul(add(x.getOp1()), add(x.getOp2()));
