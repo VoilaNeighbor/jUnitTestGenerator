@@ -110,14 +110,14 @@ public class JimpleSolver {
 		var solver = z3.mkSolver();
 		var status = solver.check(z3.add((List)relatedConstraints));
 		if (status == Status.SATISFIABLE) {
-			var value = findConcreteValueOf(z3.add(symbol), solver.getModel());
+			var value = findConcreteValueOf(z3.addSimple(symbol), solver.getModel());
 			return Pair.of(value, status);
 		} else {
 			return Pair.of(null, status);
 		}
 	}
 
-	// Todo(Seideun): Untested
+	// Todo(Seideun): Untested, duplicated
 	public Pair<List<Object>, Status> findConcreteValueOf(
 		List<JimpleLocal> symbols, List<Switchable> relatedConstraints
 	) {
@@ -126,7 +126,7 @@ public class JimpleSolver {
 		if (status == Status.SATISFIABLE) {
 			var concreteValues = symbols.stream()
 				.sequential()
-				.map(s -> findConcreteValueOf(z3.add(s), solver.getModel()))
+				.map(s -> findConcreteValueOf(z3.addSimple(s), solver.getModel()))
 				.toList();
 			return Pair.of(concreteValues, status);
 		} else {
@@ -134,7 +134,7 @@ public class JimpleSolver {
 		}
 	}
 
-	private static Object findConcreteValueOf(Expr z3Symbol, Model z3Model) {
+	private Object findConcreteValueOf(Expr z3Symbol, Model z3Model) {
 		// More on the 2nd bool parameter in `z3Model.eval`:
 		// https://z3prover.github.io/api/html/group__capi.html#gadb6ff55c26f5ef5607774514ee184957
 		// Simply put, if the parameter is true, unbounded symbols will be assigned

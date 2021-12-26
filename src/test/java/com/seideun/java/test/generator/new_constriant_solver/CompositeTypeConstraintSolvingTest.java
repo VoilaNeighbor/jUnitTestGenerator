@@ -7,11 +7,5 @@ import soot.toolkits.graph.UnitGraph;
 class CompositeTypeConstraintSolvingTest extends ConstraintSolverTestBase {
 	// 1 branch, 2 args.
 	static final UnitGraph arrayExample =
-		SootAgent.basicExamples.makeGraph(
-		"array");
-
-	@Test
-	void arrayTypes() {
-		System.out.println(arrayExample);
-	}
+		SootAgent.basicExamples.makeGraph("array");
 }

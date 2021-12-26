@@ -12,6 +12,10 @@ import java.util.List;
 public class ConstraintSolverTestBase {
 	JimpleSolver solver = new JimpleSolver();
 
+	void clear() {
+		solver = new JimpleSolver();
+	}
+
 	void reportStates(
 		List<Unit> path,
 		List<JimpleLocal> inputs,
