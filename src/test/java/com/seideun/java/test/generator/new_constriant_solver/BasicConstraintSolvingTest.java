@@ -31,6 +31,20 @@ class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 	}
 
 	@Test
+	void findConstraints() {
+		// I'm being lazy here. Logic included:
+		// 1. JIfStmt extract conditions, and negate if do not jump.
+		// 2. JAssignStmt reserved.
+		var ug = SootAgent.basicExamples.makeGraph("twoBranches");
+		var paths = findPrimePaths(ug);
+		var constraints = paths.stream().map(solver::findConstraints).toList();
+		assertEquals(
+			"[[i0 >= 1, $b1 = 9], [i0 !( >= ) 1, $b1 = 6]]",
+			constraints.toString()
+		);
+	}
+
+	@Test
 	void solveOneConstraint() {
 		var symbol = new JimpleLocal("x", IntType.v());
 		var conceivedConstraint = new JGeExpr(symbol, IntConstant.v(1));
@@ -55,20 +69,6 @@ class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 		assertEquals(Status.SATISFIABLE, result.getRight());
 		assertTrue((int) result.getLeft() >= -10);
 		assertTrue((int) result.getLeft() < -5);
-	}
-
-	@Test
-	void findConstraints() {
-		// I'm being lazy here. Logic included:
-		// 1. JIfStmt extract conditions, and negate if do not jump.
-		// 2. JAssignStmt reserved.
-		var ug = SootAgent.basicExamples.makeGraph("twoBranches");
-		var paths = findPrimePaths(ug);
-		var constraints = paths.stream().map(solver::findConstraints).toList();
-		assertEquals(
-			"[[i0 >= 1, $b1 = 9], [i0 !( >= ) 1, $b1 = 6]]",
-			constraints.toString()
-		);
 	}
 
 	@Test
