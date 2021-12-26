@@ -11,6 +11,8 @@ import soot.toolkits.graph.UnitGraph;
 
 import java.util.*;
 
+import static java.lang.String.format;
+
 /**
  * This class runs Jimple method body with Z3 expressions as
  * values. That is, it outputs a symbol table for each
@@ -53,7 +55,7 @@ public class JimpleConcolicMachine {
 			symbolTable.put((JimpleLocal) jVar, switch (jVar.getType()) {
 				case IntType x -> z3.mkIntConst(jVar.getName());
 				case RefType x -> mkRefConst(jVar, x);
-				default -> throw new TodoException(jVar);
+				default -> todo(jVar);
 			});
 		}
 	}
@@ -64,7 +66,7 @@ public class JimpleConcolicMachine {
 		if (className.equals(String.class.getName())) {
 			return z3.mkConst(jVar.getName(), z3.mkStringSort());
 		} else {
-			throw new TodoException(x);
+			return todo(x);
 		}
 	}
 
@@ -108,7 +110,7 @@ public class JimpleConcolicMachine {
 	private Map<JimpleLocal, Object> solveCurrentConstraints() {
 		var status = solver.check();
 		if (status != Status.SATISFIABLE) {
-			throw new TodoException(status);
+			return todo(status);
 		}
 		var model = solver.getModel();
 
@@ -128,5 +130,10 @@ public class JimpleConcolicMachine {
 		}
 
 		return concreteValues;
+	}
+
+	private static <T> T todo(Object ignored) {
+		System.err.printf("<Todo>Ignoring unknown object: %s</Todo>\n", ignored);
+		return null;
 	}
 }
