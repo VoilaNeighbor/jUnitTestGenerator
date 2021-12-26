@@ -31,17 +31,6 @@ class BasicConstraintSolvingTest extends ConstraintSolverTestBase {
 	}
 
 	@Test
-	void makeArbitraryForUnboundedInput() {
-		var inputSymbols = fakeFindInputSymbols(trivialExample, 2);
-		var thePath = new ArrayList<>(findPrimePaths(trivialExample).get(0));
-
-		var result = solver.solveSymbols(inputSymbols, thePath);
-
-		assertEquals(Integer.class, result.get(0).getClass());
-		assertEquals(Integer.class, result.get(1).getClass());
-	}
-
-	@Test
 	void solveOneConstraint() {
 		var symbol = new JimpleLocal("x", IntType.v());
 		var conceivedConstraint = new JGeExpr(symbol, IntConstant.v(1));

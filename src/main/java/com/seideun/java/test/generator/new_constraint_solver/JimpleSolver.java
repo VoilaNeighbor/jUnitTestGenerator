@@ -75,25 +75,6 @@ public class JimpleSolver {
 		return result;
 	}
 
-	public List<Object> solveSymbols(
-		List<JimpleLocal> inputSymbols, List<Unit> path
-	) {
-		// Todo(Seideun): Finish here
-		// Sometimes, the symbol solver is unable to soundly solve a set of
-		// constraints, nor can it prove it unsatisfiable. In this case, we
-		// assign an arbitrary value to the mysterious symbols, instead of
-		// giving up the whole case.
-		//
-		// We check if there are some unsolved symbols by examining the
-		// returned model to see if the symbol is still an Expr, not a concrete
-		// value.
-		var result = new ArrayList<>();
-		for (var i: inputSymbols) {
-			result.add(0);
-		}
-		return result;
-	}
-
 	public Pair<Object, Status> findConcreteValueOf(
 		JimpleLocal symbol, Value relatedConstraints
 	) {
@@ -112,8 +93,10 @@ public class JimpleSolver {
 	) {
 		var result = findConcreteValueOf(singletonList(symbol), relatedConstraints);
 		var symbolList = result.getLeft();
-		var status = result.getRight();
-		return Pair.of(symbolList == null ? null : symbolList.get(0), status);
+		return Pair.of(
+			symbolList == null ? null : symbolList.get(0),
+			result.getRight()
+		);
 	}
 
 	// manually tested
