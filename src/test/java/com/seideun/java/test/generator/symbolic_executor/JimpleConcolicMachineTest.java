@@ -148,9 +148,10 @@ class JimpleConcolicMachineTest {
 
 
 	@Test
-	@Disabled
-	void solveDoubleType() {
+	void solveArrays() {
+		var graph = makeGraph("arrayAssign");
 
+		var results = jcm.run(graph);
 	}
 
 	@Test

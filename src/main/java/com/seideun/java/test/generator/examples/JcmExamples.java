@@ -52,4 +52,12 @@ public final class JcmExamples {
 			return a;
 		}
 	}
+
+	public static int arrayType(int[] a) {
+		return a[0];
+	}
+
+	public static void arrayAssign(int[] a, int b) {
+		a[1] = b;
+	}
 }

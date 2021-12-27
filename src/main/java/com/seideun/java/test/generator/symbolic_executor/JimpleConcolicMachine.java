@@ -79,6 +79,14 @@ public class JimpleConcolicMachine {
 				case BooleanType x -> z3.mkBoolConst(jVar.getName());
 				case DoubleType x -> z3.mkRealConst(jVar.getName());
 				case RefType x -> mkRefConst(jVar, x);
+				case ArrayType x -> {
+					// Make a array
+					var baseSort = switch (x.baseType) {
+						case IntType y -> z3.mkIntSort();
+						default -> todo(x.baseType);
+					};
+					yield z3.mkConst(jVar.getName(), z3.mkSeqSort(((Sort) baseSort)));
+				}
 				default -> todo(jVar);
 			});
 		}
@@ -110,9 +118,31 @@ public class JimpleConcolicMachine {
 		case JAssignStmt assignStmt -> {
 			var lhs = assignStmt.getLeftOp();
 			var rhs = assignStmt.getRightOp();
-			var oldSymbol = symbolTable.put((Local) lhs, map(rhs));
-			runNext(thisUnit, result);
-			symbolTable.put((Local) lhs, oldSymbol);
+			if (lhs instanceof Local x) {
+				var oldSymbol = symbolTable.put(x, map(rhs));
+				runNext(thisUnit, result);
+				symbolTable.put(x, oldSymbol);
+			} else if (lhs instanceof ArrayRef x) {
+				var jArr = (Local) x.getBase();
+				var oldArraySymbol = map(jArr);
+				var lenSymbol = z3.mkLength(oldArraySymbol);
+				var ancestorArrSymbol = inputSymbolTable.get(jArr);
+				var idxSymbol = map(x.getIndex()); // Also prefixLen
+				solver.add(z3.mkGt(z3.mkLength(ancestorArrSymbol), idxSymbol));
+				var prefixSeq = z3.mkExtract(oldArraySymbol, z3.mkInt(0), idxSymbol);
+				var postfixSeq = z3.mkExtract(oldArraySymbol,
+					z3.mkAdd(z3.mkInt(2), idxSymbol),
+					z3.mkSub(lenSymbol, z3.mkAdd(z3.mkInt(1), idxSymbol))
+				);
+				var middle = z3.mkUnit(map(rhs));
+				var newArraySymbol = z3.mkConcat(prefixSeq, middle, postfixSeq);
+				var oldInTable = symbolTable.put(jArr, newArraySymbol);
+				assert oldArraySymbol == oldInTable;
+				runNext(thisUnit, result);
+				symbolTable.put(jArr, oldInTable);
+			} else {
+				todo(lhs);
+			}
 		}
 		case JIfStmt ifStmt -> {
 			assert jProgram.getSuccsOf(ifStmt).size() == 2;
@@ -156,29 +186,33 @@ public class JimpleConcolicMachine {
 			case Local jVar -> symbolTable.get(jVar);
 			case Constant c -> mapConst(jValue, c);
 			case AbstractBinopExpr abe -> mapBinary(abe);
-//			case JVirtualInvokeExpr vie -> {
-//				var base = vie.getBase();
-//				var method = vie.getMethodRef();
-//				if ("equals".equals(method.getName())) {
-//					yield z3.mkEq(map(base), map(vie.getArg(0)));
-//				}
-//				todo(vie);
-//				yield null;
-//			}
+			//			case JVirtualInvokeExpr vie -> {
+			//				var base = vie.getBase();
+			//				var method = vie.getMethodRef();
+			//				if ("equals".equals(method.getName())) {
+			//					yield z3.mkEq(map(base), map(vie.getArg(0)));
+			//				}
+			//				todo(vie);
+			//				yield null;
+			//			}
 			case JDynamicInvokeExpr x -> {
 				var method = x.getMethodRef();
 				if ("makeConcatWithConstants".equals(method.getName())) {
 					if (method.getParameterType(0) instanceof RefType t) {
 						if (t.getClassName().equals(String.class.getName())) {
 							var arr = new Expr[2];
-							arr[0] = (Expr<SeqSort<?>>)map(x.getArg(0));
-							arr[1] = (Expr<SeqSort<?>>)map(x.getBootstrapArg(0));
+							arr[0] = map(x.getArg(0));
+							arr[1] = map(x.getBootstrapArg(0));
 							yield z3.mkConcat(arr);
 						}
 					}
 				}
 				todo(x);
 				yield null;
+			}
+			case JArrayRef x -> {
+				var arrSymbol = symbolTable.get(x.getBase());
+				yield z3.mkAt(arrSymbol, mapConst(null, (Constant) x.getIndex()));
 			}
 			case JCastExpr x -> map(x.getOp());
 			default -> todo(jValue);
@@ -243,7 +277,19 @@ public class JimpleConcolicMachine {
 			if (interpretation instanceof IntNum x) {
 				result.put(jArgument, x.getInt());
 			} else if (interpretation instanceof SeqExpr<?> x) {
-				result.put(jArgument, x.getString());
+				var sExpr = x.getSort().getSExpr();
+				var sort = sExpr.substring(5, sExpr.length() - 1);
+				if ("Int".equals(sort)) {
+					var argSymbols = x.getArgs();
+					var arr = new int[argSymbols.length];
+					for (int i = 0; i < argSymbols.length; i++) {
+						arr[i] = ((IntNum) argSymbols[i].getArgs()[0]).getInt();
+					}
+					result.put(jArgument, arr);
+				} else {
+					// Todo(Seideun): String?
+					result.put(jArgument, x.getString());
+				}
 			} else {
 				todo(interpretation);
 			}
@@ -256,6 +302,7 @@ public class JimpleConcolicMachine {
 	private Expr mkRefConst(Local jVar, RefType x) {
 		var className = x.getClassName();
 		if (className.equals(String.class.getName())) {
+			// Todo(Seideun): extract into a method
 			return z3.mkConst(z3.mkSymbol(jVar.getName()), z3.mkStringSort());
 		} else {
 			return todo(x);
