@@ -200,6 +200,13 @@ class JimpleConcolicMachineTest {
 	}
 
 	@Test
+	void solveDouble() {
+		var graph = makeGraph("arrayAssign");
+
+		var results = jcm.run(graph);
+	}
+
+	@Test
 	@Disabled
 	void solveDependentLoops() {
 		var graph = makeGraph("twoWhileLoops");

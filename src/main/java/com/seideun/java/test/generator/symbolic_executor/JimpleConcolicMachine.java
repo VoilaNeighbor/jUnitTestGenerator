@@ -12,6 +12,8 @@ import soot.toolkits.graph.UnitGraph;
 
 import java.util.*;
 
+import static java.util.stream.Stream.concat;
+
 /**
  * This class runs Jimple method body with Z3 expressions as
  * values. That is, it outputs a symbol table for each
@@ -130,14 +132,14 @@ public class JimpleConcolicMachine {
 				var idxSymbol = map(x.getIndex()); // Also prefixLen
 				solver.add(z3.mkGt(z3.mkLength(ancestorArrSymbol), idxSymbol));
 				var prefixSeq = z3.mkExtract(oldArraySymbol, z3.mkInt(0), idxSymbol);
-				var postfixSeq = z3.mkExtract(oldArraySymbol,
+				var postfixSeq = z3.mkExtract(
+					oldArraySymbol,
 					z3.mkAdd(z3.mkInt(2), idxSymbol),
 					z3.mkSub(lenSymbol, z3.mkAdd(z3.mkInt(1), idxSymbol))
 				);
 				var middle = z3.mkUnit(map(rhs));
 				var newArraySymbol = z3.mkConcat(prefixSeq, middle, postfixSeq);
 				var oldInTable = symbolTable.put(jArr, newArraySymbol);
-				assert oldArraySymbol == oldInTable;
 				runNext(thisUnit, result);
 				symbolTable.put(jArr, oldInTable);
 			} else {
@@ -186,20 +188,27 @@ public class JimpleConcolicMachine {
 			case Local jVar -> symbolTable.get(jVar);
 			case Constant c -> mapConst(jValue, c);
 			case AbstractBinopExpr abe -> mapBinary(abe);
-			//			case JVirtualInvokeExpr vie -> {
-			//				var base = vie.getBase();
-			//				var method = vie.getMethodRef();
-			//				if ("equals".equals(method.getName())) {
-			//					yield z3.mkEq(map(base), map(vie.getArg(0)));
-			//				}
-			//				todo(vie);
-			//				yield null;
-			//			}
+			case JVirtualInvokeExpr vie -> {
+				var method = vie.getMethodRef();
+				if ("equals".equals(method.getName())) {
+					var lhs = vie.getBase();
+					var rhs = vie.getArg(0);
+					yield z3.mkEq(map(lhs), map(rhs));
+				}
+				todo(vie);
+				yield null;
+			}
 			case JDynamicInvokeExpr x -> {
 				var method = x.getMethodRef();
+				// String concatenation.
 				if ("makeConcatWithConstants".equals(method.getName())) {
 					if (method.getParameterType(0) instanceof RefType t) {
 						if (t.getClassName().equals(String.class.getName())) {
+							// fixme
+							// String / StringLiteral live in different argument boxes. We
+							// presumed that there is one var and one literal, e.g.
+							// "1".equals(str). But we can also compare two vars / two
+							// literals (why?).
 							var arr = new Expr[2];
 							arr[0] = map(x.getArg(0));
 							arr[1] = map(x.getBootstrapArg(0));
@@ -241,7 +250,14 @@ public class JimpleConcolicMachine {
 			case JLeExpr x -> z3.mkLe(map(lhs), map(rhs));
 			case JGtExpr x -> z3.mkGt(map(lhs), map(rhs));
 			case JLtExpr x -> z3.mkLt(map(lhs), map(rhs));
-			case JEqExpr x -> z3.mkEq(map(lhs), map(rhs));
+			case JEqExpr x -> {
+				var lhsSymbol = map(lhs);
+				var rhsSymbol = map(rhs);
+				if (lhsSymbol.isBool() && rhsSymbol.isInt()) {
+					lhsSymbol = z3.mkITE(lhsSymbol, z3.mkInt(1), z3.mkInt(0));
+				}
+				yield z3.mkEq(lhsSymbol, rhsSymbol);
+			}
 			case JNeExpr x -> z3.mkNot(z3.mkEq(map(lhs), map(rhs)));
 			default -> todo(abe);
 		};
