@@ -1,66 +1,43 @@
 package com.seideun.java.test.generator;
 
-import com.seideun.java.test.generator.CFG_analyzer.Path;
-import com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer;
 import com.seideun.java.test.generator.constriant_solver.JUnitTestGenerator;
-import com.seideun.java.test.generator.constriant_solver.PathArgumentsSynthesizer;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import com.seideun.java.test.generator.constriant_solver.TestCase;
 import com.seideun.java.test.generator.examples.BasicExamples;
-import soot.Unit;
+import com.seideun.java.test.generator.symbolic_executor.JimpleConcolicMachine;
+import lombok.AllArgsConstructor;
+import soot.Local;
 import soot.toolkits.graph.UnitGraph;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-
-import static com.seideun.java.test.generator.CFG_analyzer.SootCFGAnalyzer.findPrimePaths;
+import java.util.Map;
 
 /**
  * Facade of the Java Unit Test Generator.
  */
+@AllArgsConstructor
 public class Facade {
 	private final SootAgent sootAgent;
-	private final PathArgumentsSynthesizer pathArgumentsSynthesizer;
 	private final JUnitTestGenerator jUnitTestGenerator;
-
-	public Facade(
-		SootAgent sootAgent,
-		PathArgumentsSynthesizer pathArgumentsSynthesizer,
-		JUnitTestGenerator jUnitTestGenerator
-	) {
-		this.sootAgent = sootAgent;
-		this.pathArgumentsSynthesizer = pathArgumentsSynthesizer;
-		this.jUnitTestGenerator = jUnitTestGenerator;
-	}
+	private final JimpleConcolicMachine jimpleConcolicMachine;
 
 	public String makeTest(Class<?> theClass, String methodName) {
-		// Needs rework.
 		try {
-			List<TestCase> testCases = new ArrayList<>();
-			//生产控制流图
 			UnitGraph controlFlowGraph = sootAgent.makeGraph(methodName);
-			List<List<Unit>>  primePath = findPrimePaths(controlFlowGraph);
-			List<Path> completePath = SootCFGAnalyzer.findCompleteTest(primePath,controlFlowGraph);
-			for (Path path: completePath) {
-				pathArgumentsSynthesizer.clear();
-				pathArgumentsSynthesizer.store(path.oneCompletePath);
-				Optional<List<Object>> synthesizeResult =
-					pathArgumentsSynthesizer.synthesizeArguments();
-				if (synthesizeResult.isEmpty()) {
-					continue;
+			var argumentMaps = jimpleConcolicMachine.run(controlFlowGraph);
+			var parameters = controlFlowGraph.getBody().getParameterLocals();
+
+			List<TestCase> testCases = new ArrayList<>();
+			for (Map<Local, Object> arguments: argumentMaps) {
+				var input = parameters.stream().map(arguments::get).toList();
+				var types = new Class<?>[input.size()];
+				for (int i = 0; i < input.size(); i++) {
+					types[i] = int.class;
 				}
-				List<Object> arguments = synthesizeResult.get();
-				Class<?>[] argumentClasses = new Class<?>[arguments.size()];
-				for (int i = 0; i != arguments.size(); ++i) {
-					 argumentClasses[i] = arguments.get(i).getClass();
-					//argumentClasses[i] = int.class;
-				}
-				//得到预期结果
-				Object expectedOutput = theClass.getMethod(methodName, argumentClasses)
-					.invoke(null, arguments.get(0));
-				testCases.add(new TestCase(arguments, expectedOutput));
+				var method = theClass.getMethod(methodName, types);
+				var result = method.invoke(null, input.toArray());
+				testCases.add(new TestCase(input, result));
 			}
 			return jUnitTestGenerator.generateAssertForEachCase(testCases);
 		} catch (Exception e) {
@@ -71,17 +48,9 @@ public class Facade {
 
 	public static void main(String[] args) {
 		var sootAgent = SootAgent.basicExamples;
-		PathArgumentsSynthesizer argumentsSynthesizer =
-			new PathArgumentsSynthesizer();
-		JUnitTestGenerator jUnitTestGenerator = new JUnitTestGenerator(
-			BasicExamples.class.getSimpleName().toLowerCase(Locale.ROOT),
-			"arrayTest"
-		);
-		Facade facade = new Facade(
-			sootAgent,
-			argumentsSynthesizer,
-			jUnitTestGenerator
-		);
-		System.out.println(facade.makeTest(BasicExamples.class, "arrayTest"));
+		var jcm = new JimpleConcolicMachine();
+		var jUnitTestGenerator = new JUnitTestGenerator("myObject", "oneArg");
+		var facade = new Facade(sootAgent, jUnitTestGenerator, jcm);
+		System.out.println(facade.makeTest(BasicExamples.class, "oneArg"));
 	}
 }
