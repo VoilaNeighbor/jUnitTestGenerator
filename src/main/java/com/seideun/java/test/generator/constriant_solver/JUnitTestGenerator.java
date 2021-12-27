@@ -1,5 +1,8 @@
 package com.seideun.java.test.generator.constriant_solver;
 
+import lombok.SneakyThrows;
+
+import java.io.Writer;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -20,6 +23,22 @@ public class JUnitTestGenerator {
 	public JUnitTestGenerator(String objectName, String methodName) {
 		this.objectName = objectName;
 		this.methodName = methodName;
+	}
+
+	@SneakyThrows
+	public String generateAssertForEachCase(
+		Collection<TestCase> testSuite,
+		Writer out
+	) {
+		var prepend = """
+			package generated_test;
+			import static org.junit.jupiter.api.Assertions.assertEquals;
+			import static org.junit.jupiter.api.Assertions.assertTrue;
+					
+			class MyTest {""";
+		var result = prepend + generateAssertForEachCase(testSuite) + "}";
+		out.append(result);
+		return result;
 	}
 
 	public String generateAssertForEachCase(Collection<TestCase> testSuite) {

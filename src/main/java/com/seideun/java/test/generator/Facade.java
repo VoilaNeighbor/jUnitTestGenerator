@@ -6,9 +6,12 @@ import com.seideun.java.test.generator.constriant_solver.TestCase;
 import com.seideun.java.test.generator.examples.BasicExamples;
 import com.seideun.java.test.generator.symbolic_executor.JimpleConcolicMachine;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import soot.Local;
 import soot.toolkits.graph.UnitGraph;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +38,7 @@ public class Facade {
 		return null;
 	}
 
+	@SneakyThrows
 	private String makeTestCases(
 		Class<?> theClass,
 		String methodName,
@@ -57,14 +61,17 @@ public class Facade {
 			var result = method.invoke(null, input.toArray());
 			testCases.add(new TestCase(input, result));
 		}
-		return jUnitTestGenerator.generateAssertForEachCase(testCases);
+		try (var fileWriter = new FileWriter("generated_junit_tests/MyTest.java")) {
+			return jUnitTestGenerator.generateAssertForEachCase(testCases, fileWriter);
+		}
 	}
 
 	public static void main(String[] args) {
 		var sootAgent = SootAgent.basicExamples;
 		var jcm = new JimpleConcolicMachine();
-		var jUnitTestGenerator = new JUnitTestGenerator("myObject", "oneArg");
+		var jUnitTestGenerator = new JUnitTestGenerator("myObject", "twoBranches");
 		var facade = new Facade(sootAgent, jUnitTestGenerator, jcm);
-		System.out.println(facade.makeTest(BasicExamples.class, "oneArg"));
+
+		facade.makeTest(BasicExamples.class, "twoBranches");
 	}
 }
