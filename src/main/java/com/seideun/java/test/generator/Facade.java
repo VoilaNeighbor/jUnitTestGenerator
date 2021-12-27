@@ -10,9 +10,7 @@ import lombok.SneakyThrows;
 import soot.Local;
 import soot.toolkits.graph.UnitGraph;
 
-import java.io.File;
 import java.io.FileWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,26 +24,20 @@ public class Facade {
 	private final JUnitTestGenerator jUnitTestGenerator;
 	private final JimpleConcolicMachine jimpleConcolicMachine;
 
-	public String makeTest(Class<?> theClass, String methodName) {
-		try {
-			UnitGraph controlFlowGraph = sootAgent.makeGraph(methodName);
-			var argumentMaps = jimpleConcolicMachine.run(controlFlowGraph);
-			var parameters = controlFlowGraph.getBody().getParameterLocals();
-			return makeTestCases(theClass, methodName, argumentMaps, parameters);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
+	public void makeTest(Class<?> theClass, String methodName) {
+		UnitGraph controlFlowGraph = sootAgent.makeGraph(methodName);
+		var argumentMaps = jimpleConcolicMachine.run(controlFlowGraph);
+		var parameters = controlFlowGraph.getBody().getParameterLocals();
+		makeTestCases(theClass, methodName, argumentMaps, parameters);
 	}
 
 	@SneakyThrows
-	private String makeTestCases(
+	private void makeTestCases(
 		Class<?> theClass,
 		String methodName,
 		List<Map<Local, Object>> argumentMaps,
 		List<Local> parameters
-	) throws NoSuchMethodException, IllegalAccessException,
-		InvocationTargetException {
+	) {
 		List<TestCase> testCases = new ArrayList<>();
 		for (Map<Local, Object> arguments: argumentMaps) {
 			var input = parameters.stream().map(arguments::get).toList();
@@ -61,17 +53,20 @@ public class Facade {
 			var result = method.invoke(null, input.toArray());
 			testCases.add(new TestCase(input, result));
 		}
-		try (var fileWriter = new FileWriter("generated_junit_tests/MyTest.java")) {
-			return jUnitTestGenerator.generateAssertForEachCase(testCases, fileWriter);
-		}
+		jUnitTestGenerator.addTestMethod(methodName, testCases);
 	}
 
+	@SneakyThrows
 	public static void main(String[] args) {
 		var sootAgent = SootAgent.basicExamples;
 		var jcm = new JimpleConcolicMachine();
-		var jUnitTestGenerator = new JUnitTestGenerator("myObject", "twoBranches");
+		var jUnitTestGenerator = new JUnitTestGenerator("myObject", "");
 		var facade = new Facade(sootAgent, jUnitTestGenerator, jcm);
 
+		facade.makeTest(BasicExamples.class, "twoArgs");
 		facade.makeTest(BasicExamples.class, "twoBranches");
+		try (var fileWriter = new FileWriter("generated_junit_tests/MyTest.java")) {
+			jUnitTestGenerator.buildToWriter(fileWriter);
+		}
 	}
 }

@@ -12,8 +12,7 @@ import static java.lang.String.format;
  * A text-generating class creating JUnit test for based on input.
  */
 public class JUnitTestGenerator {
-	private static final int ARBITRARY_CAPACITY = 100;
-	private final StringBuilder builder = new StringBuilder(ARBITRARY_CAPACITY);
+	private final StringBuilder builder = new StringBuilder();
 	private final String objectName;
 	private final String methodName;
 
@@ -25,6 +24,30 @@ public class JUnitTestGenerator {
 		this.methodName = methodName;
 	}
 
+	public JUnitTestGenerator addTestMethod(String methodName, Collection<TestCase> testSuite) {
+		if (testSuite.isEmpty()) {
+			throw new NoTestCaseException();
+		}
+		makeMethodAccessExpression(methodName);
+		builder.append(format("@Test void %s(){", methodName));
+		testSuite.forEach(this::buildAssertion);
+		builder.append("}");
+		return this;
+	}
+
+	@SneakyThrows
+	public void buildToWriter(Writer out) {
+		var prepend = """
+			package generated_test;
+			import static org.junit.jupiter.api.Assertions.assertEquals;
+			import static org.junit.jupiter.api.Assertions.assertTrue;
+
+			class MyTest {""";
+		var result = prepend + builder + "}";
+		out.append(result);
+	}
+
+	@Deprecated
 	@SneakyThrows
 	public String generateAssertForEachCase(
 		Collection<TestCase> testSuite,
@@ -34,7 +57,7 @@ public class JUnitTestGenerator {
 			package generated_test;
 			import static org.junit.jupiter.api.Assertions.assertEquals;
 			import static org.junit.jupiter.api.Assertions.assertTrue;
-					
+
 			class MyTest {""";
 		var result = prepend + generateAssertForEachCase(testSuite) + "}";
 		out.append(result);
@@ -45,7 +68,7 @@ public class JUnitTestGenerator {
 		if (testSuite.isEmpty()) {
 			throw new NoTestCaseException();
 		}
-		makeMethodAccessExpression();
+		makeMethodAccessExpression(methodName);
 		builder.setLength(0);
 		builder.append(format("@Test void %sReturnsAsExpected(){", methodName));
 		testSuite.forEach(this::buildAssertion);
@@ -53,7 +76,7 @@ public class JUnitTestGenerator {
 		return builder.toString();
 	}
 
-	private void makeMethodAccessExpression() {
+	private void makeMethodAccessExpression(String methodName) {
 		methodAccess = objectName + '.' + methodName;
 	}
 
