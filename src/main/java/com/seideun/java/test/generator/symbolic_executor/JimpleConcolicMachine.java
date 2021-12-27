@@ -165,20 +165,21 @@ public class JimpleConcolicMachine {
 //				todo(vie);
 //				yield null;
 //			}
-//			case JDynamicInvokeExpr x -> {
-//				var method = x.getMethodRef();
-//				if ("makeConcatWithConstants".equals(method.getName())) {
-//					if (method.getParameterType(0) instanceof RefType t) {
-//						if (t.getClassName().equals(String.class.getName())) {
-//							yield z3.mkConcat(map(x.getArg(0)), map(x.getBootstrapArg(0)));
-//						}
-//					}
-//				}
-//				todo(x);
-//				yield null;
-//			}
-			// Todo(Seideun): I don't know how to handle cast in Z3.
-			// I don't know why the concat fails, either.
+			case JDynamicInvokeExpr x -> {
+				var method = x.getMethodRef();
+				if ("makeConcatWithConstants".equals(method.getName())) {
+					if (method.getParameterType(0) instanceof RefType t) {
+						if (t.getClassName().equals(String.class.getName())) {
+							var arr = new Expr[2];
+							arr[0] = (Expr<SeqSort<?>>)map(x.getArg(0));
+							arr[1] = (Expr<SeqSort<?>>)map(x.getBootstrapArg(0));
+							yield z3.mkConcat(arr);
+						}
+					}
+				}
+				todo(x);
+				yield null;
+			}
 			case JCastExpr x -> map(x.getOp());
 			default -> todo(jValue);
 		};
