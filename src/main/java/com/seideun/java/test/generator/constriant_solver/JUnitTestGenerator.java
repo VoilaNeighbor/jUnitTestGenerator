@@ -30,6 +30,7 @@ public class JUnitTestGenerator {
 		builder.setLength(0);
 		builder.append(format("@Test void %sReturnsAsExpected(){", methodName));
 		testSuite.forEach(this::buildAssertion);
+		builder.append("}");
 		return builder.toString();
 	}
 

@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import soot.Local;
 import soot.toolkits.graph.UnitGraph;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,23 +28,36 @@ public class Facade {
 			UnitGraph controlFlowGraph = sootAgent.makeGraph(methodName);
 			var argumentMaps = jimpleConcolicMachine.run(controlFlowGraph);
 			var parameters = controlFlowGraph.getBody().getParameterLocals();
-
-			List<TestCase> testCases = new ArrayList<>();
-			for (Map<Local, Object> arguments: argumentMaps) {
-				var input = parameters.stream().map(arguments::get).toList();
-				var types = new Class<?>[input.size()];
-				for (int i = 0; i < input.size(); i++) {
-					types[i] = int.class;
-				}
-				var method = theClass.getMethod(methodName, types);
-				var result = method.invoke(null, input.toArray());
-				testCases.add(new TestCase(input, result));
-			}
-			return jUnitTestGenerator.generateAssertForEachCase(testCases);
+			return makeTestCases(theClass, methodName, argumentMaps, parameters);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	private String makeTestCases(
+		Class<?> theClass,
+		String methodName,
+		List<Map<Local, Object>> argumentMaps,
+		List<Local> parameters
+	) throws NoSuchMethodException, IllegalAccessException,
+		InvocationTargetException {
+		List<TestCase> testCases = new ArrayList<>();
+		for (Map<Local, Object> arguments: argumentMaps) {
+			var input = parameters.stream().map(arguments::get).toList();
+			var types = new Class<?>[input.size()];
+			for (int i = 0; i < input.size(); i++) {
+				if (input.get(i).getClass() == Integer.class) {
+					types[i] = int.class;
+				} else {
+					types[i] = input.get(i).getClass();
+				}
+			}
+			var method = theClass.getMethod(methodName, types);
+			var result = method.invoke(null, input.toArray());
+			testCases.add(new TestCase(input, result));
+		}
+		return jUnitTestGenerator.generateAssertForEachCase(testCases);
 	}
 
 	public static void main(String[] args) {
