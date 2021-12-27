@@ -17,7 +17,7 @@ public class mainController {
 			"target" +
 			File.separator + "test-classes";
 		String clsName = BasicExamples.class.getName();
-		String methodName = "arrayTest";
+		String methodName = "array";
 
 		UnitGraph ug = SootCFG.getMethodCFG(clspath, clsName, methodName);
 

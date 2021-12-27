@@ -1,7 +1,7 @@
 package com.seideun.java.test.generator.examples;
 
 public final class JcmExamples {
-	private JcmExamples() { }
+	public JcmExamples() { }
 
 	public static void empty() { }
 
@@ -42,7 +42,8 @@ public final class JcmExamples {
 	}
 
 	public static String stringType(String a) {
-		return "Hello " + a;
+		String b = "Hello";
+		return  b + a;
 	}
 
 	public static String stringEquals(String a, String b) {

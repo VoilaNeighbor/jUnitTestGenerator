@@ -4,6 +4,7 @@ import com.seideun.java.test.generator.constriant_solver.JUnitTestGenerator;
 import com.seideun.java.test.generator.constriant_solver.SootAgent;
 import com.seideun.java.test.generator.constriant_solver.TestCase;
 import com.seideun.java.test.generator.examples.BasicExamples;
+import com.seideun.java.test.generator.examples.JcmExamples;
 import com.seideun.java.test.generator.symbolic_executor.JimpleConcolicMachine;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -11,6 +12,7 @@ import soot.Local;
 import soot.toolkits.graph.UnitGraph;
 
 import java.io.FileWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +52,12 @@ public class Facade {
 				}
 			}
 			var method = theClass.getMethod(methodName, types);
-			var result = method.invoke(null, input.toArray());
+			Object result = null;
+			try {
+				result = method.invoke(null, input.toArray());
+			} catch (InvocationTargetException e) {
+				// Such input cases are used for inducing exceptions.
+			}
 			testCases.add(new TestCase(input, result));
 		}
 		jUnitTestGenerator.addTestMethod(methodName, testCases);
@@ -58,13 +65,20 @@ public class Facade {
 
 	@SneakyThrows
 	public static void main(String[] args) {
-		var sootAgent = SootAgent.basicExamples;
+		var jUnitTestGenerator = new JUnitTestGenerator("jcmExamples", "");
 		var jcm = new JimpleConcolicMachine();
-		var jUnitTestGenerator = new JUnitTestGenerator("myObject", "");
-		var facade = new Facade(sootAgent, jUnitTestGenerator, jcm);
+		var facade = new Facade(SootAgent.jcmExamples, jUnitTestGenerator, jcm);
 
-		facade.makeTest(BasicExamples.class, "twoArgs");
-		facade.makeTest(BasicExamples.class, "twoBranches");
+		facade.makeTest(JcmExamples.class, "empty");
+		facade.makeTest(JcmExamples.class, "intSequential");
+		facade.makeTest(JcmExamples.class, "twoBranches");
+		facade.makeTest(JcmExamples.class, "manyIfs");
+		facade.makeTest(JcmExamples.class, "whileLoop");
+		facade.makeTest(JcmExamples.class, "twoWhileLoops");
+		facade.makeTest(JcmExamples.class, "stringType");
+		facade.makeTest(JcmExamples.class, "stringEquals");
+		facade.makeTest(JcmExamples.class, "arrayType");
+		facade.makeTest(JcmExamples.class, "arrayAssign");
 		try (var fileWriter = new FileWriter("generated_junit_tests/MyTest.java")) {
 			jUnitTestGenerator.buildToWriter(fileWriter);
 		}
