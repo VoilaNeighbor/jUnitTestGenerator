@@ -229,36 +229,34 @@ public class JimpleConcolicMachine {
 	}
 
 	private Expr mapBinary(AbstractBinopExpr abe) {
-		var lhs = abe.getOp1();
-		var rhs = abe.getOp2();
+		var lhsSymbol = map(abe.getOp1());
+		var rhsSymbol = map(abe.getOp2());
 		return switch (abe) {
-			case JAndExpr x -> z3.mkAnd(map(lhs), map(rhs));
-			case JOrExpr x -> z3.mkOr(map(lhs), map(rhs));
-			case JXorExpr x -> z3.mkXor(map(lhs), map(rhs));
-			case JAddExpr x -> z3.mkAdd(map(lhs), map(rhs));
-			case JSubExpr x -> z3.mkSub(map(lhs), map(rhs));
-			case JMulExpr x -> z3.mkMul(map(lhs), map(rhs));
-			case JDivExpr x -> z3.mkDiv(map(lhs), map(rhs));
-			case JRemExpr x -> z3.mkRem(map(lhs), map(rhs));
-			case JCmpExpr x -> z3.mkSub(map(lhs), map(rhs));
-			case JCmplExpr x -> z3.mkSub(map(lhs), map(rhs));
-			case JCmpgExpr x -> z3.mkSub(map(lhs), map(rhs));
+			case JAndExpr x -> z3.mkAnd(lhsSymbol, rhsSymbol);
+			case JOrExpr x -> z3.mkOr(lhsSymbol, rhsSymbol);
+			case JXorExpr x -> z3.mkXor(lhsSymbol, rhsSymbol);
+			case JAddExpr x -> z3.mkAdd(lhsSymbol, rhsSymbol);
+			case JSubExpr x -> z3.mkSub(lhsSymbol, rhsSymbol);
+			case JMulExpr x -> z3.mkMul(lhsSymbol, rhsSymbol);
+			case JDivExpr x -> z3.mkDiv(lhsSymbol, rhsSymbol);
+			case JRemExpr x -> z3.mkRem(lhsSymbol, rhsSymbol);
+			case JCmpExpr x -> z3.mkSub(lhsSymbol, rhsSymbol);
+			case JCmplExpr x -> z3.mkSub(lhsSymbol, rhsSymbol);
+			case JCmpgExpr x -> z3.mkSub(lhsSymbol, rhsSymbol);
 			// These expressions appear exclusively in If Statements. CmpXXX ones
 			// are more general.
 			// Ref: http://www.sable.mcgill.ca/listarchives/soot-list/msg01032.html
-			case JGeExpr x -> z3.mkGe(map(lhs), map(rhs));
-			case JLeExpr x -> z3.mkLe(map(lhs), map(rhs));
-			case JGtExpr x -> z3.mkGt(map(lhs), map(rhs));
-			case JLtExpr x -> z3.mkLt(map(lhs), map(rhs));
+			case JGeExpr x -> z3.mkGe(lhsSymbol, rhsSymbol);
+			case JLeExpr x -> z3.mkLe(lhsSymbol, rhsSymbol);
+			case JGtExpr x -> z3.mkGt(lhsSymbol, rhsSymbol);
+			case JLtExpr x -> z3.mkLt(lhsSymbol, rhsSymbol);
 			case JEqExpr x -> {
-				var lhsSymbol = map(lhs);
-				var rhsSymbol = map(rhs);
 				if (lhsSymbol.isBool() && rhsSymbol.isInt()) {
 					lhsSymbol = z3.mkITE(lhsSymbol, z3.mkInt(1), z3.mkInt(0));
 				}
 				yield z3.mkEq(lhsSymbol, rhsSymbol);
 			}
-			case JNeExpr x -> z3.mkNot(z3.mkEq(map(lhs), map(rhs)));
+			case JNeExpr x -> z3.mkNot(z3.mkEq(lhsSymbol, rhsSymbol));
 			default -> todo(abe);
 		};
 	}
