@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 
 import java.io.Writer;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -38,11 +39,11 @@ public class JUnitTestGenerator {
 	@SneakyThrows
 	public void buildToWriter(Writer out) {
 		var prepend = """
-			package generated_test;
-			import static org.junit.jupiter.api.Assertions.assertEquals;
-			import static org.junit.jupiter.api.Assertions.assertTrue;
+				package generated_test;
+				import static org.junit.jupiter.api.Assertions.assertEquals;
+				import static org.junit.jupiter.api.Assertions.assertTrue;
 
-			class MyTest {""";
+				class MyTest {""";
 		var result = prepend + builder + "}";
 		out.append(result);
 	}
@@ -50,15 +51,15 @@ public class JUnitTestGenerator {
 	@Deprecated
 	@SneakyThrows
 	public String generateAssertForEachCase(
-		Collection<TestCase> testSuite,
-		Writer out
+			Collection<TestCase> testSuite,
+			Writer out
 	) {
 		var prepend = """
-			package generated_test;
-			import static org.junit.jupiter.api.Assertions.assertEquals;
-			import static org.junit.jupiter.api.Assertions.assertTrue;
+				package generated_test;
+				import static org.junit.jupiter.api.Assertions.assertEquals;
+				import static org.junit.jupiter.api.Assertions.assertTrue;
 
-			class MyTest {""";
+				class MyTest {""";
 		var result = prepend + generateAssertForEachCase(testSuite) + "}";
 		out.append(result);
 		return result;
@@ -81,12 +82,19 @@ public class JUnitTestGenerator {
 	}
 
 	private void buildAssertion(TestCase testCase) {
-		builder.append(format(
-			"assertEquals(%s,%s(%s));",
-			toLiteral(testCase.expectedOutput),
-			methodAccess,
-			makeArgumentLiterals(testCase.arguments)
-		));
+		if (testCase.expectedOutput == null) {
+			builder.append(format(
+					"assertDoesNotThrow(()->%s(%s));",
+					methodAccess, makeArgumentLiterals(testCase.arguments)
+			));
+		} else {
+			builder.append(format(
+					"assertEquals(%s,%s(%s));",
+					toLiteral(testCase.expectedOutput),
+					methodAccess,
+					makeArgumentLiterals(testCase.arguments)
+			));
+		}
 	}
 
 	/**
@@ -97,15 +105,18 @@ public class JUnitTestGenerator {
 			String s = (String) x;
 			// Currently, only String is specially treated.
 			return '"' + s + '"';
+		} else if (x instanceof Object[] arr) {
+			// todo
+			return null;
 		} else {
-			return x.toString();
+			return Objects.toString(x);
 		}
 	}
 
 	private static String makeArgumentLiterals(Collection<Object> arguments) {
 		return arguments.stream()
-			.map(JUnitTestGenerator::toLiteral)
-			.collect(Collectors.joining(","));
+				.map(JUnitTestGenerator::toLiteral)
+				.collect(Collectors.joining(","));
 	}
 
 	public static class NoTestCaseException extends RuntimeException {
